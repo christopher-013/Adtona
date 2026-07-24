@@ -1,6 +1,6 @@
 # Adtona — Version 5 UI working copy
 
-## v5.3.10 viewport-fit Adventure cards
+## v5.3.11 viewport-fit Adventure cards
 
 - Keeps the complete Adventure decision flow inside one standard desktop or
   mobile viewport, with a scroll fallback only for unusually short windows.

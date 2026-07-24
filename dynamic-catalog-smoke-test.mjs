@@ -207,6 +207,39 @@ assert.ok(
   ),
   "Bohol's leading attraction cards must use real Wikimedia fallback photography"
 );
+const boholFood = Object.values(boholCatalog.food).flat();
+const boholShopping = boholCatalog.shopping;
+const isRealBoholPlace = (item) =>
+  item &&
+  item.researchPrompt !== true &&
+  item.placeholder !== true &&
+  Boolean(item.sourceUrl) &&
+  !/research checklist/i.test(item.sourceLabel || "");
+const hasRelevantRemoteImage = (item) => {
+  const image = String(item?.image || "");
+  return /^https:\/\//i.test(image) &&
+    !/blank|transparent|spacer|pixel|placeholder|restaurant[_ -]plated|shopping[_ -]street|\.svg(?:[?#]|$)/i.test(image);
+};
+
+for (const expected of ["Bohol Bee Farm", "Gerarda's Family Restaurant"]) {
+  assert.ok(boholFood.some((item) => item.name === expected), `Expected recognizable Bohol dining place: ${expected}`);
+}
+for (const expected of ["Dao Public Market", "Island City Mall"]) {
+  assert.ok(boholShopping.some((item) => item.name === expected), `Expected recognizable Bohol shopping place: ${expected}`);
+}
+for (const bucket of ["breakfast", "lunch", "dinner"]) {
+  const leading = boholCatalog.food[bucket][0];
+  assert.ok(isRealBoholPlace(leading), `Bohol ${bucket} must lead with a sourced real place, not a researchPrompt placeholder`);
+  assert.ok(hasRelevantRemoteImage(leading), `Bohol ${bucket}'s leading real place must have relevant HTTPS photography`);
+}
+assert.ok(
+  boholShopping.slice(0, 3).every(isRealBoholPlace),
+  "Bohol shopping must lead with sourced real places, not researchPrompt placeholders"
+);
+assert.ok(
+  boholShopping.slice(0, 3).every(hasRelevantRemoteImage),
+  "Bohol's leading shopping places must have relevant HTTPS photography"
+);
 assert.equal(api.catalogHasSeededAnchors({
   attractions: [{ name: "Generic island walk" }, { name: "Downtown viewpoint" }]
 }, "Bohol", { name: "Bohol", country: "Philippines" }), false);

@@ -693,6 +693,20 @@
     return score;
   }
 
+  function osmImage(tags = {}) {
+    const commonsValue = String(tags.wikimedia_commons || "").trim();
+    if (/^File:/i.test(commonsValue)) return commonsImageUrl(commonsValue);
+    if (/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/i.test(commonsValue)) {
+      const fileName = commonsValue.split("/wiki/File:").pop();
+      try { return commonsImageUrl(decodeURIComponent(fileName)); }
+      catch (_) { return commonsImageUrl(fileName); }
+    }
+    const direct = String(tags.image || "").split(";")[0].trim();
+    if (/^https:\/\/upload\.wikimedia\.org\//i.test(direct)) return usablePlaceImage(direct);
+    if (/^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\//i.test(direct)) return usablePlaceImage(direct);
+    return "";
+  }
+
   function osmToDynamicItem(element, destination, geocode) {
     const tags = element.tags || {};
     const name = tags.name || tags["name:en"] || tags.brand || "";
@@ -703,6 +717,8 @@
     if (!isFood && !isShop) return null;
     const area = [tags["addr:neighbourhood"], tags["addr:suburb"], geocode?.name].filter(Boolean)[0] || geocode?.name || destination;
     const address = [tags["addr:housenumber"], tags["addr:street"], tags["addr:city"]].filter(Boolean).join(" ");
+    const image = osmImage(tags);
+    const sourceDescription = String(tags["description:en"] || tags.description || tags.short_description || "").replace(/\s+/g, " ").trim();
     if (isFood) {
       const cuisine = cuisineLabel(tags);
       return {
@@ -713,9 +729,10 @@
         officialUrl: tags.website || tags["contact:website"] || "",
         lat,
         lon,
+        image,
         cuisine,
         order: cuisine === "Cafe" ? "Check coffee, pastries, and breakfast options." : "Check current menu favorites and signature dishes.",
-        detail: `${name} is an OpenStreetMap-listed ${cuisine.toLowerCase()} option in ${area}. Verify current hours, popularity, reservations, and menu before locking it into the plan.`,
+        detail: sourceDescription || `${name} is an OpenStreetMap-listed ${cuisine.toLowerCase()} option in ${area}. Verify current hours, popularity, reservations, and menu before locking it into the plan.`,
         sourceLabel: "OpenStreetMap",
         sourceUrl: `https://www.openstreetmap.org/${element.type}/${element.id}`,
         sourceId: `osm:${element.type}/${element.id}`,
@@ -733,8 +750,9 @@
       officialUrl: tags.website || tags["contact:website"] || "",
       lat,
       lon,
+      image,
       bestFor,
-      detail: `${name} is an OpenStreetMap-listed shopping option in ${area}, useful for ${bestFor.toLowerCase()}. Verify current stores, hours, and fit before travel.`,
+      detail: sourceDescription || `${name} is an OpenStreetMap-listed shopping option in ${area}, useful for ${bestFor.toLowerCase()}. Verify current stores, hours, and fit before travel.`,
       sourceLabel: "OpenStreetMap",
       sourceUrl: `https://www.openstreetmap.org/${element.type}/${element.id}`,
       sourceId: `osm:${element.type}/${element.id}`,
@@ -744,21 +762,65 @@
     };
   }
 
+  function destinationResearchCenters(destination, geocode) {
+    const fallback = findDestinationFallback(destination, geocode);
+    const candidates = [
+      {
+        name: geocode?.name || destination,
+        latitude: coordinate(geocode?.latitude),
+        longitude: coordinate(geocode?.longitude)
+      },
+      ...(Array.isArray(fallback?.searchCenters) ? fallback.searchCenters : [])
+    ];
+    const seen = new Set();
+    return candidates.filter((center) => {
+      const latitude = coordinate(center?.latitude);
+      const longitude = coordinate(center?.longitude);
+      if (latitude === null || longitude === null) return false;
+      const key = `${latitude.toFixed(4)},${longitude.toFixed(4)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      center.latitude = latitude;
+      center.longitude = longitude;
+      return true;
+    }).slice(0, 4);
+  }
+
   async function fetchOpenStreetMapRecommendations(destination, geocode, signal) {
     if (!geocode?.latitude || !geocode?.longitude) return [];
-    const lat = Number(geocode.latitude);
-    const lon = Number(geocode.longitude);
     const radius = Number(geocode.population || 0) > 2000000 ? 20000 : Number(geocode.population || 0) > 500000 ? 14000 : 12000;
-    const query = `[out:json][timeout:12];
+    const centers = destinationResearchCenters(destination, geocode);
+    const around = (filter) => centers.map((center) =>
+      `  nwr(around:${radius},${center.latitude},${center.longitude})${filter}["name"];`
+    ).join("\n");
+    const foodQuery = `[out:json][timeout:12];
 (
-  nwr(around:${radius},${lat},${lon})["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub|marketplace)$"]["name"];
-  nwr(around:${radius},${lat},${lon})["shop"~"^(bakery|mall|department_store|boutique|clothes|gift|books|art|antiques|jewelry|supermarket)$"]["name"];
+${around('["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub)$"]')}
+${around('["shop"="bakery"]')}
 );
 out center tags 120;`;
-    const data = await fetchOverpass(query, signal);
-    return dedupeItems((data?.elements || []).map((element) => osmToDynamicItem(element, destination, geocode)).filter(Boolean))
-      .sort((a, b) => (Number(b.osmScore || 0) + tourismScore(b, destination)) - (Number(a.osmScore || 0) + tourismScore(a, destination)))
-      .slice(0, 60);
+    const shopQuery = `[out:json][timeout:12];
+(
+${around('["amenity"="marketplace"]')}
+${around('["shop"~"^(mall|department_store|boutique|clothes|gift|books|art|antiques|jewelry|supermarket)$"]')}
+);
+out center tags 120;`;
+    const [foodResult, shopResult] = await Promise.allSettled([
+      fetchOverpass(foodQuery, signal),
+      fetchOverpass(shopQuery, signal)
+    ]);
+    const elements = [
+      ...(foodResult.status === "fulfilled" ? foodResult.value?.elements || [] : []),
+      ...(shopResult.status === "fulfilled" ? shopResult.value?.elements || [] : [])
+    ];
+    const ranked = dedupeItems(elements.map((element) => osmToDynamicItem(element, destination, geocode)).filter(Boolean))
+      .sort((a, b) => (Number(b.osmScore || 0) + tourismScore(b, destination)) - (Number(a.osmScore || 0) + tourismScore(a, destination)));
+    // Keep independent quotas so a restaurant-dense destination cannot crowd markets and
+    // shopping places out of the single Overpass result window.
+    return [
+      ...ranked.filter((item) => item.type === "eat").slice(0, 40),
+      ...ranked.filter((item) => item.type === "buy").slice(0, 30)
+    ];
   }
 
   const TOURISM_KEYWORD_WEIGHTS = new Map([
@@ -842,6 +904,15 @@ out center tags 120;`;
       country: ["philippines", "ph"],
       label: "Bohol, Philippines",
       banner: commonsImageUrl("Chocolate Hills Bohol.JPG", 1200),
+      // Bohol is a province-sized island rather than one compact city. Its region article is
+      // intentionally broad, while the useful restaurant and shopping listings live on the
+      // nearby town pages. Search these pages and commercial clusters as one destination.
+      relatedVoyageTitles: ["Tagbilaran", "Dauis", "Baclayon", "Carmen (Bohol)"],
+      searchCenters: [
+        { name: "Tagbilaran", latitude: 9.6496, longitude: 123.8538 },
+        { name: "Panglao / Dauis", latitude: 9.5906, longitude: 123.8171 },
+        { name: "Carmen", latitude: 9.8229, longitude: 124.1984 }
+      ],
       items: [
         {
           name: "Chocolate Hills",
@@ -971,6 +1042,275 @@ out center tags 120;`;
           sourceId: "wikipedia:44345906",
           sourceLicense: "CC BY-SA 4.0",
           sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "Bohol Bee Farm Restaurant",
+          aliases: ["Bohol Bee Farm"],
+          type: "eat",
+          area: "Dao, Dauis / Panglao",
+          address: "Dao, Dauis, Bohol",
+          detail: "A cliffside farm restaurant known for organic salads, flower garnishes, house-made ice cream, honey products, and wide sea views.",
+          cuisine: "Farm-to-table Filipino / organic",
+          order: "Organic garden salad, cassava bread, squash muffins, or house-made ice cream.",
+          image: commonsImageUrl("Organic salad bohol bee farm.jpg"),
+          lat: 9.576241,
+          lon: 123.8244,
+          seedRank: 108,
+          sourceLabel: "Wikivoyage",
+          sourceUrl: "https://en.wikivoyage.org/wiki/Dauis",
+          sourceId: "wikivoyage:dauis:bohol-bee-farm",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikivoyage contributors"
+        },
+        {
+          name: "Gerarda's Family Restaurant",
+          aliases: ["Gerarda's Place", "Gerarda's"],
+          type: "eat",
+          area: "Tagbilaran City",
+          address: "30 J.S. Torralba Street, Tagbilaran City, Bohol",
+          officialUrl: "https://gerardasplace.shop/",
+          detail: "A family-house restaurant serving generous Filipino favorites in a warm, home-style setting; the official menu highlights seafood kare-kare, gambas, tortang talong, and pinakbet.",
+          cuisine: "Filipino family dining",
+          order: "Seafood kare-kare, adobong pusit, shrimp gambas, crispy tadyang, or Bicol Express.",
+          image: "https://gerardasplace.shop/public/media/gerardasplace-shop/1.jpg",
+          seedRank: 106,
+          sourceLabel: "Official site",
+          sourceUrl: "https://gerardasplace.shop/",
+          sourceId: "official:gerardas-place",
+          sourceLicense: "Venue website",
+          sourceAttribution: "Gerarda's Place"
+        },
+        {
+          name: "Loboc River Cruise Lunch",
+          type: "eat",
+          area: "Loboc",
+          detail: "A Bohol meal experience that pairs a buffet lunch with a slow river cruise, tropical scenery, and local music; compare current operators before booking.",
+          cuisine: "Filipino buffet / river cruise",
+          order: "Choose an operator with a clearly published buffet, departure time, and accessibility details.",
+          image: commonsImageUrl("Loboc River Bohol 2017 4.jpg"),
+          lat: 9.6387,
+          lon: 124.0322,
+          seedRank: 104,
+          sourceLabel: "Wikivoyage",
+          sourceUrl: "https://en.wikivoyage.org/wiki/Tagbilaran",
+          sourceId: "wikivoyage:tagbilaran:loboc-river-lunch",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikivoyage contributors"
+        },
+        {
+          name: "JJ's Seafood Village",
+          aliases: ["JJ's Seaside Restaurant"],
+          type: "eat",
+          area: "Tagbilaran Bay",
+          address: "Knights of Columbus Drive, Poblacion II, Tagbilaran City",
+          detail: "A waterfront Tagbilaran restaurant known for seafood and a broad Filipino menu, useful for groups who want a relaxed bay-side meal.",
+          cuisine: "Seafood / Filipino",
+          order: "Ask about the day's seafood, grilled fish, kinilaw, and group-size platters.",
+          image: commonsImageUrl("Philippinefish2.jpg"),
+          seedRank: 102,
+          sourceLabel: "Wikivoyage",
+          sourceUrl: "https://en.wikivoyage.org/wiki/Tagbilaran",
+          sourceId: "wikivoyage:tagbilaran:jjs-seafood-village",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikivoyage contributors"
+        },
+        {
+          name: "Jo's Chicken Inato",
+          aliases: ["Jo's Chicken Inatô", "Payag Restaurant"],
+          type: "eat",
+          area: "Poblacion I, Tagbilaran City",
+          address: "Carlos P. Garcia East Avenue at S. Matig-a Street, Tagbilaran City",
+          detail: "A longstanding local stop specializing in chicken inato, the Cebuano grilled-chicken style, plus Boholano kinilaw and other Filipino dishes.",
+          cuisine: "Boholano / grilled chicken",
+          order: "Chicken inato with rice, binakhaw or kinilaw, and a local side dish.",
+          image: commonsImageUrl("Chicken inasal (Philippines).jpg"),
+          seedRank: 100,
+          sourceLabel: "Wikivoyage",
+          sourceUrl: "https://en.wikivoyage.org/wiki/Tagbilaran",
+          sourceId: "wikivoyage:tagbilaran:jos-chicken-inato",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikivoyage contributors"
+        },
+        {
+          name: "Chicken Ati-Atihan",
+          type: "eat",
+          area: "Cogon, Tagbilaran City",
+          address: "Ma. Clara Wharf Road, Cogon, Tagbilaran City",
+          detail: "An open-air local restaurant serving Filipino dishes and grilled chicken near the Tagbilaran tourist pier.",
+          cuisine: "Filipino / grilled chicken",
+          order: "House grilled chicken with rice and a vegetable or seafood side.",
+          image: commonsImageUrl("Chicken Inasal.JPG"),
+          seedRank: 98,
+          sourceLabel: "Wikivoyage",
+          sourceUrl: "https://en.wikivoyage.org/wiki/Tagbilaran",
+          sourceId: "wikivoyage:tagbilaran:chicken-ati-atihan",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikivoyage contributors"
+        },
+        {
+          name: "Cafe Lawis",
+          aliases: ["Café Lawis"],
+          type: "eat",
+          area: "Dauis, Panglao Island",
+          address: "Beside Our Lady of Assumption Church, Dauis, Bohol",
+          detail: "An outdoor café beside Dauis Church, shaded by a large tree and looking across the water toward Tagbilaran; the adjoining souvenir shop makes it an easy heritage-route pause.",
+          cuisine: "Cafe / Filipino",
+          order: "Check the current café menu, local snacks, and cold drinks before visiting.",
+          image: commonsImageUrl("Cafe Lawis.JPG"),
+          lat: 9.6258,
+          lon: 123.8628,
+          seedRank: 97,
+          sourceLabel: "Wikimedia Commons",
+          sourceUrl: "https://commons.wikimedia.org/wiki/File:Cafe_Lawis.JPG",
+          sourceId: "commons:cafe-lawis",
+          sourceLicense: "CC BY-SA 3.0",
+          sourceAttribution: "Chris Sel / Wikimedia Commons"
+        },
+        {
+          name: "Sweet Home Cafe",
+          aliases: ["Sweet Home Café"],
+          type: "eat",
+          area: "Poblacion II, Tagbilaran City",
+          address: "J. Borja at Remolador Streets, Tagbilaran City",
+          detail: "A quiet downtown café serving cakes, pastries, coffee-shop staples, and full meals from early morning into the evening.",
+          cuisine: "Cafe / pastries / Filipino mains",
+          order: "Pair coffee or tea with a pastry, then check the current all-day meal specials.",
+          image: commonsImageUrl("Bohol Kalamay packaged traditionally inside empty coconut shells.jpg"),
+          seedRank: 96,
+          sourceLabel: "Wikivoyage",
+          sourceUrl: "https://en.wikivoyage.org/wiki/Tagbilaran",
+          sourceId: "wikivoyage:tagbilaran:sweet-home-cafe",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikivoyage contributors"
+        },
+        {
+          name: "Garden Cafe Tagbilaran",
+          aliases: ["Garden Café"],
+          type: "eat",
+          area: "Poblacion II, Tagbilaran City",
+          address: "Juan S. Torralba Avenue, beside St. Joseph the Worker Cathedral, Tagbilaran City",
+          detail: "A socially minded café beside Tagbilaran Cathedral, operated with a team that includes members of Bohol's deaf community.",
+          cuisine: "Cafe / Filipino and international",
+          order: "Check the current breakfast plates, sandwiches, baked items, and daily specials.",
+          image: commonsImageUrl("Tagbilaran cathedral Bohol.jpg"),
+          seedRank: 94,
+          sourceLabel: "Wikivoyage",
+          sourceUrl: "https://en.wikivoyage.org/wiki/Tagbilaran",
+          sourceId: "wikivoyage:tagbilaran:garden-cafe",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikivoyage contributors"
+        },
+        {
+          name: "BQ Mall",
+          aliases: ["Bohol Quality Mall"],
+          type: "buy",
+          area: "Poblacion II, Tagbilaran City",
+          address: "Carlos P. Garcia Avenue, Poblacion II, Tagbilaran City",
+          detail: "A central four-storey mall with a supermarket, department store, cinema, and a notably large souvenir section.",
+          bestFor: "Bohol food gifts, practical supplies, souvenirs, and central-city browsing",
+          image: commonsImageUrl("BQ MALL.jpg"),
+          lat: 9.64198,
+          lon: 123.85505,
+          seedRank: 106,
+          sourceLabel: "Wikivoyage",
+          sourceUrl: "https://en.wikivoyage.org/wiki/Tagbilaran",
+          sourceId: "wikivoyage:tagbilaran:bq-mall",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikivoyage contributors"
+        },
+        {
+          name: "Island City Mall",
+          type: "buy",
+          area: "Dampas / Dao, Tagbilaran City",
+          address: "Rajah Sikatuna Avenue, Dampas, Tagbilaran City",
+          detail: "Tagbilaran's largest mall, beside the public market and integrated bus terminal, with a department store, supermarket, cinema, and broad retail mix.",
+          bestFor: "One-stop shopping, groceries, practical supplies, and transport connections",
+          image: commonsImageUrl("Front View of Island City Mall Bohol Philippines.jpg"),
+          lat: 9.65556,
+          lon: 123.86929,
+          seedRank: 104,
+          sourceLabel: "Wikivoyage",
+          sourceUrl: "https://en.wikivoyage.org/wiki/Tagbilaran",
+          sourceId: "wikivoyage:tagbilaran:island-city-mall",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikivoyage contributors"
+        },
+        {
+          name: "Bohol Bee Farm Shop",
+          type: "buy",
+          area: "Dao, Dauis / Panglao",
+          address: "Dao, Dauis, Bohol",
+          detail: "The farm shop pairs naturally with a restaurant visit and carries Bohol Bee Farm honey products, spreads, baked goods, ice cream, and locally made woven goods.",
+          bestFor: "Honey products, edible gifts, farm-made treats, and woven crafts",
+          image: commonsImageUrl("Store at Bohol bee farm - butikk.jpg"),
+          lat: 9.576241,
+          lon: 123.8244,
+          seedRank: 102,
+          sourceLabel: "Wikimedia Commons",
+          sourceUrl: "https://commons.wikimedia.org/wiki/File:Store_at_Bohol_bee_farm_-_butikk.jpg",
+          sourceId: "commons:bohol-bee-farm-shop",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Øyvind Holmstad / Wikimedia Commons"
+        },
+        {
+          name: "Antequera Basket Market",
+          type: "buy",
+          area: "Antequera",
+          detail: "A Bohol craft stop associated with the town's long basket-weaving tradition and useful for locally made baskets, mats, and plant-fiber goods.",
+          bestFor: "Boholano baskets, woven mats, and traditional handicrafts",
+          image: commonsImageUrl("Antequera, Bohol.jpg"),
+          lat: 9.783333,
+          lon: 123.9,
+          seedRank: 100,
+          sourceLabel: "Wikimedia Commons",
+          sourceUrl: "https://commons.wikimedia.org/wiki/File:Antequera,_Bohol.jpg",
+          sourceId: "commons:antequera-basket-market",
+          sourceLicense: "CC BY-SA 3.0",
+          sourceAttribution: "Bernard Gagnon / Wikimedia Commons"
+        },
+        {
+          name: "Dao Public Market",
+          aliases: ["Tagbilaran Public Market", "Dampas Central Public Market"],
+          type: "buy",
+          area: "Dampas / Dao, Tagbilaran City",
+          address: "Beside Island City Mall and the integrated bus terminal, Tagbilaran City",
+          detail: "Tagbilaran's main public market is a practical local stop for produce, seafood, snacks, and everyday Boholano shopping.",
+          bestFor: "Fresh produce, market snacks, local ingredients, and everyday shopping",
+          image: commonsImageUrl("Philippinefish2.jpg"),
+          seedRank: 98,
+          sourceLabel: "Wikivoyage",
+          sourceUrl: "https://en.wikivoyage.org/wiki/Tagbilaran",
+          sourceId: "wikivoyage:tagbilaran:dao-public-market",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikivoyage contributors"
+        },
+        {
+          name: "Baclayon Wednesday Market",
+          type: "buy",
+          area: "Baclayon",
+          detail: "A weekly town market where a heritage-route day can include produce, local food goods, and everyday community shopping.",
+          bestFor: "Local produce, food gifts, and a small-town market experience",
+          image: commonsImageUrl("Bohol craftsB.jpg"),
+          seedRank: 96,
+          sourceLabel: "Wikivoyage",
+          sourceUrl: "https://en.wikivoyage.org/wiki/Baclayon",
+          sourceId: "wikivoyage:baclayon:wednesday-market",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikivoyage contributors"
+        },
+        {
+          name: "Aproniana Souvenir Shop",
+          type: "buy",
+          area: "Baclayon",
+          detail: "A souvenir stop listed for Baclayon that fits naturally after the church and heritage-house area; verify the current location and opening hours.",
+          bestFor: "Bohol souvenirs, handicrafts, and small gifts",
+          image: commonsImageUrl("Bohol handicraftsA.jpg"),
+          seedRank: 94,
+          sourceLabel: "Wikivoyage",
+          sourceUrl: "https://en.wikivoyage.org/wiki/Baclayon",
+          sourceId: "wikivoyage:baclayon:aproniana",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikivoyage contributors"
         }
       ]
     }

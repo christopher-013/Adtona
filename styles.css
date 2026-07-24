@@ -6396,123 +6396,6 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
   }
 }
 
-/* Adventure viewport fit.
-   Keep the entire decision flow — recommendation, controls, selection count,
-   and Back/Next actions — inside one normal desktop or mobile viewport. The
-   card is deliberately narrower and more vertical so landscape destination
-   photos retain substantially more of their original composition. */
-.builder.builder-wide .trip-form[data-current-step="2"] {
-  grid-template-rows: auto auto auto minmax(0, 1fr);
-  overflow: hidden;
-}
-.builder.builder-wide .trip-form[data-current-step="2"] .workflow-brand {
-  margin-bottom: 7px;
-}
-.builder.builder-wide .trip-form[data-current-step="2"] .security-note,
-.builder.builder-wide .trip-form[data-current-step="2"] .form-footnote {
-  display: none;
-}
-.builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active {
-  height: 100%;
-  min-height: 0;
-  align-self: stretch;
-  grid-template-rows: auto minmax(0, 1fr) auto auto auto auto;
-  align-content: stretch;
-  overflow: hidden;
-}
-.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-board,
-.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group,
-.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell,
-.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-deck {
-  height: 100%;
-  min-height: 0;
-}
-.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-board,
-.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group {
-  overflow: hidden;
-}
-.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell {
-  width: min(100%, 780px);
-  grid-template-rows: minmax(0, 1fr) 44px auto;
-  gap: 4px;
-}
-.builder .suggestion-swipe-card,
-.builder.builder-wide .suggestion-swipe-card {
-  grid-template-rows: minmax(0, 7fr) minmax(104px, 3fr);
-}
-.builder .suggestion-swipe-card .suggestion-card-image,
-.builder.builder-wide .suggestion-swipe-card .suggestion-card-image {
-  object-position: center;
-  transform: none;
-}
-.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-actions {
-  gap: clamp(7px, 1.3vw, 12px);
-}
-.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-actions .suggestion-action-button {
-  width: 44px;
-  height: 44px;
-  min-height: 44px;
-  font-size: 20px;
-}
-.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-hint {
-  font-size: 8px;
-  line-height: 1.2;
-}
-.builder.builder-wide .trip-form[data-current-step="2"] .selection-summary {
-  min-height: 28px;
-  margin-top: 3px;
-  padding: 4px 8px;
-}
-.builder.builder-wide .trip-form[data-current-step="2"] .preference-actions {
-  margin: 4px 0 0;
-}
-.builder.builder-wide .trip-form[data-current-step="2"] .preference-actions .icon-nav-button {
-  min-height: 40px;
-  height: 40px;
-  padding-block: 0;
-}
-
-@media (max-width: 760px) {
-  .builder.builder-wide .trip-form[data-current-step="2"] .workflow-brand {
-    margin-bottom: 4px;
-  }
-  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell {
-    width: min(100%, 480px);
-  }
-  .builder .suggestion-swipe-card,
-  .builder.builder-wide .suggestion-swipe-card {
-    grid-template-rows: minmax(0, 7fr) minmax(100px, 3fr);
-  }
-  .builder.builder-wide .trip-form[data-current-step="2"] .preference-actions .icon-nav-button {
-    min-height: 44px;
-    height: 44px;
-  }
-}
-
-/* At unusually short viewport heights (including heavy browser zoom), preserve
-   access to every control instead of clipping the card below a usable size. */
-@media (max-height: 560px) {
-  .builder.builder-wide .trip-form[data-current-step="2"] {
-    grid-template-rows: auto auto auto auto;
-    overflow-y: auto;
-  }
-  .builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active {
-    height: auto;
-    grid-template-rows: auto auto auto auto auto auto;
-    overflow: visible;
-  }
-  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-board,
-  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group,
-  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell {
-    height: auto;
-    overflow: visible;
-  }
-  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-deck {
-    height: 310px;
-    min-height: 310px;
-  }
-}
-
 /* Feedback dialog (reuses .export-dialog base) */
 .feedback-dialog .feedback-category {
   display: flex;
@@ -7279,5 +7162,122 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
     font-size: 6px;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+}
+
+/* Adventure viewport fit.
+   Keep the entire decision flow — recommendation, controls, selection count,
+   and Back/Next actions — inside one normal desktop or mobile viewport. The
+   card is deliberately narrower and more vertical so landscape destination
+   photos retain substantially more of their original composition. */
+.builder.builder-wide .trip-form[data-current-step="2"] {
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  overflow: hidden;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .workflow-brand {
+  margin-bottom: 7px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .security-note,
+.builder.builder-wide .trip-form[data-current-step="2"] .form-footnote {
+  display: none;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active {
+  height: 100%;
+  min-height: 0;
+  align-self: stretch;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto auto;
+  align-content: stretch;
+  overflow: hidden;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-board,
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group,
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell,
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-deck {
+  height: 100%;
+  min-height: 0;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-board,
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group {
+  overflow: hidden;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell {
+  width: min(100%, 780px);
+  grid-template-rows: minmax(0, 1fr) 44px auto;
+  gap: 4px;
+}
+.builder .suggestion-swipe-card,
+.builder.builder-wide .suggestion-swipe-card {
+  grid-template-rows: minmax(0, 7fr) minmax(104px, 3fr);
+}
+.builder .suggestion-swipe-card .suggestion-card-image,
+.builder.builder-wide .suggestion-swipe-card .suggestion-card-image {
+  object-position: center;
+  transform: none;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-actions {
+  gap: clamp(7px, 1.3vw, 12px);
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-actions .suggestion-action-button {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  font-size: 20px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-hint {
+  font-size: 8px;
+  line-height: 1.2;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .selection-summary {
+  min-height: 28px;
+  margin-top: 3px;
+  padding: 4px 8px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .preference-actions {
+  margin: 4px 0 0;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .preference-actions .icon-nav-button {
+  min-height: 40px;
+  height: 40px;
+  padding-block: 0;
+}
+
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] .workflow-brand {
+    margin-bottom: 4px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell {
+    width: min(100%, 480px);
+  }
+  .builder .suggestion-swipe-card,
+  .builder.builder-wide .suggestion-swipe-card {
+    grid-template-rows: minmax(0, 7fr) minmax(100px, 3fr);
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .preference-actions .icon-nav-button {
+    min-height: 44px;
+    height: 44px;
+  }
+}
+
+/* At unusually short viewport heights (including heavy browser zoom), preserve
+   access to every control instead of clipping the card below a usable size. */
+@media (max-height: 560px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] {
+    grid-template-rows: auto auto auto auto;
+    overflow-y: auto;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active {
+    height: auto;
+    grid-template-rows: auto auto auto auto auto auto;
+    overflow: visible;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-board,
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group,
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell {
+    height: auto;
+    overflow: visible;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-deck {
+    height: 310px;
+    min-height: 310px;
   }
 }
