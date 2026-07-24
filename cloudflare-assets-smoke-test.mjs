@@ -57,11 +57,14 @@ assert.equal(
   "christopher-013/Adtona",
   "Feedback must target the Adtona repository"
 );
-assert(
-  Array.isArray(wrangler.secrets?.required)
-    && wrangler.secrets.required.includes("GITHUB_TOKEN"),
-  "Deployments must require the encrypted GitHub token secret"
-);
+// GITHUB_TOKEN is an encrypted Cloudflare secret set out-of-band (dashboard / `wrangler secret
+// put GITHUB_TOKEN`) and persists across deploys. It must NOT be declared as a deploy-time
+// required secret in wrangler.jsonc — doing so makes `wrangler deploy` hard-fail in CI before
+// the value can be read from the Worker's secret store. The Worker still requires it at runtime
+// (returns 500 without it), which is enforced by feedback-worker-smoke-test.mjs.
+assert(!wrangler.secrets, "wrangler.jsonc must not declare deploy-time required secrets; GITHUB_TOKEN is set in Cloudflare's secret store");
+const feedbackWorkerSource = await readFile(path.join(projectRoot, "feedback-worker.js"), "utf8");
+assert(/env\.GITHUB_TOKEN/.test(feedbackWorkerSource), "Feedback Worker must read the GitHub token from its secret binding at runtime");
 const feedbackRateLimiter = (wrangler.ratelimits || [])
   .find((binding) => binding.name === "FEEDBACK_RATE_LIMITER");
 assert(feedbackRateLimiter, "Feedback Worker must declare a Cloudflare rate-limiting binding");

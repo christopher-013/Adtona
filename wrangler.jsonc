@@ -9,11 +9,6 @@
   "build": {
     "command": "node build-cloudflare.mjs"
   },
-  "secrets": {
-    "required": [
-      "GITHUB_TOKEN"
-    ]
-  },
   "vars": {
     "GITHUB_REPO": "christopher-013/Adtona",
     "ALLOWED_ORIGINS": "https://adtona.com,https://www.adtona.com,https://adtona.cch13.workers.dev,http://127.0.0.1:8767,http://localhost:8767"
