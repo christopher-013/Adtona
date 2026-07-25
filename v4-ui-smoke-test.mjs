@@ -29,7 +29,8 @@ assert.match(stepOneHtml, /<label class="sr-only" for="destination">Destination<
 assert.doesNotMatch(stepOneHtml, />Where\?</, "The compact first screen must not show a redundant Where heading");
 assert.doesNotMatch(stepOneHtml, />When\?</, "The compact first screen must not show a redundant When heading");
 assert.match(stepOneHtml, /<label for="startDate">Arrive<\/label>[\s\S]*?id="startDate"[\s\S]*?<label for="endDate">Depart<\/label>[\s\S]*?id="endDate"/, "Arrival and departure inputs must retain their individual labels");
-assert.match(script, /destinationInput\.value\s*=\s*"Tokyo, Japan";/, "A new browser draft must start with Tokyo, Japan");
+assert.match(script, /destinationInput\.value\s*=\s*"";/, "A new browser draft must start with a blank destination");
+assert.doesNotMatch(script, /destinationInput\.value\s*=\s*"Tokyo, Japan";/, "The destination field must no longer be prefilled with Tokyo, Japan");
 assert.match(stepOneHtml, /data-open-import[\s\S]{0,180}?Import your AI plan/, "The first screen must provide a compact AI-plan importer");
 assert.match(stepOneHtml, /id="nextStepButton"[^>]*type="button"[\s\S]{0,160}?Adto Na\. Go Now/, "The merged first screen must use the requested continue action");
 assert.doesNotMatch(html, /id="startSplash(?:Continue)?"/, "Trip Basics must not be hidden behind a separate splash layer");
@@ -38,7 +39,8 @@ assert.doesNotMatch(script, /function dismissStartSplash\(/, "The merged first s
 assert.match(styles, /\.trip-form\[data-current-step="1"\][\s\S]{0,900}?linear-gradient\(150deg,\s*#fff4d6/, "Trip Basics must retain the branded startup background");
 assert.match(styles, /\.builder:not\(\.builder-wide\) \.merged-start-layout\s*\{[^}]*grid-template-rows:\s*minmax\(24px,\s*\.65fr\)\s+auto\s+minmax\(64px,\s*1fr\)\s+auto/s, "The welcome screen must balance flexible space above and below the brand");
 assert.match(styles, /\.builder:not\(\.builder-wide\) \.merged-start-step \.builder-hero-lockup\s*\{[^}]*grid-row:\s*2/s, "The welcome brand must occupy the centered second grid row");
-assert.match(styles, /\.builder:not\(\.builder-wide\) \.merged-start-step \.home-brand-lockup \.home-brand-logo\s*\{[^}]*width:\s*clamp\(260px,\s*25vw,\s*390px\)/s, "The desktop welcome logo must use the enlarged responsive lockup");
+assert.match(styles, /\.builder:not\(\.builder-wide\) \.merged-start-step \.home-brand-lockup \.home-brand-logo\s*\{[^}]*width:\s*clamp\(320px,\s*32vw,\s*520px\)/s, "The desktop welcome logo must use the enlarged responsive lockup");
+assert.match(styles, /\.builder:not\(\.builder-wide\) \.merged-start-step \.builder-hero-message \.eyebrow\s*\{[^}]*font-size:\s*clamp\(15px,\s*1\.6vw,\s*23px\)/s, "The welcome tagline must be enlarged for readability");
 assert.match(styles, /\.builder:not\(\.builder-wide\) \.merged-start-questions\s*\{[^}]*grid-row:\s*4[^}]*align-self:\s*end/s, "Destination and date controls must sit immediately above the bottom action row");
 assert.match(styles, /\.builder:not\(\.builder-wide\) \.merged-start-actions\s*\{[^}]*margin-top:\s*0/s, "The welcome actions must remain aligned directly beneath the trip controls");
 assert.match(styles, /prefers-reduced-motion:\s*reduce/, "The v4 animations must honor reduced-motion preferences");
@@ -165,33 +167,14 @@ assert.match(styles, /\.activity-origin-badge\.is-selected\s*\{[^}]*background:/
 assert.match(styles, /\.activity-origin-badge\.is-favorite\s*\{[^}]*background:/s, "Favorite itinerary pills need a distinct visual treatment");
 assert.match(uniqueActivitiesSource, /item\.userSelected\s*\|\|\s*item\.favorite/, "Duplicate resolution must never replace a traveler-selected or favorite stop");
 
-assert.match(
-  styles,
-  /\.trip-creation-transition\.is-running\s+\.creation-output-card\s*\{[^}]*animation:\s*creationArcCardIn/s,
-  "Trip creation must reveal the deliverable cards sequentially along the arc"
-);
-assert.match(
-  styles,
-  /@keyframes\s+creationArcCardIn[\s\S]*?100%\s*\{[^}]*opacity:\s*1[^}]*var\(--arc-x\)[^}]*var\(--arc-y\)[^}]*scale\(1\)/s,
-  "Each deliverable card must remain visible in its final arc position"
-);
-assert.match(styles, /\.creation-center-stage\s*\{[^}]*top:\s*clamp\(76px,\s*10vh,\s*96px\)/s, "The logo and creation copy must move below the deliverable-card arc");
-for (let position = 1; position <= 5; position += 1) {
-  assert.match(
-    styles,
-    new RegExp(`\\.creation-output-card:nth-child\\(${position}\\)\\s*\\{[^}]*--arc-x:[^;}]+;[^}]*--arc-y:\\s*-`, "s"),
-    `Creation deliverable ${position} must have a distinct position above the logo`
-  );
-}
-assert.match(styles, /@media\s*\(max-width:\s*760px\)[\s\S]*?\.creation-output-card\s+span\s*\{[^}]*display:\s*none/s, "Mobile arc cards must hide secondary copy to remain compact and non-overlapping");
-const creationCardStart = html.indexOf('class="creation-output-stack"');
-const creationCardEnd = html.indexOf("</div>", creationCardStart);
-const creationCards = html.slice(creationCardStart, creationCardEnd);
-assert.ok(creationCardStart > -1, "The trip-creation transition must contain deliverable cards");
-assert.ok(
-  creationCards.lastIndexOf("AI Source-of-Truth File") > creationCards.lastIndexOf("Photo Journal"),
-  "AI Source-of-Truth must be the last creation-transition deliverable"
-);
+// The busy deliverable-card arc was removed: the build screen now shows only the enlarged,
+// centered logo with the brand line beneath it.
+assert.doesNotMatch(html, /class="creation-output-stack"/, "The trip-creation transition must no longer render the deliverable-card arc");
+assert.doesNotMatch(html, /class="creation-output-card"/, "The individual build-animation output cards must be removed");
+assert.match(html, /class="creation-center-stage"[\s\S]{0,200}?id="tripCreationLogo"[\s\S]{0,260}?trip-creation-brand-line/s, "The build screen must center the logo above the brand line");
+assert.match(styles, /\.trip-creation-transition \.creation-center-stage\s*\{\s*top:\s*0/s, "With the cards gone, the logo and copy must sit centered rather than pushed below an arc");
+assert.match(styles, /\.trip-creation-transition \.creation-center-stage > img\s*\{[^}]*width:\s*clamp\(160px/s, "The standalone build-animation logo must be enlarged");
+assert.match(styles, /\.trip-creation-transition \.creation-center-stage \.trip-creation-brand-line\s*\{[^}]*font-size:\s*clamp\(34px/s, "The build-animation brand line must be enlarged");
 
 const obsoleteZeroSelectionGuard = /if\s*\(\s*!selectedSuggestions\.size\s*&&\s*!wishListInput\.value\.trim\(\)\s*\)/;
 assert.doesNotMatch(script, obsoleteZeroSelectionGuard, "Skipping every card must not dead-end the workflow");

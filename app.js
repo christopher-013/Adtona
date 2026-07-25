@@ -314,7 +314,7 @@ const defaultStart = new Date(today.getFullYear(), today.getMonth() + 1, 8);
 const defaultEnd = new Date(today.getFullYear(), today.getMonth() + 1, 13);
 startDateInput.value = toInputDate(defaultStart);
 endDateInput.value = toInputDate(defaultEnd);
-destinationInput.value = "Tokyo, Japan";
+destinationInput.value = "";
 
 renderKnownDestinationOptions();
 showStartSplash();
@@ -710,7 +710,7 @@ document.querySelector("#newTripButton").addEventListener("click", () => {
   safeStorageRemove("x-travel-guide-trip");
   safeStorageRemove("roam-trip");
   form.reset();
-  destinationInput.value = "Tokyo, Japan";
+  destinationInput.value = "";
   selectedSuggestions.clear();
   rejectedSuggestions.clear();
   suggestionDestination = "";
@@ -1477,7 +1477,7 @@ async function showTripCreationTransition() {
 
 function getTripPreferences() {
   return {
-    pace: document.querySelector("#tripPace").value,
+    pace: document.querySelector("#tripPace")?.value || "balanced",
     party: document.querySelector("#tripParty").value,
     start: document.querySelector("#dayStart").value,
     evening: "flexible",

@@ -27,7 +27,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=5.3.12">
+  <link rel="stylesheet" href="styles.css?v=5.3.13">
 </head>
 <body>
   <main class="page-shell">
@@ -156,7 +156,6 @@
             <label class="style-question"><span>Group size</span><small>Pick a common size or type your own.</small><input id="groupSize" type="number" min="1" max="30" value="2"><div class="quick-picks" data-picks="groupSize" aria-label="Common group sizes"></div></label>
             <label class="style-question"><span>Traveler ages</span><small>Choose a common mix, or type specific ages.</small><input id="travelerAges" type="text" placeholder="e.g. 42, 40, 12, 8"><div class="quick-picks" data-picks="travelerAges" aria-label="Common traveler mixes"></div></label>
             <label class="style-question"><span>Trip purpose</span><small>Pick one or type your own.</small><input id="tripPurpose" type="text" placeholder="e.g. first visit, anniversary, graduation"><div class="quick-picks" data-picks="tripPurpose" aria-label="Common trip purposes"></div></label>
-            <label class="style-question"><span>Trip pace</span><small>How full should each day feel?</small><select id="tripPace"><option value="relaxed">Relaxed · 6 stops</option><option value="balanced" selected>Balanced · 8 stops</option><option value="packed">Packed · 10 stops</option></select></label>
             <label class="style-question"><span>Who is traveling?</span><small>Helps tune breaks and activities.</small><select id="tripParty"><option value="solo">Solo</option><option value="couple" selected>Couple</option><option value="family">Family</option><option value="friends">Friends</option></select></label>
             <label class="style-question"><span>When should days begin?</span><small>We will shift the morning schedule.</small><select id="dayStart"><option value="early">Early · around 7:30</option><option value="standard" selected>Standard · around 8:30</option><option value="slow">Slow · around 10:00</option></select></label>
           </div>
@@ -347,13 +346,6 @@
         <p class="eyebrow">Building your adventure</p>
         <h2 class="trip-creation-brand-line">Turning your plan into a mobile travel guide.<br><strong class="hero-brand-word hero-brand-guide">Adto na — go now.</strong></h2>
       </div>
-      <div class="creation-output-stack" aria-label="What we're creating">
-        <article class="creation-output-card" style="--creation-card-index: 0"><strong>📱 Mobile Trip App</strong><span>A mobile-first guide designed for use during the trip</span></article>
-        <article class="creation-output-card" style="--creation-card-index: 1"><strong>📄 Printable Executive Guide</strong><span>A clear planning and sharing view</span></article>
-        <article class="creation-output-card" style="--creation-card-index: 2"><strong>🌐 Shareable Website</strong><span>A polished overview for friends and family</span></article>
-        <article class="creation-output-card" style="--creation-card-index: 3"><strong>📷 Photo Journal</strong><span>A place for the post-trip story and memories</span></article>
-        <article class="creation-output-card" style="--creation-card-index: 4"><strong>✦ AI Source-of-Truth File</strong><span>Reusable planning context for ChatGPT, Claude, or other AI tools</span></article>
-      </div>
     </div>
   </div>
 
@@ -435,13 +427,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=5.3.12"></script>
-  <script src="dynamic-catalog.js?v=5.3.12"></script>
-  <script src="export-styles.js?v=5.3.12"></script>
-  <script src="icon-source.js?v=5.3.12"></script>
-  <script src="photo-store.js?v=5.3.12"></script>
-  <script src="trip-schema.js?v=5.3.12"></script>
-  <script src="beta-tools.js?v=5.3.12"></script>
-  <script src="app.js?v=5.3.12"></script>
+  <script src="version.js?v=5.3.13"></script>
+  <script src="dynamic-catalog.js?v=5.3.13"></script>
+  <script src="export-styles.js?v=5.3.13"></script>
+  <script src="icon-source.js?v=5.3.13"></script>
+  <script src="photo-store.js?v=5.3.13"></script>
+  <script src="trip-schema.js?v=5.3.13"></script>
+  <script src="beta-tools.js?v=5.3.13"></script>
+  <script src="app.js?v=5.3.13"></script>
 </body>
 </html>

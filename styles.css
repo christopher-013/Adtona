@@ -6171,11 +6171,14 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
     gap: 10px;
     text-align: center;
   }
-  .builder:not(.builder-wide) .merged-start-step .home-brand-lockup .home-brand-logo { width: clamp(142px, 42vw, 190px); }
-  .builder:not(.builder-wide) .merged-start-step .builder-hero-message .eyebrow { margin-bottom: 5px; font-size: 8px; }
+  /* Large logo that fills most of the phone width, a readable tagline, and a hero+questions
+     block centered so the destination field sits around the vertical middle (the action row
+     stays pinned to the bottom via the step's 1fr/auto rows). */
+  .builder:not(.builder-wide) .merged-start-step .home-brand-lockup .home-brand-logo { width: clamp(250px, 82vw, 360px); }
+  .builder:not(.builder-wide) .merged-start-step .builder-hero-message .eyebrow { margin-bottom: 0; font-size: clamp(12px, 3.4vw, 15px); line-height: 1.4; letter-spacing: .11em; }
   .builder:not(.builder-wide) .merged-start-step .builder-hero-message h1 { margin-inline: auto; font-size: clamp(31px, 8.7vw, 42px); line-height: .98; }
   .builder:not(.builder-wide) .merged-start-step .builder-hero-message .lede { margin: 9px auto 0; font-size: 11px; line-height: 1.4; }
-  .merged-start-layout { gap: 15px; }
+  .merged-start-layout { align-content: center; gap: clamp(24px, 5.5vh, 52px); }
   .merged-start-questions { grid-template-columns: 1fr; gap: 10px; }
   .merged-start-questions .field-group { padding: 0; }
   .merged-start-questions .field-content > label,
@@ -6282,18 +6285,18 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
   place-items: center;
   height: min(720px, calc(100dvh - 32px));
 }
-.trip-creation-transition .creation-center-stage { width: min(560px, 84vw); }
+.trip-creation-transition .creation-center-stage { width: min(760px, 92vw); }
 .trip-creation-transition .creation-center-stage > img {
-  width: clamp(92px, 11vw, 128px);
-  height: clamp(92px, 11vw, 128px);
+  width: clamp(160px, 18vw, 240px);
+  height: clamp(160px, 18vw, 240px);
 }
 .trip-creation-transition .creation-center-stage > .eyebrow {
   color: #8a6500;
-  font-size: clamp(9px, 1vw, 11px);
+  font-size: clamp(10px, 1.15vw, 13px);
 }
 .trip-creation-transition .creation-center-stage .trip-creation-brand-line {
   color: #173e35;
-  font-size: clamp(26px, 4.2vw, 46px);
+  font-size: clamp(34px, 5.4vw, 62px);
 }
 .trip-creation-transition .creation-output-stack {
   position: absolute;
@@ -6765,7 +6768,7 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
   grid-row: 2;
 }
 .builder:not(.builder-wide) .merged-start-step .home-brand-lockup .home-brand-logo {
-  width: clamp(260px, 25vw, 390px);
+  width: clamp(320px, 32vw, 520px);
 }
 .builder:not(.builder-wide) .merged-start-questions {
   grid-row: 4;
@@ -6777,7 +6780,9 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
 
 @media (max-width: 760px) {
   .builder:not(.builder-wide) .merged-start-layout {
-    grid-template-rows: minmax(12px, .4fr) auto minmax(28px, 1fr) auto;
+    /* 5-row centered template (top spacer / hero / small gap / questions / bottom spacer) so the
+       destination field sits around the vertical middle instead of near the bottom. */
+    grid-template-rows: minmax(16px, 1fr) auto minmax(16px, .5fr) auto minmax(16px, 1fr);
     gap: 0;
     padding-top: 0;
   }
@@ -6788,7 +6793,7 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
     grid-row: 4;
   }
   .builder:not(.builder-wide) .merged-start-step .home-brand-lockup .home-brand-logo {
-    width: clamp(170px, 48vw, 230px);
+    width: clamp(250px, 82vw, 360px);
   }
 }
 
@@ -6866,8 +6871,8 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
   gap: 0;
 }
 .builder:not(.builder-wide) .merged-start-step .builder-hero-message .eyebrow {
-  font-size: clamp(8px, .72vw, 10px);
-  line-height: 1.35;
+  font-size: clamp(15px, 1.6vw, 23px);
+  line-height: 1.4;
 }
 .builder:not(.builder-wide) .merged-start-questions .destination-error {
   margin-top: 5px;
@@ -6888,7 +6893,7 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
   z-index: 6;
 }
 .trip-creation-transition .creation-center-stage {
-  top: clamp(76px, 10vh, 96px);
+  top: 0;
 }
 .trip-creation-transition .creation-output-card,
 .trip-creation-transition .creation-output-card:nth-child(n) {
@@ -6973,7 +6978,7 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
     gap: 0;
   }
   .trip-creation-transition .creation-center-stage {
-    top: clamp(70px, 10vh, 92px);
+    top: 0;
   }
   .trip-creation-transition .creation-output-card,
   .trip-creation-transition .creation-output-card:nth-child(n) {
