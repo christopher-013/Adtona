@@ -6874,6 +6874,15 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
   font-size: clamp(15px, 1.6vw, 23px);
   line-height: 1.4;
 }
+/* On desktop keep the product-value tagline on a single line; the size and tighter
+   tracking are tuned so it stays within the viewport instead of wrapping. */
+@media (min-width: 761px) {
+  .builder:not(.builder-wide) .merged-start-step .builder-hero-message .eyebrow {
+    white-space: nowrap;
+    font-size: clamp(11px, 1.28vw, 20px);
+    letter-spacing: .05em;
+  }
+}
 .builder:not(.builder-wide) .merged-start-questions .destination-error {
   margin-top: 5px;
   font-size: 8.5px;

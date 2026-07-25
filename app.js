@@ -343,7 +343,7 @@ destinationInput.addEventListener("blur", () => {
   normalizeSelectedDestination();
   scheduleDestinationResearch();
   if (destinationInput.value.trim() && !hasLiveOrCuratedCatalog(destinationInput.value) && !(destinationResearchState.geocode && sameResearchQuery(destinationInput.value))) {
-    destinationError.textContent = "Starter mode is available for this destination: Adtona will create an AI-ready research plan and website.";
+    destinationError.textContent = "Starter mode is available for this destination";
   }
   updateDestinationModeBadge();
   updateDestinationClearButton();
@@ -605,7 +605,7 @@ function startOrReuseDynamicCatalogResearch(destination, options = {}) {
           ? "Live research catalog created from keyless public sources. Verify before travel."
           : researchWasRateLimited(destination)
             ? "Live research is busy right now — showing starter suggestions. Retry in a minute."
-            : "Starter mode is available for this destination: Adtona will create an AI-ready research plan and website.";
+            : "Starter mode is available for this destination";
         updateDestinationModeBadge();
       }
       renderSuggestionPicker(destination);
