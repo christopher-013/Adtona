@@ -5800,6 +5800,13 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
 }
 .builder .merged-start-continue > [aria-hidden="true"] { color: #c9491a; }
 .builder .merged-start-continue:hover { border-color: rgba(20, 58, 80, .5); background: rgba(255,255,255,.56); }
+/* The merged welcome's two bottom pills sit side by side. The continue pill reuses the legacy
+   .compact-next-button class, whose mobile rules force width:100% for the old Trip Basics grid.
+   In this flex row that overflows past the phone edge and clips the button — keep it content-
+   width, and let the row wrap on very narrow screens instead of overflowing. */
+.builder .merged-start-actions .merged-start-continue,
+.builder .trip-basics-action-row .merged-start-continue { width: auto; min-width: 0; flex: 0 1 auto; }
+.merged-start-actions { flex-wrap: wrap; }
 @keyframes mergedStartArrive {
   from { opacity: 0; transform: translateY(14px) scale(.992); }
   to { opacity: 1; transform: none; }
