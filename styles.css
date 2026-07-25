@@ -5628,6 +5628,17 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
   box-shadow: none;
   backdrop-filter: none;
 }
+/* Backstop so the start-screen gradient always reaches the very bottom: the form uses
+   100dvh, but its full-height ancestors (page-shell/builder at 100vh, body paper) would
+   otherwise show a cream sliver in the vh - dvh gap. Painting the same gradient on the
+   tall scroll container fills that gap with matching colors instead of cream. */
+body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
+  background:
+    radial-gradient(circle at 84% 16%, rgba(255, 193, 52, .60), transparent 32%),
+    radial-gradient(circle at 15% 88%, rgba(45, 150, 70, .28), transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(41, 171, 226, .32), transparent 44%),
+    linear-gradient(150deg, #fff4d6 0%, #ffe4bd 28%, #e2f0d7 60%, #cfe9f7 100%);
+}
 .trip-form[data-current-step="1"] > .workflow-brand,
 .trip-form[data-current-step="1"] > .step-row,
 .trip-form[data-current-step="1"] > .form-progress,
@@ -7300,5 +7311,31 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
   .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-deck {
     height: 310px;
     min-height: 310px;
+  }
+}
+
+/* C: On mobile, keep the adventure heading ("Choose your own adventure · Places to…")
+   on a single line by giving it the full row width — the "Choose for me" helper drops
+   below it — and clamping the font so the longest category label still fits. */
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row h2#adventureStepTitle {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: clamp(13px, 4vw, 18px);
+    line-height: 1.15;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row .suggestion-toolbar {
+    flex: 0 0 auto;
+    align-self: flex-start;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row .suggestion-toolbar button {
+    width: auto;
   }
 }
