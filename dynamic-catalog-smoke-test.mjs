@@ -221,7 +221,7 @@ const hasRelevantRemoteImage = (item) => {
     !/blank|transparent|spacer|pixel|placeholder|restaurant[_ -]plated|shopping[_ -]street|\.svg(?:[?#]|$)/i.test(image);
 };
 
-for (const expected of ["Bohol Bee Farm", "Gerarda's Family Restaurant"]) {
+for (const expected of ["Bohol Bee Farm Restaurant", "Gerarda's Family Restaurant"]) {
   assert.ok(boholFood.some((item) => item.name === expected), `Expected recognizable Bohol dining place: ${expected}`);
 }
 for (const expected of ["Dao Public Market", "Island City Mall"]) {
