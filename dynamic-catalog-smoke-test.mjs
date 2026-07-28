@@ -348,4 +348,47 @@ assert.deepEqual(Array.from(orderedEat, (item) => item.wikivoyageRank), [0, 1, 2
 assert.equal(ordered.find((item) => item.type === "see").wikivoyageRank, 0, "Section order is tracked per category, not globally");
 assert.ok(orderedEat[0].wikivoyageRank < orderedEat[2].wikivoyageRank, "Earlier Eat listings must outrank later ones");
 
+
+
+// Dining fallback: when Wikivoyage and OpenStreetMap return few real places to eat, the
+// Wikipedia category path must still produce named restaurants rather than leaving the
+// deck to "<city> neighbourhood cafe" filler. A restaurant article rarely says so in its
+// title ("Canlis"), so the category a page came from is what types it.
+const categoryFetch = async (url) => {
+  const text = decodeURIComponent(String(url)).replace(/\+/g, " ");
+  if (text.includes("incategory:")) {
+    const category = text.match(/incategory:"([^"]+)"/)?.[1] || "";
+    const members = {
+      "Restaurants in Seattle": [{ pageid: 1, title: "Canlis" }, { pageid: 2, title: "Pike Place Chowder" }],
+      "Coffeehouses in Seattle": [{ pageid: 3, title: "Starbucks Reserve Roastery" }],
+      "Tourist attractions in Seattle": [{ pageid: 4, title: "Space Needle" }],
+      "Shopping malls in Seattle": [{ pageid: 5, title: "Westlake Center" }]
+    }[category] || [];
+    return { ok: true, json: async () => ({ query: { search: members } }) };
+  }
+  if (text.includes("pageids=")) {
+    return { ok: true, json: async () => ({ query: { pages: {
+      1: { pageid: 1, title: "Canlis", extract: "Fine dining restaurant." },
+      2: { pageid: 2, title: "Pike Place Chowder", extract: "Seafood counter." },
+      3: { pageid: 3, title: "Starbucks Reserve Roastery", extract: "Coffee roastery." },
+      4: { pageid: 4, title: "Space Needle", extract: "Observation tower." },
+      5: { pageid: 5, title: "Westlake Center", extract: "A shopping mall downtown." }
+    } } }) };
+  }
+  return { ok: true, json: async () => ({}) };
+};
+const categorySandbox = {
+  console, globalThis: {}, localStorage: { getItem: () => "", setItem: () => {} },
+  URL, AbortController, setTimeout, clearTimeout, fetch: categoryFetch
+};
+categorySandbox.globalThis = categorySandbox;
+vm.runInNewContext(readFileSync("dynamic-catalog.js", "utf8"), categorySandbox, { filename: "dynamic-catalog.js" });
+const categoryPlaces = await categorySandbox.fetchWikipediaCategoryPlaces("Seattle", { name: "Seattle" });
+const namesOfType = (type) => categoryPlaces.filter((item) => item.type === type).map((item) => item.name);
+for (const restaurant of ["Canlis", "Pike Place Chowder", "Starbucks Reserve Roastery"]) {
+  assert.ok(namesOfType("eat").includes(restaurant), `Wikipedia dining categories must supply real places to eat: ${restaurant}`);
+}
+assert.ok(namesOfType("see").includes("Space Needle"), "Sightseeing categories must still produce see items");
+assert.ok(namesOfType("buy").includes("Westlake Center"), "Shopping categories must type their members as buy even when the title does not say so");
+
 console.log("dynamic catalog smoke test passed");

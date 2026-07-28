@@ -557,7 +557,12 @@
   // Topics used to discover the destination's real category names. Many metro areas file their
   // headline attractions under regional categories ("Tourist attractions in the Las Vegas Valley",
   // not "... in Las Vegas"), so a fixed "in {city}" list misses them entirely.
-  const CATEGORY_TOPICS = ["Tourist attractions", "Landmarks", "Museums", "Parks", "Beaches", "Shopping malls", "Casinos", "Amusement parks"];
+  const CATEGORY_TOPICS = ["Tourist attractions", "Landmarks", "Museums", "Parks", "Beaches", "Shopping malls", "Casinos", "Amusement parks", "Restaurants", "Coffeehouses", "Bakeries"];
+  // Categories whose members are places to eat. Restaurant articles rarely have a food word
+  // in the title ("Canlis"), so the category they came from is what identifies them.
+  const FOOD_CATEGORY_PATTERN = /\b(restaurant|coffee ?house|caf[eé]|bakery|bakeries|diner|steakhouse|pizzeria|brewer|food hall)/i;
+  // Same idea for shopping: "Westlake Center" is a mall, but nothing in its title says so.
+  const SHOP_CATEGORY_PATTERN = /\b(shopping (?:mall|centre|center|district)|malls|market|bazaar|department store)/i;
   const CATEGORY_TITLE_EXCLUDE = /defunct|former|proposed|demolished|planned|unbuilt|people|history of|companies|images|borough of/i;
 
   function filterDiscoveredCategoryTitles(results, city) {
@@ -601,14 +606,21 @@
       `Tourist attractions in ${city}`,
       `Museums in ${city}`,
       `Parks in ${city}`,
-      `Shopping malls in ${city}`
+      `Shopping malls in ${city}`,
+      // Dining fallback: when Wikivoyage and OpenStreetMap return few real places to eat,
+      // these categories still yield named, notable restaurants and coffee houses rather
+      // than leaving the deck to generic "neighbourhood cafe" filler.
+      `Restaurants in ${city}`,
+      `Coffeehouses in ${city}`
     ];
     const discovered = await discoverCategoryTitles(city, signal).catch(() => []);
     // Discovered titles come first, then only the static names not already covered by a
     // discovered category of the same topic, capped hard to keep the request budget low.
     const discoveredTopics = new Set(discovered.map((title) => CATEGORY_TOPICS.find((topic) => title.toLowerCase().startsWith(topic.toLowerCase()))));
     const remainingStatic = staticNames.filter((name) => !discoveredTopics.has(CATEGORY_TOPICS.find((topic) => name.toLowerCase().startsWith(topic.toLowerCase()))));
-    const categoryNames = [...new Set([...discovered, ...remainingStatic])].slice(0, 8);
+    // Cap raised from 8 to 10 so the two dining categories are not crowded out by
+    // discovered sightseeing ones — the dining fallback is the whole point of adding them.
+    const categoryNames = [...new Set([...discovered, ...remainingStatic])].slice(0, 10);
     const categoryResults = await Promise.all(categoryNames.map(async (category) => {
       try {
         // incategory: search sorted by incoming links instead of list=categorymembers: the
@@ -619,7 +631,9 @@
           action: "query", list: "search", srsearch: `incategory:"${category}"`,
           srsort: "incoming_links_desc", srnamespace: "0", srlimit: "18", format: "json", origin: "*"
         }), signal);
-        return data?.query?.search || [];
+        // Tag each hit with the category it came from: an article's own title rarely says
+        // it is a restaurant, so this is what lets dining places be typed as "eat" below.
+        return (data?.query?.search || []).map((hit) => ({ ...hit, fromCategory: category }));
       } catch (_) {
         // Many destinations do not have every category. Keep going with the categories that exist.
         return [];
@@ -633,6 +647,8 @@
     const categoryNameSet = new Set(categoryNames.map((name) => name.toLowerCase()));
     const rankBoosts = new Map();
     const pageIds = new Set();
+    const foodPageIds = new Set();
+    const shopPageIds = new Set();
     const maxLength = Math.max(0, ...categoryResults.map((list) => list.length));
     for (let position = 0; position < maxLength; position += 1) {
       for (const list of categoryResults) {
@@ -645,6 +661,8 @@
         // that exact category was queried this run — they describe groups, not visitable places.
         if (categoryNameSet.has(title.toLowerCase()) || /^(tourist attractions|landmarks|museums|parks(?: and open spaces)?|beaches|shopping (?:malls|centres|centers)|casinos|amusement parks)\b.*\b(?:in|of)\b/i.test(title)) continue;
         pageIds.add(item.pageid);
+        if (!foodPageIds.has(item.pageid) && FOOD_CATEGORY_PATTERN.test(String(item.fromCategory || ""))) foodPageIds.add(item.pageid);
+        if (!shopPageIds.has(item.pageid) && SHOP_CATEGORY_PATTERN.test(String(item.fromCategory || ""))) shopPageIds.add(item.pageid);
         if (!rankBoosts.has(item.pageid)) rankBoosts.set(item.pageid, Math.max(0, 44 - position * 3));
       }
     }
@@ -656,9 +674,14 @@
     }), signal);
     return Object.values(pages?.query?.pages || {}).filter((page) => wikipediaPageLooksVisitable(page)).map((page) => ({
       name: page.title,
-      type: /market|mall|shopping|rodeo drive|grove|bazaar|arcade|outlet|emporium|department store|flea market|night market|souk/i.test(page.title || "") ? "buy" : "see",
+      type: foodPageIds.has(page.pageid) ? "eat"
+        : (shopPageIds.has(page.pageid) || /market|mall|shopping|rodeo drive|grove|bazaar|arcade|outlet|emporium|department store|flea market|night market|souk/i.test(page.title || "")) ? "buy"
+          : "see",
       area: city,
-      detail: String(page.extract || "A Wikipedia-listed attraction worth researching and verifying before visiting.").split(/\n/)[0].slice(0, 240),
+      ...(foodPageIds.has(page.pageid) ? { cuisine: "Notable local restaurant" } : {}),
+      detail: String(page.extract || (foodPageIds.has(page.pageid)
+        ? "A Wikipedia-listed restaurant worth researching and verifying before visiting."
+        : "A Wikipedia-listed attraction worth researching and verifying before visiting.")).split(/\n/)[0].slice(0, 240),
       image: wikipediaThumbnail(page),
       lat: coordinate(page.coordinates?.[0]?.lat),
       lon: coordinate(page.coordinates?.[0]?.lon),
