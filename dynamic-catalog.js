@@ -344,6 +344,22 @@
     return usablePlaceImage(thumbnail.source);
   }
 
+  // Venues that serve food or drink you sit down with — these belong in "Places to eat"
+  // even when Wikivoyage files them under {{drink}}.
+  const FOOD_SERVING_PATTERN = /\b(caf[eé]|coffee|espresso|tea\s?(?:house|room|shop|stand)?|teahouse|bakery|bakeries|patisserie|p[aâ]tisserie|juice|smoothie|dessert|ice[\s-]?cream|gelato|chocolat|creamery|brunch|breakfast|lunch|dinner|restaurant|bistro|brasserie|diner|eatery|izakaya|tapas|deli|delicatessen|food|dishes|cuisine|menu|meals?)\b/i;
+  // Pure nightlife: dancing, DJs and live music venues rather than somewhere to eat.
+  const NIGHTLIFE_PATTERN = /\b(night\s?club|nightclub|dance\s?floors?|dancefloor|discoth[eè]que|\bdisco\b|\bdjs?\b|clubbing|karaoke|cabaret|strip\s?club|hostess\s?(?:bar|club)|live\s?house|rave|after[\s-]?party|gay\s?bar|dive\s?bar|cocktail\s?lounge)\b/i;
+
+  function isNightlifeListing(name = "", description = "") {
+    return NIGHTLIFE_PATTERN.test(`${name} ${description}`);
+  }
+
+  function isFoodServingListing(name = "", description = "") {
+    const text = `${name} ${description}`;
+    if (isNightlifeListing(name, description)) return false;
+    return FOOD_SERVING_PATTERN.test(text);
+  }
+
   function parseListingTemplate(content, pageTitle) {
     const parts = splitTopLevel(content);
     const templateName = parts.shift().trim().toLowerCase();
@@ -361,8 +377,17 @@
     if (!name || /^(none|various)$/i.test(name)) return null;
     const description = stripWikitext(fields.content || fields.description || fields.directions || fields.wiki || unnamed.slice(1).join(" "));
     const category = templateName === "listing" ? String(fields.type || "").toLowerCase() : templateName;
-    const type = /eat|drink/.test(category) ? "eat" : /buy/.test(category) ? "buy" : /see|do/.test(category) ? "see" : "";
+    // Wikivoyage's {{drink}} template covers bars, pubs and nightclubs — not restaurants.
+    // Mapping it wholesale onto "eat" listed nightlife under "Places to eat" (a dance club
+    // described as having three dance floors, for example). Keep only the food-serving
+    // drink listings; drop pure nightlife, which fits none of the see/eat/buy categories.
+    const type = /drink/.test(category)
+      ? (isFoodServingListing(name, description) ? "eat" : "")
+      : /eat/.test(category) ? "eat" : /buy/.test(category) ? "buy" : /see|do/.test(category) ? "see" : "";
     if (!type) return null;
+    // Belt and braces: a listing filed under {{eat}} that reads purely as nightlife is
+    // still not a place to eat.
+    if (type === "eat" && isNightlifeListing(name, description)) return null;
     const sourceUrl = `https://en.wikivoyage.org/wiki/${encodeURIComponent(String(pageTitle || "").replace(/\s+/g, "_"))}`;
     return {
       name,
@@ -712,7 +737,12 @@
     const name = tags.name || tags["name:en"] || tags.brand || "";
     if (!name || /^(restaurant|cafe|shop|market)$/i.test(name)) return null;
     const { lat, lon } = osmElementLatLon(element);
-    const isFood = Boolean(tags.amenity && /^(restaurant|cafe|fast_food|food_court|bar|pub)$/i.test(tags.amenity)) || tags.shop === "bakery";
+    // amenity=bar/pub legitimately serve food, but a venue whose own name or description
+    // reads as a nightclub does not belong under "Places to eat".
+    const isNightlife = tags.amenity === "nightclub"
+      || isNightlifeListing(String(tags.name || ""), String(tags["description:en"] || tags.description || ""));
+    const isFood = !isNightlife
+      && (Boolean(tags.amenity && /^(restaurant|cafe|fast_food|food_court|bar|pub)$/i.test(tags.amenity)) || tags.shop === "bakery");
     const isShop = Boolean(tags.shop) || tags.amenity === "marketplace";
     if (!isFood && !isShop) return null;
     const area = [tags["addr:neighbourhood"], tags["addr:suburb"], geocode?.name].filter(Boolean)[0] || geocode?.name || destination;

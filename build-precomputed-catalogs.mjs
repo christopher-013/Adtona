@@ -50,89 +50,6 @@ const CITIES = [
   "Rio de Janeiro", "Buenos Aires", "Cairo", "Marrakesh", "Cape Town"
 ];
 
-// --- Build-time photo baking (recommended change #1) --------------------------------------
-// Restaurants/shops (and a few imageless sights) get a representative Commons photo baked into
-// the catalog so precomputed cities show a real image instantly, with no runtime lookup. The
-// keyword->image cache is GLOBAL across all cities, so shared keywords ("sushi", "shopping
-// mall", "museum") are resolved once — the whole build makes only a few dozen extra requests.
-const IMAGE_USER_AGENT = "Adtona/5.1 (https://christopher-013.github.io/PlanToGuide/)";
-const representativeImageCache = new Map();
-
-function representativeImageKeyword(item, type) {
-  const text = `${item.cuisine || ""} ${item.name || ""} ${item.detail || ""} ${item.bestFor || ""}`.toLowerCase();
-  if (type === "eat") {
-    if (/sushi|sashimi|nigiri|omakase/.test(text)) return "sushi";
-    if (/ramen|noodle|soba|udon|pho/.test(text)) return "ramen noodles";
-    if (/dim sum|dumpling|cantonese/.test(text)) return "dim sum dumplings";
-    if (/bakery|pastry|bread|croissant|patisserie/.test(text)) return "bakery pastries";
-    if (/coffee|café|cafe|espresso|latte/.test(text)) return "coffee cafe";
-    if (/seafood|fish|oyster|prawn|crab|lobster/.test(text)) return "seafood platter";
-    if (/steak|grill|bbq|barbecue|yakitori|churrasco/.test(text)) return "grilled meat dish";
-    if (/pizza|pasta|italian|trattoria|osteria/.test(text)) return "italian pasta";
-    if (/taco|burrito|mexican|taqueria/.test(text)) return "tacos";
-    if (/curry|indian|tandoori|biryani/.test(text)) return "indian curry";
-    if (/thai|pad thai/.test(text)) return "thai food";
-    if (/tapas|spanish|paella/.test(text)) return "tapas";
-    if (/french|bistro|brasserie/.test(text)) return "french cuisine plated";
-    if (/vegan|vegetarian|salad/.test(text)) return "vegetarian bowl";
-    if (/street food|hawker|food hall|food court|market/.test(text)) return "street food market";
-    if (/dessert|ice cream|gelato|cake/.test(text)) return "dessert plate";
-    return "restaurant plated food";
-  }
-  if (type === "shop") {
-    if (/mall|department store|shopping cent|outlet|emporium/.test(text)) return "shopping mall interior";
-    if (/bazaar|flea market|night market|hawker|market/.test(text)) return "street market stalls";
-    if (/book/.test(text)) return "bookstore interior";
-    if (/craft|artisan|handmade|souvenir|gift/.test(text)) return "artisan craft market";
-    if (/boutique|fashion|design|apparel|clothing/.test(text)) return "fashion boutique";
-    return "shopping street storefronts";
-  }
-  // see
-  if (/museum|gallery/.test(text)) return "museum interior";
-  if (/park|garden|botanical/.test(text)) return "city park";
-  if (/cathedral|church|basilica/.test(text)) return "cathedral";
-  if (/temple|shrine|pagoda/.test(text)) return "temple";
-  if (/castle|fort|palace|citadel/.test(text)) return "castle";
-  if (/beach|bay|coast/.test(text)) return "beach";
-  if (/tower|monument|statue/.test(text)) return "monument";
-  return "";
-}
-
-async function commonsRepresentativeImage(keyword) {
-  if (!keyword) return "";
-  if (representativeImageCache.has(keyword)) return representativeImageCache.get(keyword);
-  let resolved = "";
-  try {
-    const params = new URLSearchParams({ action: "query", generator: "search", gsrsearch: keyword, gsrnamespace: "6", gsrlimit: "16", prop: "imageinfo", iiprop: "url|mime", iiurlwidth: "640", format: "json", origin: "*" });
-    const response = await fetch(`https://commons.wikimedia.org/w/api.php?${params}`, { headers: { "Api-User-Agent": IMAGE_USER_AGENT } });
-    if (response.ok) {
-      const data = await response.json();
-      const pages = Object.values(data?.query?.pages || {}).sort((a, b) => (a.index || 0) - (b.index || 0));
-      for (const page of pages) {
-        const info = page.imageinfo?.[0];
-        const src = info?.thumburl || info?.url || "";
-        if (src && /image\/(jpeg|png)/i.test(info?.mime || "") && !/logo|icon|map\b|diagram|flag|coat of arms|\.svg/i.test(page.title || "")) {
-          resolved = src;
-          break;
-        }
-      }
-    }
-  } catch (_) { /* leave imageless; runtime resolves it as before */ }
-  representativeImageCache.set(keyword, resolved);
-  return resolved;
-}
-
-async function bakeCatalogImages(catalog) {
-  const targets = [];
-  ["breakfast", "lunch", "dinner"].forEach((slot) => (catalog?.food?.[slot] || []).forEach((item) => { if (item && !item.image && !item.placeholder) targets.push([item, "eat"]); }));
-  (catalog?.shopping || []).forEach((item) => { if (item && !item.image && !item.placeholder) targets.push([item, "shop"]); });
-  (catalog?.attractions || []).forEach((item) => { if (item && !item.image && !item.placeholder) targets.push([item, "see"]); });
-  for (const [item, type] of targets) {
-    const src = await commonsRepresentativeImage(representativeImageKeyword(item, type));
-    if (src) item.image = src;
-  }
-}
-
 function parseArgs(argv) {
   const args = { out: "precomputed-catalogs.json", limit: CITIES.length };
   for (let index = 2; index < argv.length; index += 1) {
@@ -241,7 +158,11 @@ async function main() {
     try {
       const catalog = await buildDynamicCatalog(city);
       if (catalog && isGoodCatalog(catalog)) {
-        await bakeCatalogImages(catalog);
+        // Deliberately no longer bakes generic "representative" Commons photos onto items
+        // that lack one. Those are keyword searches, not the venue, so they shipped wrong
+        // images for precomputed cities (a random dinner-table snapshot standing in for a
+        // named Tokyo venue). Items keep only their own source image; the app draws its
+        // bundled category illustration when there isn't one.
         catalogs.push({ ...catalog, match: undefined, matchPattern: augmentedMatchPattern(city, catalog), sourceCity: city, builtAt: new Date().toISOString() });
         const quality = catalogQuality(catalog);
         console.log(`ok: ${city} (see ${quality.realSee} / eat ${quality.realEat} / buy ${quality.realBuy})`);

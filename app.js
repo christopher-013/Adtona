@@ -275,9 +275,6 @@ const suggestionImageLookups = new Map();
 const suggestionImageQueue = [];
 let activeSuggestionImageLookups = 0;
 const MAX_SUGGESTION_IMAGE_LOOKUPS = 4;
-// Representative (cuisine/category) images are shared across every place of that kind, so
-// they're cached by keyword — one lookup per cuisine, reused by all matching cards.
-const representativeImageCache = new Map();
 // URLs whose pixels we've already told the browser to preload, so we don't double-request.
 const preloadedImageUrls = new Set();
 let suggestionLookup = new Map();
@@ -2312,10 +2309,9 @@ async function fetchSuggestionImage(url) {
   throw new Error("Image lookup unavailable");
 }
 
-// Representative fallback: restaurants and shops rarely have their own Wikipedia article,
-// so when no exact-place photo is found we show a photo that represents the *kind* of place
-// (a sushi plate, a food market, a shopping mall, a cathedral...). One Commons lookup per
-// keyword is shared by every matching card via representativeImageCache.
+// Describes the *kind* of place (sushi, food market, shopping mall, cathedral...). This used
+// to drive a Commons keyword search, which returned arbitrary photos that were not the venue;
+// it now selects which bundled illustration to draw, so the result is always on-topic.
 function representativeImageKeyword(suggestion, destination) {
   const text = `${suggestion.cuisine || ""} ${suggestion.name || ""} ${suggestion.detail || ""} ${suggestion.bestFor || ""} ${suggestion.order || ""}`.toLowerCase();
   const dest = String(destination || "").trim();
@@ -2369,33 +2365,6 @@ function representativeImageKeyword(suggestion, destination) {
   return dest ? `${dest} cityscape` : "cityscape landmark";
 }
 
-async function representativeImageUrl(keyword) {
-  if (!keyword) return "";
-  const cacheKey = `repr:${keyword.toLowerCase()}`;
-  if (representativeImageCache.has(cacheKey)) return representativeImageCache.get(cacheKey);
-  if (typeof isWikimediaThrottled === "function" && isWikimediaThrottled()) return "";
-  try {
-    const url = await queueSuggestionImageLookup(cacheKey, async () => {
-      const params = new URLSearchParams({ action: "query", generator: "search", gsrsearch: keyword, gsrnamespace: "6", gsrlimit: "16", prop: "imageinfo", iiprop: "url|mime", iiurlwidth: "520", format: "json", origin: "*" });
-      const payload = await fetchSuggestionImage(`https://commons.wikimedia.org/w/api.php?${params}`);
-      const pages = Object.values(payload?.query?.pages || {}).sort((a, b) => (a.index || 0) - (b.index || 0));
-      for (const page of pages) {
-        const info = page.imageinfo?.[0];
-        const source = info?.thumburl || info?.url || "";
-        // Only real photos — skip icons, logos, maps, diagrams, flags, and vector files.
-        if (source && /image\/(jpeg|png)/i.test(info?.mime || "") && !/logo|icon|map\b|diagram|flag|coat of arms|\.svg/i.test(page.title || "")) {
-          return source;
-        }
-      }
-      return "";
-    });
-    representativeImageCache.set(cacheKey, url);
-    return url;
-  } catch (_) {
-    return "";
-  }
-}
-
 // Resolve the best image URL for a suggestion: an exact-place photo when one exists
 // (Wikipedia/Commons with a destination-scoped then name-only query), otherwise a
 // representative cuisine/category photo. Result is cached per place; "" means keep the
@@ -2443,12 +2412,12 @@ async function resolveSuggestionImage(suggestion, destination) {
       suggestionImageCache.set(cacheKey, resolved.source);
       return resolved;
     }
-    // 4) Representative cuisine/category photo (shared, cached by keyword).
-    const reprSource = await representativeImageUrl(representativeImageKeyword(suggestion, destination));
-    if (reprSource) {
-      suggestionImageCache.set(cacheKey, reprSource);
-      return { source: reprSource, imageSource: "representative" };
-    }
+    // No generic "representative" keyword photo here on purpose. Searching Commons for a
+    // category keyword returns an arbitrary user photo that is not the venue — it showed a
+    // snapshot of strangers at a dinner table as if it were a named Tokyo venue, which is
+    // both wrong and a poor way to depict identifiable people. Falling through leaves the
+    // caller to draw the bundled category illustration, which is accurate by construction,
+    // and the retry sweep still upgrades the card if a real match appears later.
     // Nothing found: cache the miss (unless throttled) so we don't re-hammer the API.
     if (!(typeof isWikimediaThrottled === "function" && isWikimediaThrottled())) suggestionImageCache.set(cacheKey, "");
     return { source: "", imageSource: "" };

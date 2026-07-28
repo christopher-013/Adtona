@@ -307,4 +307,28 @@ assert.equal(requestCount, 1, "Identical in-flight requests should be coalesced"
 await Promise.all(Array.from({ length: 10 }, (_, index) => networkSandbox.geocodeDestination(`Burst City ${index}`)));
 assert.ok(peakRequests <= 6, `Public-source requests exceeded the concurrency cap: ${peakRequests}`);
 
+// Category correctness: Wikivoyage's {{drink}} template covers bars and nightclubs as well
+// as cafes, so mapping it wholesale onto "eat" listed a dance club under "Places to eat".
+// Food-serving drink listings must survive; pure nightlife must not reach the eat category.
+const categoryWikitext = [
+  "{{drink|name=Club Atom / STUDIO-A|content=Owned by Vanilla, this club houses three dance floors with music ranging from psychedelic trance to hip-hop.}}",
+  "{{drink|name=Blue Note Tokyo|content=Famous jazz club with live music every night.}}",
+  "{{drink|name=Cafe de l'Ambre|content=Long-standing coffee house roasting its own aged beans.}}",
+  "{{drink|name=Sakura Tea House|content=Traditional tea room serving matcha and wagashi.}}",
+  "{{eat|name=Sukiyabashi Jiro|content=Michelin-starred sushi restaurant.}}",
+  "{{eat|name=Karaoke Kan Bar|content=Karaoke rooms with a full drinks list and a dance floor.}}",
+  "{{see|name=Senso-ji|content=Ancient Buddhist temple in Asakusa.}}",
+  "{{buy|name=Nakamise Shopping Street|content=Souvenir stalls leading to the temple.}}"
+].join("\n");
+const categoryItems = api.parseWikivoyageListings(categoryWikitext, "Tokyo");
+const eatNames = categoryItems.filter((item) => item.type === "eat").map((item) => item.name);
+for (const nightlife of ["Club Atom / STUDIO-A", "Blue Note Tokyo", "Karaoke Kan Bar"]) {
+  assert.ok(!eatNames.includes(nightlife), `Nightlife must not be listed as a place to eat: ${nightlife}`);
+}
+for (const food of ["Cafe de l'Ambre", "Sakura Tea House", "Sukiyabashi Jiro"]) {
+  assert.ok(eatNames.includes(food), `Food-serving listings must remain places to eat: ${food}`);
+}
+assert.ok(categoryItems.some((item) => item.name === "Senso-ji" && item.type === "see"), "Sights must stay in the see category");
+assert.ok(categoryItems.some((item) => item.name === "Nakamise Shopping Street" && item.type === "buy"), "Shopping must stay in the buy category");
+
 console.log("dynamic catalog smoke test passed");
