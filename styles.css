@@ -7775,3 +7775,43 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
 .builder [tabindex="-1"]:focus:not(:focus-visible) {
   outline: none;
 }
+
+/* Give the one-question card the same contained look as the Adventure deck card in
+   Step 2, rather than a full-width strip: same border, radius, paper and shadow, and a
+   width that stops it stretching across a wide desktop. Selectors match the specificity of
+   the step compression rules above, which would otherwise keep their flat 8px treatment. */
+[data-form-step="3"] .trip-style-grid,
+[data-form-step="4"] .trip-style-grid,
+.builder.builder-wide .trip-form[data-current-step="3"] .trip-style-grid,
+.builder.builder-wide .trip-form[data-current-step="4"] .trip-style-grid {
+  width: min(100%, 780px);
+  margin-inline: auto;
+}
+.builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question,
+.builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question,
+[data-form-step="3"] .style-question.is-current-question,
+[data-form-step="4"] .style-question.is-current-question {
+  gap: 8px;
+  padding: 22px 24px;
+  border: 1px solid rgba(36, 89, 76, .22);
+  border-radius: 22px;
+  background: #fffdf8;
+  box-shadow: 0 20px 55px rgba(28, 31, 38, .16);
+  /* Vertical panning still scrolls the page; horizontal drags are the skip/back gesture. */
+  touch-action: pan-y;
+}
+.builder.builder-wide .trip-form[data-current-step="3"] .wizard-actions.question-actions,
+.builder.builder-wide .trip-form[data-current-step="4"] .wizard-actions.question-actions,
+[data-form-step="3"] .wizard-actions.question-actions,
+[data-form-step="4"] .wizard-actions.question-actions {
+  width: min(100%, 780px);
+  margin-inline: auto;
+}
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question {
+    padding: 15px 16px;
+    border-radius: 16px;
+    box-shadow: 0 12px 32px rgba(28, 31, 38, .13);
+  }
+}

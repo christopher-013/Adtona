@@ -687,7 +687,62 @@ QUESTION_STEPS.forEach((step) => {
   if (!section) return;
   section.querySelector("[data-next-question]")?.addEventListener("click", () => showStepQuestion(step, questionPosition[step] + 1));
   section.querySelector("[data-skip-question]")?.addEventListener("click", () => showStepQuestion(step, questionPosition[step] + 1));
+  // Picking from a dropdown is a complete answer, so move on as well.
+  section.querySelectorAll(".style-question select").forEach((select) => {
+    select.addEventListener("change", () => advanceQuestionAfterChoice(select));
+  });
+  bindQuestionSwipe(section, step);
 });
+
+// Answering advances to the next question. A short pause lets the traveler see their
+// choice register before the card changes. On the last question there is nowhere further
+// to go, so the step's own action stays in charge.
+function advanceQuestionAfterChoice(origin) {
+  const section = origin?.closest?.("[data-form-step]");
+  const step = Number(section?.dataset.formStep);
+  if (!QUESTION_STEPS.includes(step)) return;
+  const total = stepQuestions(step).length;
+  if (questionPosition[step] >= total - 1) return;
+  window.setTimeout(() => showStepQuestion(step, questionPosition[step] + 1), 220);
+}
+
+// Mobile gestures on the question card: swipe left to skip ahead, swipe right to go back.
+// Matches the Adventure deck's direction, where a left flick also moves you on.
+function bindQuestionSwipe(section, step) {
+  let pointerId = null;
+  let startX = 0;
+  let startY = 0;
+  let deltaX = 0;
+  let deltaY = 0;
+  const grid = section.querySelector(".trip-style-grid");
+  if (!grid) return;
+  grid.addEventListener("pointerdown", (event) => {
+    if (event.pointerType !== "touch") return;
+    // Never hijack a drag that starts on a control the traveler is trying to use.
+    if (event.target.closest("input, select, textarea, button, a")) return;
+    pointerId = event.pointerId;
+    startX = event.clientX;
+    startY = event.clientY;
+    deltaX = 0;
+    deltaY = 0;
+  });
+  grid.addEventListener("pointermove", (event) => {
+    if (pointerId !== event.pointerId) return;
+    deltaX = event.clientX - startX;
+    deltaY = event.clientY - startY;
+  });
+  const finish = () => {
+    if (pointerId === null) return;
+    pointerId = null;
+    const movedX = Math.abs(deltaX);
+    // Ignore mostly-vertical drags so scrolling the page still works.
+    if (movedX < 60 || movedX <= Math.abs(deltaY) * 1.2) return;
+    if (deltaX < 0) showStepQuestion(step, questionPosition[step] + 1);
+    else showStepQuestion(step, questionPosition[step] - 1);
+  };
+  grid.addEventListener("pointerup", finish);
+  grid.addEventListener("pointercancel", () => { pointerId = null; });
+}
 document.querySelector("#clearSelectionsButton").addEventListener("click", () => {
   selectedSuggestions.clear();
   rejectedSuggestions.clear();
@@ -1716,6 +1771,10 @@ function renderQuickPicks() {
         event.preventDefault();
         event.stopPropagation();
         applyQuickPick(key, cfg, chip.dataset.value);
+        // Choosing an answer moves straight on. Only for single-choice questions: the
+        // "list" questions (food restrictions, must-dos, things to avoid) expect several
+        // taps, so advancing on the first one would cut the traveler off.
+        if (cfg.mode !== "list") advanceQuestionAfterChoice(chip);
       });
     });
     const field = document.querySelector(`#${key}`);

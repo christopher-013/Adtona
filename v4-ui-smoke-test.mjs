@@ -199,3 +199,15 @@ assert.ok(
   script.indexOf("const QUESTION_STEPS") < script.indexOf("function showFormStep"),
   "Question-step state must be declared before showFormStep to avoid a start-up TDZ error"
 );
+
+// Answering a single-choice question advances on its own, but the multi-select questions
+// (food restrictions, must-dos, things to avoid) must not — advancing on the first tap
+// would stop the traveler choosing several.
+assert.match(script, /if \(cfg\.mode !== "list"\) advanceQuestionAfterChoice\(chip\)/, "Only single-choice quick picks may auto-advance");
+assert.match(script, /function advanceQuestionAfterChoice\(origin\)/, "Choosing an answer must advance the question");
+assert.match(script, /\.style-question select[\s\S]{0,140}?advanceQuestionAfterChoice\(select\)/, "Choosing from a dropdown must advance the question");
+// Mobile gestures: left skips ahead, right goes back.
+assert.match(script, /function bindQuestionSwipe\(section, step\)/, "The question card must support swipe gestures");
+assert.match(script, /if \(deltaX < 0\) showStepQuestion\(step, questionPosition\[step\] \+ 1\);/, "A left swipe must skip to the next question");
+assert.match(script, /else showStepQuestion\(step, questionPosition\[step\] - 1\)/, "A right swipe must return to the previous question");
+assert.match(styles, /\.style-question\.is-current-question[\s\S]{0,400}?border-radius:\s*22px[\s\S]{0,200}?box-shadow/s, "The question must render as a contained card like the Adventure deck");
