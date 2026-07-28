@@ -1796,13 +1796,11 @@ function renderQuickPicks() {
   });
 }
 
-// Every answer on Steps 3 and 4. Restoring each field to the default it was authored with
-// (rather than a hardcoded list of values) keeps this correct if the markup changes.
-const TRIP_PREFERENCE_FIELD_IDS = [
-  "homeBase", "groupSize", "travelerAges", "tripPurpose", "tripParty", "dayStart",
-  "foodRestrictions", "mobilityNeeds", "mustDos", "avoidList", "transportStyle",
-  "tripBudget", "bookedItems"
-];
+// Only the answers that describe the place, not the traveller. Group size, ages, dietary
+// needs, mobility, pace and budget stay put — they are true of the same people wherever
+// they go, and re-entering them for every destination would be tedious. Restoring each
+// field to the default it was authored with keeps this correct if the markup changes.
+const TRIP_PREFERENCE_FIELD_IDS = ["homeBase", "mustDos", "avoidList", "bookedItems"];
 
 function resetTripPreferenceFields() {
   TRIP_PREFERENCE_FIELD_IDS.forEach((id) => {
@@ -2969,11 +2967,19 @@ function buildTrip(destination, start, end, wishes, selections = [], preferences
   });
   parseList(preferences.mustDos).forEach((name, index) => {
     const targetDay = itineraryDays[index % itineraryDays.length];
-    if (!itineraryDays.some((day) => day.activities.some((item) => item.title.toLowerCase().includes(name.toLowerCase())))) targetDay.activities.push(activity("Must do", "⭐", "Flexible", name, "Traveler-designated must-do activity. Preserve it unless the traveler explicitly changes it.", "Confirmed"));
+    if (itineraryDays.some((day) => day.activities.some((item) => item.title.toLowerCase().includes(name.toLowerCase())))) return;
+    // The must-do quick picks are categories rather than places ("Local cuisine"), so once
+    // the plan already has that kind of stop they are satisfied. Scheduling them anyway
+    // produced a bare "Local cuisine" block at 21:30 on a day that already had dinner.
+    if (genericMustDoIsCovered(name, itineraryDays)) return;
+    targetDay.activities.push(activity("Must do", "⭐", "Flexible", name, "Traveler-designated must-do activity. Preserve it unless the traveler explicitly changes it.", "Confirmed"));
   });
 
   itineraryDays.forEach((day, index) => {
     day.activities = scheduleDayActivities(day.activities, preferences);
+    // Run after scheduling, because only then are the real start and end times known and a
+    // long empty afternoon becomes visible.
+    fillDaytimeGaps(day, destination, preferences, seenRecommendations, dayZones[index]);
     day.activities = assignDistinctActivityIcons(day.activities, index);
     const featured = day.activities.find((item) => /^(See|Arrival|Booking|Must do)$/.test(item.type))
       || day.activities.find((item) => !/^breakfast|^lunch|^dinner|^farewell dinner/i.test(item.title))
@@ -3467,6 +3473,53 @@ function fillFullDay(activities, target, seen, destination, date, preferences, z
     index += 1;
   }
   return kept;
+}
+
+// The must-do quick picks name a kind of experience, not a specific place. Each entry maps
+// the category to the activity types that already deliver it, so a plan that includes meals
+// does not also carry a standalone "Local cuisine" item. Anything not listed here is treated
+// as a real, specific must-do and always scheduled.
+const GENERIC_MUST_DO_COVERAGE = [
+  { pattern: /^local cuisine$|^local food$|^street food$/i, types: /^Eat$/ },
+  { pattern: /^iconic landmarks?$/i, types: /^(See|Arrival)$/ },
+  { pattern: /^museums? (?:&|and) art$|^museums?$/i, types: /^(See|Arrival)$/ },
+  { pattern: /^local markets?$/i, types: /^(Shop|Eat)$/ },
+  { pattern: /^scenic viewpoints?$/i, types: /^(See|Arrival)$/ }
+];
+
+function genericMustDoIsCovered(name, itineraryDays) {
+  const rule = GENERIC_MUST_DO_COVERAGE.find((entry) => entry.pattern.test(String(name).trim()));
+  if (!rule) return false;
+  return itineraryDays.some((day) => day.activities.some((item) => rule.types.test(String(item.type || ""))));
+}
+
+// A day can be left with a long empty stretch — lunch ending at 14:30 and nothing until a
+// 19:30 dinner — when the destination yielded too few real places to fill the afternoon.
+// Offer something to do in that free time instead of leaving a five-hour hole.
+const MAX_FREE_GAP_MINUTES = 150;
+
+function fillDaytimeGaps(day, destination, preferences, seen, zone) {
+  for (let pass = 0; pass < 3; pass += 1) {
+    const activities = day.activities;
+    let gapIndex = -1;
+    let gapStart = 0;
+    for (let i = 0; i < activities.length - 1; i += 1) {
+      const endsAt = timeToMinutes(activities[i].endTime || activities[i].time);
+      const nextStart = timeToMinutes(activities[i + 1].time);
+      if (!Number.isFinite(endsAt) || !Number.isFinite(nextStart)) continue;
+      if (nextStart - endsAt >= MAX_FREE_GAP_MINUTES) { gapIndex = i; gapStart = endsAt; break; }
+    }
+    if (gapIndex === -1) return;
+    // Walk the suggestion pool until we find one this trip has not used already.
+    let block = null;
+    for (let offset = 0; offset < 8 && !block; offset += 1) {
+      const candidate = createPlanningBlock(destination, day.date, formatClockMinutes(gapStart + 30), seen.size + offset, preferences, "Explore", zone);
+      if (!seen.has(candidate.title.toLowerCase())) block = candidate;
+    }
+    if (!block) return;
+    seen.add(block.title.toLowerCase());
+    day.activities = scheduleDayActivities([...activities, block], preferences);
+  }
 }
 
 function createPlanningBlock(destination, date, time, index, preferences = {}, requestedType = "Explore", zone = null) {

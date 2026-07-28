@@ -233,3 +233,12 @@ assert.match(
 );
 assert.match(script, /field\.value = field\.defaultValue/, "Answers must return to the defaults authored in the markup");
 assert.match(script, /option\.defaultSelected/, "Dropdowns must return to their authored selected option");
+
+// A day must not be left with hours of dead time (the reported Seattle day ran lunch to
+// 14:30 then nothing until a 19:30 dinner), and the category-style must-do quick picks
+// must not be scheduled again once the plan already covers them.
+assert.match(script, /function fillDaytimeGaps\(day, destination, preferences, seen, zone\)/, "Long empty stretches must be filled with something to do");
+assert.match(script, /const MAX_FREE_GAP_MINUTES = 150/, "The acceptable free-time gap must be bounded");
+assert.match(script, /fillDaytimeGaps\(day, destination, preferences, seenRecommendations, dayZones\[index\]\)/, "Gap filling must run after scheduling, when real times are known");
+assert.match(script, /function genericMustDoIsCovered\(name, itineraryDays\)/, "Generic must-dos must be checked against what the plan already covers");
+assert.match(script, /\^local cuisine\$/, "\"Local cuisine\" must count as covered by an Eat stop");
