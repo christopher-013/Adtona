@@ -222,3 +222,14 @@ assert.match(script, /mobilityNeeds:\s*\{ mode: "list", sep: "; "/, "Mobility ne
 assert.match(script, /parseList\(trip\.preferences\.mustDos\)/, "The packing list must split must-dos on commas as well as newlines");
 assert.match(script, /function autoSizeTextarea\(field\)/, "Multi-select boxes must grow to fit instead of scrolling");
 assert.doesNotMatch(html, /placeholder="One per line"/, "The comma-separated questions must not still say one per line");
+
+// Choosing a different destination starts the travel-style and constraints answers fresh,
+// so a home base like "Asakusa" cannot follow a traveler from one city into another.
+assert.match(script, /function resetTripPreferenceFields\(\)/, "Switching destination must reset the wizard answers");
+assert.match(
+  script,
+  /rejectedSuggestions\.clear\(\);[\s\S]{0,320}?resetTripPreferenceFields\(\);/,
+  "The reset must run on the same destination-change branch that clears deck selections"
+);
+assert.match(script, /field\.value = field\.defaultValue/, "Answers must return to the defaults authored in the markup");
+assert.match(script, /option\.defaultSelected/, "Dropdowns must return to their authored selected option");

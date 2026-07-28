@@ -1796,11 +1796,41 @@ function renderQuickPicks() {
   });
 }
 
+// Every answer on Steps 3 and 4. Restoring each field to the default it was authored with
+// (rather than a hardcoded list of values) keeps this correct if the markup changes.
+const TRIP_PREFERENCE_FIELD_IDS = [
+  "homeBase", "groupSize", "travelerAges", "tripPurpose", "tripParty", "dayStart",
+  "foodRestrictions", "mobilityNeeds", "mustDos", "avoidList", "transportStyle",
+  "tripBudget", "bookedItems"
+];
+
+function resetTripPreferenceFields() {
+  TRIP_PREFERENCE_FIELD_IDS.forEach((id) => {
+    const field = document.querySelector(`#${id}`);
+    if (!field) return;
+    if (field.tagName === "SELECT") {
+      const initial = Array.from(field.options).find((option) => option.defaultSelected) || field.options[0];
+      if (initial) field.value = initial.value;
+    } else {
+      field.value = field.defaultValue;
+      autoSizeTextarea(field);
+    }
+  });
+  // Redraw the chips so none stay ticked, and start the new trip at the first question.
+  renderQuickPicks();
+  questionPosition[3] = 0;
+  questionPosition[4] = 0;
+}
+
 function renderSuggestionPicker(destination) {
   const normalizedDestination = destination.toLowerCase();
   if (suggestionDestination && suggestionDestination !== normalizedDestination) {
     selectedSuggestions.clear();
     rejectedSuggestions.clear();
+    // A different destination is a different trip, so the travel-style and constraints
+    // answers start fresh too — otherwise a home base like "Asakusa" followed a traveler
+    // from Osaka into a Seattle plan.
+    resetTripPreferenceFields();
   }
   if (suggestionDeckDestination !== normalizeDestinationName(destination)) resetSuggestionDeckState(destination);
   suggestionDestination = normalizedDestination;
