@@ -35,6 +35,21 @@ assert.match(script, /destinationInput\.value\s*=\s*"";/, "A new browser draft m
 assert.doesNotMatch(script, /destinationInput\.value\s*=\s*"Tokyo, Japan";/, "The destination field must no longer be prefilled with Tokyo, Japan");
 assert.match(stepOneHtml, /data-open-import[\s\S]{0,180}?Import your AI plan/, "The first screen must provide a compact AI-plan importer");
 assert.match(stepOneHtml, /id="nextStepButton"[^>]*type="button"[\s\S]{0,160}?Adto Na\. Go Now/, "The merged first screen must use the requested continue action");
+assert.match(
+  script,
+  /form\.addEventListener\("submit"[\s\S]{0,500}?currentFormStep === 1[\s\S]{0,220}?await goToPreferencesStep\(\);[\s\S]{0,80}?return;/,
+  "Pressing Enter on Trip Basics must advance to Adventure instead of creating the final website"
+);
+assert.match(
+  script,
+  /\[destinationInput, startDateInput, endDateInput\]\.forEach[\s\S]{0,360}?event\.key !== "Enter"[\s\S]{0,220}?event\.preventDefault\(\);[\s\S]{0,100}?goToPreferencesStep\(\);/,
+  "Every Trip Basics field must explicitly map the desktop Enter key to the Adventure transition"
+);
+assert.match(
+  script,
+  /if \(currentFormStep !== 4\) return;[\s\S]{0,260}?questionPosition\[4\] < constraintQuestions\.length - 1[\s\S]{0,180}?showStepQuestion\(4, questionPosition\[4\] \+ 1\)/,
+  "Implicit form submission must not create a website before the final Constraints question"
+);
 assert.doesNotMatch(html, /id="startSplash(?:Continue)?"/, "Trip Basics must not be hidden behind a separate splash layer");
 assert.match(script, /function showStartSplash\(/, "Refresh and workflow restarts must have an explicit merged-start lifecycle");
 assert.doesNotMatch(script, /function dismissStartSplash\(/, "The merged first screen must not auto-dismiss while the traveler is typing");

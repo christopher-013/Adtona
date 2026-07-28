@@ -1,5 +1,12 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.47 Enter-key wizard navigation
+
+- Routes Enter from the Trip Basics destination or date fields through the same
+  validation and Adventure transition as the visible continue button.
+- Prevents implicit form submission from creating a website before the traveler
+  reaches the final Constraints question.
+
 ## v5.3.46 resilient suggestion photos
 
 - Limits concurrent Wikimedia image lookups to reduce mobile rate limiting, retries

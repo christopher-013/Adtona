@@ -376,6 +376,16 @@ startDateInput.addEventListener("change", () => {
   endDateInput.value = toInputDate(departDate);
   dateError.textContent = "";
 });
+// Desktop browsers are inconsistent about implicit form submission when the only submit
+// control lives inside a hidden later wizard step. Make Enter on any Trip Basics field an
+// explicit continue action so it always behaves exactly like "Adto Na. Go Now".
+[destinationInput, startDateInput, endDateInput].forEach((field) => {
+  field.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.isComposing || event.defaultPrevented) return;
+    event.preventDefault();
+    goToPreferencesStep();
+  });
+});
 
 function updateDestinationClearButton() {
   if (!clearDestinationButton) return;
@@ -781,6 +791,21 @@ document.querySelector("#surpriseMeButton").addEventListener("click", () => {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+  // Pressing Enter in a form field asks the browser to submit the whole form. Because the
+  // only submit button lives on the final Constraints question, that implicit submission
+  // previously skipped every intervening wizard step and started site creation immediately.
+  // Route implicit submissions according to the visible step; only the final Constraints
+  // question is allowed to create the guide.
+  if (currentFormStep === 1) {
+    await goToPreferencesStep();
+    return;
+  }
+  if (currentFormStep !== 4) return;
+  const constraintQuestions = stepQuestions(4);
+  if (questionPosition[4] < constraintQuestions.length - 1) {
+    showStepQuestion(4, questionPosition[4] + 1);
+    return;
+  }
   const start = parseDate(startDateInput.value);
   const end = parseDate(endDateInput.value);
   if (end < start) {
