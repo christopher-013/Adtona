@@ -1,5 +1,11 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.49 Enter-to-continue guided questions
+
+- Maps Enter in active Step 3 and Step 4 fields to the same action as the visible Next button.
+- Prevents a delayed dropdown change from advancing twice when Enter was also pressed.
+- Removes the redundant Skip links because Next already moves forward without requiring an answer.
+
 ## v5.3.48 Guided-question readability
 
 - Enlarges the active Step 3 and Step 4 question cards so the one-question flow uses the available desktop canvas.

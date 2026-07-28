@@ -7751,20 +7751,6 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   gap: 10px;
   padding-inline: 22px;
 }
-.wizard-actions.question-actions .question-skip {
-  padding: 6px 10px;
-  border: 0;
-  border-radius: 999px;
-  color: var(--muted);
-  background: transparent;
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 700;
-  text-decoration: underline;
-}
-.wizard-actions.question-actions .question-skip:hover {
-  color: var(--ink);
-}
 .wizard-actions.question-actions [hidden] {
   display: none;
 }
@@ -7922,12 +7908,6 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   font-size: 16px;
 }
 
-.wizard-actions.question-actions .question-skip {
-  min-height: 44px;
-  padding: 10px 14px;
-  font-size: 14px;
-}
-
 @media (max-width: 760px) {
   .builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question,
   .builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question {
@@ -7987,11 +7967,6 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
     font-size: 14px;
   }
 
-  .wizard-actions.question-actions .question-skip {
-    min-height: 42px;
-    padding: 9px 8px;
-    font-size: 13px;
-  }
 }
 
 @media (max-width: 420px) and (max-height: 720px) {

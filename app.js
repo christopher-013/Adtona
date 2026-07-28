@@ -688,7 +688,6 @@ function showStepQuestion(step, index) {
   const section = document.querySelector(`[data-form-step="${step}"]`);
   const isLast = position === questions.length - 1;
   const nextButton = section.querySelector("[data-next-question]");
-  const skipButton = section.querySelector("[data-skip-question]");
   const advanceButton = section.querySelector("#constraintsStepButton, #createTripButton");
   // The continue button names the question it leads to, so the traveler always knows what
   // is coming next. On the final question it hands over to the step's own action.
@@ -697,7 +696,6 @@ function showStepQuestion(step, index) {
     const label = nextButton.querySelector(".question-next-label");
     if (label && !isLast) label.textContent = questionTitle(questions[position + 1]);
   }
-  if (skipButton) skipButton.hidden = isLast;
   if (advanceButton) advanceButton.hidden = !isLast;
 }
 
@@ -705,7 +703,19 @@ QUESTION_STEPS.forEach((step) => {
   const section = document.querySelector(`[data-form-step="${step}"]`);
   if (!section) return;
   section.querySelector("[data-next-question]")?.addEventListener("click", () => showStepQuestion(step, questionPosition[step] + 1));
-  section.querySelector("[data-skip-question]")?.addEventListener("click", () => showStepQuestion(step, questionPosition[step] + 1));
+  // On desktop, Enter mirrors the visible continue action for the current question.
+  // This also prevents the form's final submit button from creating the guide early.
+  section.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.isComposing || event.defaultPrevented || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
+    if (!event.target.closest(".style-question.is-current-question input, .style-question.is-current-question select, .style-question.is-current-question textarea")) return;
+    event.preventDefault();
+    const questions = stepQuestions(step);
+    if (questionPosition[step] < questions.length - 1) {
+      showStepQuestion(step, questionPosition[step] + 1);
+      return;
+    }
+    section.querySelector("#constraintsStepButton, #createTripButton")?.click();
+  });
   // Picking from a dropdown is a complete answer, so move on as well.
   section.querySelectorAll(".style-question select").forEach((select) => {
     select.addEventListener("change", () => advanceQuestionAfterChoice(select));
@@ -722,7 +732,12 @@ function advanceQuestionAfterChoice(origin) {
   if (!QUESTION_STEPS.includes(step)) return;
   const total = stepQuestions(step).length;
   if (questionPosition[step] >= total - 1) return;
-  window.setTimeout(() => showStepQuestion(step, questionPosition[step] + 1), 220);
+  const startingPosition = questionPosition[step];
+  window.setTimeout(() => {
+    // Enter may have already advanced this question while a select's change pause was
+    // pending. Only advance if the traveler is still on the question that scheduled it.
+    if (questionPosition[step] === startingPosition) showStepQuestion(step, startingPosition + 1);
+  }, 220);
 }
 
 // Mobile gestures on the question card: swipe left to skip ahead, swipe right to go back.

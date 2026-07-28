@@ -203,7 +203,7 @@ console.log("Merged welcome screen and four-action swipe-deck smoke test passed.
 // still reads answers given before the traveler moved on.
 assert.match(html, /data-form-step="3"[\s\S]*?data-next-question[\s\S]{0,200}?question-next-label/, "Step 3 must offer a continue button that names the next question");
 assert.match(html, /data-form-step="4"[\s\S]*?data-next-question[\s\S]{0,200}?question-next-label/, "Step 4 must offer a continue button that names the next question");
-assert.equal((html.match(/data-skip-question/g) || []).length, 2, "Both question steps must offer a skip control");
+assert.equal((html.match(/data-skip-question/g) || []).length, 0, "Guided questions must not duplicate the Next action with a Skip link");
 assert.match(script, /function showStepQuestion\(step, index\)/, "One-question-at-a-time navigation must be implemented");
 assert.match(script, /label\.textContent = questionTitle\(questions\[position \+ 1\]\)/, "The continue button must be labelled with the following question");
 assert.match(styles, /\[data-form-step="3"\] \.style-question,\s*\[data-form-step="4"\] \.style-question\s*\{[^}]*display:\s*none/s, "Only the current question may be visible");
@@ -221,6 +221,16 @@ assert.ok(
 assert.match(script, /if \(cfg\.mode !== "list"\) advanceQuestionAfterChoice\(chip\)/, "Only single-choice quick picks may auto-advance");
 assert.match(script, /function advanceQuestionAfterChoice\(origin\)/, "Choosing an answer must advance the question");
 assert.match(script, /\.style-question select[\s\S]{0,140}?advanceQuestionAfterChoice\(select\)/, "Choosing from a dropdown must advance the question");
+assert.match(
+  script,
+  /QUESTION_STEPS\.forEach[\s\S]{0,1100}?section\.addEventListener\("keydown"[\s\S]{0,500}?event\.key !== "Enter"[\s\S]{0,500}?showStepQuestion\(step, questionPosition\[step\] \+ 1\)/,
+  "Enter in an active Step 3/4 field must activate the visible next-question action"
+);
+assert.match(
+  script,
+  /const startingPosition = questionPosition\[step\];[\s\S]{0,320}?questionPosition\[step\] === startingPosition/,
+  "Delayed dropdown advancement must not skip a second question after Enter already advanced"
+);
 // Mobile gestures: left skips ahead, right goes back.
 assert.match(script, /function bindQuestionSwipe\(section, step\)/, "The question card must support swipe gestures");
 assert.match(script, /if \(deltaX < 0\) showStepQuestion\(step, questionPosition\[step\] \+ 1\);/, "A left swipe must skip to the next question");
