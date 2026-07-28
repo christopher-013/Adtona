@@ -69,6 +69,231 @@ assert.ok(mergedAttraction.sources.some((source) => source.id === "wikipedia:101
 assert.ok(mergedAttraction.sources.some((source) => source.label === "Wikivoyage"));
 assert.ok(mergedAttraction.sources.every((source) => Object.hasOwn(source, "license") && Object.hasOwn(source, "attribution")));
 
+// Progressive mobile research and the final desktop/precomputed path can encounter duplicate
+// Wikipedia records in a different order. The richer copy's popularity and photo must survive
+// either merge order so Manila always leads with the same well-known, photographed attraction.
+const manilaRizalPhoto = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Rizal_Monument_at_Rizal_Park.jpg/640px-Rizal_Monument_at_Rizal_Park.jpg";
+const manilaRizalSparse = {
+  name: "Rizal Park (Luneta)",
+  type: "see",
+  area: "Manila",
+  detail: "Manila's central urban park and national monument.",
+  image: "",
+  popularity: 0,
+  rankBoost: 0,
+  sourceLabel: "Wikipedia",
+  sourceId: "wikipedia:rizal-geo"
+};
+const manilaRizalEnriched = {
+  ...manilaRizalSparse,
+  image: manilaRizalPhoto,
+  popularity: 5200,
+  rankBoost: 44,
+  sourceLabel: "Wikipedia category",
+  sourceId: "wikipedia:rizal-category"
+};
+const manilaIntramuros = {
+  name: "Intramuros",
+  type: "see",
+  area: "Manila",
+  detail: "Manila's historic walled district.",
+  popularity: 800,
+  rankBoost: 30,
+  sourceLabel: "Wikipedia category",
+  sourceId: "wikipedia:intramuros"
+};
+const manilaFortSantiago = {
+  name: "Fort Santiago",
+  type: "see",
+  area: "Manila",
+  detail: "A historic citadel in Manila.",
+  popularity: 120,
+  sourceLabel: "Wikipedia",
+  sourceId: "wikipedia:fort-santiago"
+};
+const manilaSourceOrders = [
+  {
+    label: "partial-first source order",
+    items: [manilaRizalSparse, manilaIntramuros, manilaFortSantiago, manilaRizalEnriched]
+  },
+  {
+    label: "final-first source order",
+    items: [manilaRizalEnriched, manilaFortSantiago, manilaIntramuros, manilaRizalSparse]
+  }
+];
+for (const scenario of manilaSourceOrders) {
+  const manilaCatalog = api.assembleDynamicCatalog("Manila", {
+    name: "Manila",
+    admin1: "Metro Manila",
+    country: "Philippines"
+  }, {
+    wikipediaItems: scenario.items
+  });
+  assert.equal(
+    manilaCatalog.attractions[0].name,
+    "Rizal Park (Luneta)",
+    `Manila must lead with the same most-popular attraction for ${scenario.label}`
+  );
+  assert.equal(
+    manilaCatalog.attractions[0].image,
+    manilaRizalPhoto,
+    `Manila's first attraction must retain its available photo for ${scenario.label}`
+  );
+}
+
+const manilaOfflineBaseline = api.assembleDynamicCatalog("Manila", {
+  name: "Manila",
+  admin1: "Metro Manila",
+  country: "Philippines"
+}, {});
+assert.equal(
+  manilaOfflineBaseline.attractions[0].name,
+  "Rizal Park (Luneta)",
+  "Manila must keep a stable first recommendation even when a live source is unavailable"
+);
+assert.match(
+  manilaOfflineBaseline.attractions[0].image,
+  /^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\/Rizal_Park\.jpg\?/,
+  "Manila's stable first recommendation must ship with its exact Commons photo"
+);
+assert.equal(
+  manilaOfflineBaseline.food.breakfast[0].name,
+  "Café Adriatico",
+  "Manila's food deck must open with the same source-backed local institution on every device"
+);
+assert.match(
+  manilaOfflineBaseline.food.breakfast[0].image,
+  /^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\/Cafe_Adriatico%2C_Malate%2C_Manila%2C_Mar_2024\.jpg\?/,
+  "Manila's opening food recommendation must ship with its exact Commons photo"
+);
+assert.equal(
+  manilaOfflineBaseline.shopping[0].name,
+  "Divisoria Market",
+  "Manila's shopping deck must open with the same source-backed market on every device"
+);
+assert.match(
+  manilaOfflineBaseline.shopping[0].image,
+  /^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\/Divisoria_San_Nicolas_Binondo_Districts_05\.jpg\?/,
+  "Manila's opening shopping recommendation must ship with its exact Commons photo"
+);
+const manilaUnevenSourceCatalog = api.assembleDynamicCatalog("Manila", {
+  name: "Manila",
+  admin1: "Metro Manila",
+  country: "Philippines"
+}, {
+  wikivoyageItems: [{
+    name: "Intramuros",
+    type: "see",
+    area: "Manila",
+    detail: "Manila's historic walled district.",
+    wikivoyageRank: 0,
+    popularity: 100000,
+    rankBoost: 100,
+    sourceLabel: "Wikivoyage",
+    sourceId: "wikivoyage:intramuros"
+  }]
+});
+assert.equal(
+  manilaUnevenSourceCatalog.attractions[0].name,
+  "Rizal Park (Luneta)",
+  "Manila's canonical opening card must not change when one device receives stronger metadata for a competing place"
+);
+assert.equal(
+  api.catalogHasResearchDepth(manilaOfflineBaseline, "Manila", {
+    name: "Manila",
+    admin1: "Metro Manila",
+    country: "Philippines"
+  }),
+  true,
+  "The source-backed Manila baseline must pass the runtime cache quality gate"
+);
+assert.equal(
+  api.catalogHasResearchDepth({
+    attractions: [{ name: "Intramuros", sourceLabel: "Wikipedia category", image: "" }],
+    food: { breakfast: [], lunch: [], dinner: [] },
+    shopping: []
+  }, "Example City", { name: "Example City", country: "Exampleland" }),
+  false,
+  "A thin, imageless device-local result must remain retryable instead of being cached"
+);
+
+const imagelessLeadingCatalog = structuredClone(manilaOfflineBaseline);
+imagelessLeadingCatalog.attractions[0].image = "";
+assert.equal(
+  api.catalogHasResearchDepth(imagelessLeadingCatalog, "Manila", {
+    name: "Manila",
+    admin1: "Metro Manila",
+    country: "Philippines"
+  }),
+  false,
+  "An otherwise complete catalog with an imageless leading card must remain retryable"
+);
+
+const exampleAttractions = [
+  { name: "Example City Museum", type: "see", detail: "A city museum.", sourceLabel: "Wikipedia", sourceId: "wikipedia:example-museum" },
+  { name: "Example City Park", type: "see", detail: "A city park.", sourceLabel: "Wikipedia", sourceId: "wikipedia:example-park" }
+];
+const osmOrderingCatalog = api.assembleDynamicCatalog("Example City", {
+  name: "Example City",
+  country: "Exampleland"
+}, {
+  wikipediaItems: exampleAttractions,
+  osmItems: [
+    {
+      name: "Alpha Cafe",
+      type: "eat",
+      area: "Center",
+      cuisine: "Cafe",
+      detail: "A cafe.",
+      osmScore: 10,
+      sourceLabel: "OpenStreetMap",
+      sourceId: "osm:node/1"
+    },
+    {
+      name: "Zeta Cafe",
+      type: "eat",
+      area: "Center",
+      cuisine: "Cafe",
+      detail: "A cafe.",
+      osmScore: 90,
+      sourceLabel: "OpenStreetMap",
+      sourceId: "osm:node/2"
+    }
+  ]
+});
+assert.equal(
+  osmOrderingCatalog.food.breakfast[0].name,
+  "Zeta Cafe",
+  "OSM popularity must remain the deterministic tie-breaker instead of alphabetical order"
+);
+
+for (const categoryRecords of [
+  [
+    { name: "Example Market", type: "see", sourceLabel: "Wikipedia", sourceId: "wikipedia:market-geo" },
+    { name: "Example Market", type: "buy", bestFor: "Local goods", sourceLabel: "Wikipedia category", sourceId: "wikipedia-category:market" }
+  ],
+  [
+    { name: "Example Market", type: "buy", bestFor: "Local goods", sourceLabel: "Wikipedia category", sourceId: "wikipedia-category:market" },
+    { name: "Example Market", type: "see", sourceLabel: "Wikipedia", sourceId: "wikipedia:market-geo" }
+  ]
+]) {
+  const categoryCatalog = api.assembleDynamicCatalog("Example City", {
+    name: "Example City",
+    country: "Exampleland"
+  }, {
+    wikipediaItems: [...exampleAttractions, ...categoryRecords]
+  });
+  assert.equal(
+    categoryCatalog.shopping[0].name,
+    "Example Market",
+    "A category-specific shopping record must beat a generic geosearch attraction in either source order"
+  );
+  assert.ok(
+    !categoryCatalog.attractions.some((item) => item.name === "Example Market"),
+    "The merged shopping place must not leak into Places to see"
+  );
+}
+
 const peterCatalog = api.assembleDynamicCatalog("Tokyo, Japan", { name: "Tokyo", country: "Japan" }, {
   wikivoyageTitle: "Tokyo/Chiyoda",
   wikivoyageItems: peterItems,

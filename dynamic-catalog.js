@@ -128,7 +128,10 @@
   }
 
   function cacheKey(slug) {
-    return `ptg:dyncat4:${slug}:${global.PLANTOGUIDE_VERSION || "dev"}`;
+    // Namespace changes invalidate older device-local catalogs that may have been saved after
+    // only one public source returned. Those thin snapshots were the reason the same search
+    // could show a different first place on desktop and mobile for 30 days.
+    return `ptg:dyncat7:${slug}:${global.PLANTOGUIDE_VERSION || "dev"}`;
   }
 
   const dynamicCatalogCache = {
@@ -530,6 +533,7 @@
       return true;
     }).map((page) => ({
       name: page.title,
+      wikipediaTitle: page.title,
       type: "see",
       area: geocode.name,
       detail: String(page.extract || "A Wikipedia-listed landmark or neighborhood worth researching.").split(/\n/)[0].slice(0, 220),
@@ -674,6 +678,7 @@
     }), signal);
     return Object.values(pages?.query?.pages || {}).filter((page) => wikipediaPageLooksVisitable(page)).map((page) => ({
       name: page.title,
+      wikipediaTitle: page.title,
       type: foodPageIds.has(page.pageid) ? "eat"
         : (shopPageIds.has(page.pageid) || /market|mall|shopping|rodeo drive|grove|bazaar|arcade|outlet|emporium|department store|flea market|night market|souk/i.test(page.title || "")) ? "buy"
           : "see",
@@ -974,6 +979,245 @@ out center tags 120;`;
   // durable, source-backed anchors used to keep a dynamic result useful when a public endpoint
   // is incomplete or rate limited. Live Wikimedia records still merge into and enrich them.
   const DESTINATION_FALLBACK_PROFILES = [
+    {
+      aliases: ["manila", "manila philippines", "city of manila"],
+      country: ["philippines", "ph"],
+      label: "Manila, Philippines",
+      banner: commonsImageUrl("Rizal Park.jpg", 1200),
+      searchCenters: [
+        { name: "Manila", latitude: 14.5906, longitude: 120.9794 },
+        { name: "Binondo / Divisoria", latitude: 14.6019, longitude: 120.9741 }
+      ],
+      items: [
+        {
+          name: "Rizal Park (Luneta)",
+          aliases: ["Rizal Park", "Luneta Park"],
+          wikipediaTitle: "Rizal Park",
+          type: "see",
+          area: "Ermita",
+          detail: "Manila's landmark national park, centered on the Rizal Monument and well placed for the National Museum complex and Intramuros.",
+          image: commonsImageUrl("Rizal Park.jpg"),
+          lat: 14.5826,
+          lon: 120.9787,
+          seedRank: 140,
+          destinationLead: true,
+          categoryLead: true,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Rizal_Park",
+          sourceId: "wikipedia:rizal-park",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "Intramuros",
+          wikipediaTitle: "Intramuros",
+          type: "see",
+          area: "Intramuros",
+          detail: "Manila's historic walled city, best explored as a compact heritage walk linking plazas, churches, fortifications, and museums.",
+          image: commonsImageUrl("Manila, Intramuros, Philippines.jpg"),
+          lat: 14.5896,
+          lon: 120.9747,
+          seedRank: 132,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Intramuros",
+          sourceId: "wikipedia:intramuros",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "National Museum of Fine Arts",
+          wikipediaTitle: "National Museum of Fine Arts (Manila)",
+          type: "see",
+          area: "Ermita",
+          detail: "The flagship fine-arts museum of the National Museum complex, housed in the former Legislative Building near Rizal Park.",
+          image: commonsImageUrl("The National Museum of Fine Arts.jpg"),
+          lat: 14.5869,
+          lon: 120.981,
+          seedRank: 128,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/National_Museum_of_Fine_Arts_(Manila)",
+          sourceId: "wikipedia:national-museum-fine-arts-manila",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "Fort Santiago",
+          wikipediaTitle: "Fort Santiago",
+          type: "see",
+          area: "Intramuros",
+          detail: "A restored citadel at the northern edge of Intramuros with historic gates, riverside grounds, and the Rizal Shrine.",
+          image: commonsImageUrl("Fort Santiago, Intramuros, Manila.jpg"),
+          lat: 14.594,
+          lon: 120.9703,
+          seedRank: 126,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Fort_Santiago",
+          sourceId: "wikipedia:fort-santiago",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "Manila Cathedral",
+          wikipediaTitle: "Manila Cathedral",
+          type: "see",
+          area: "Intramuros",
+          detail: "Intramuros's principal cathedral faces Plaza Roma and pairs naturally with Fort Santiago and nearby heritage streets.",
+          image: commonsImageUrl("Manila Cathedral, Intramuros Manila.jpg"),
+          lat: 14.5919,
+          lon: 120.9737,
+          seedRank: 122,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Manila_Cathedral",
+          sourceId: "wikipedia:manila-cathedral",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "San Agustin Church",
+          wikipediaTitle: "San Agustin Church (Manila)",
+          type: "see",
+          area: "Intramuros",
+          detail: "A UNESCO-listed Baroque church and museum whose architecture and collections anchor an Intramuros heritage day.",
+          image: commonsImageUrl("San Agustin Church, Manila, February 2023.jpg"),
+          lat: 14.5894,
+          lon: 120.9748,
+          seedRank: 120,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/San_Agustin_Church_(Manila)",
+          sourceId: "wikipedia:san-agustin-church-manila",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "The Aristocrat Restaurant",
+          type: "eat",
+          area: "Malate",
+          address: "432 San Andres Street, Malate, Manila",
+          detail: "A long-running Manila institution known for Filipino comfort food and its signature chicken barbecue.",
+          cuisine: "Filipino",
+          order: "Chicken barbecue with java rice, plus classic Filipino shared dishes.",
+          image: commonsImageUrl("The Aristocrat Restaurant, Malate, Manila, Mar 2024.jpg"),
+          lat: 14.5715,
+          lon: 120.987,
+          seedRank: 116,
+          sourceLabel: "Wikimedia Commons",
+          sourceUrl: "https://commons.wikimedia.org/wiki/File:The_Aristocrat_Restaurant,_Malate,_Manila,_Mar_2024.jpg",
+          sourceId: "commons:aristocrat-malate",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Ralff Nestor Nacor / Wikimedia Commons"
+        },
+        {
+          name: "Café Adriatico",
+          aliases: ["Cafe Adriatico"],
+          type: "eat",
+          area: "Malate",
+          address: "Remedios Circle, Malate, Manila",
+          detail: "A landmark Malate café associated with Manila's late-night café culture and a broad menu of Filipino and Spanish-influenced favorites.",
+          cuisine: "Filipino café",
+          order: "Try a Filipino breakfast, arroz caldo, or one of the café's classic house dishes.",
+          image: commonsImageUrl("Cafe Adriatico, Malate, Manila, Mar 2024.jpg"),
+          lat: 14.5711,
+          lon: 120.9907,
+          seedRank: 114,
+          categoryLead: true,
+          sourceLabel: "Wikimedia Commons",
+          sourceUrl: "https://commons.wikimedia.org/wiki/File:Cafe_Adriatico,_Malate,_Manila,_Mar_2024.jpg",
+          sourceId: "commons:cafe-adriatico-malate",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Ralff Nestor Nacor / Wikimedia Commons"
+        },
+        {
+          name: "Ling Nam Wanton Parlor",
+          aliases: ["Ling Nam Wanton Parlor and Noodle Factory"],
+          type: "eat",
+          area: "Binondo",
+          address: "T. Alonzo Street, Binondo, Manila",
+          detail: "A classic Binondo noodle house known for wanton noodles, dumplings, and straightforward Chinese-Filipino comfort food.",
+          cuisine: "Chinese-Filipino noodles",
+          order: "Wanton noodles, dumplings, and asado.",
+          image: commonsImageUrl("ManilaChinatownjf0040 02.JPG"),
+          lat: 14.602,
+          lon: 120.9786,
+          seedRank: 112,
+          sourceLabel: "Wikimedia Commons",
+          sourceUrl: "https://commons.wikimedia.org/wiki/File:ManilaChinatownjf0040_02.JPG",
+          sourceId: "commons:ling-nam-binondo",
+          sourceLicense: "CC BY-SA 3.0",
+          sourceAttribution: "Ramon FVelasquez / Wikimedia Commons"
+        },
+        {
+          name: "Eng Bee Tin Chinese Deli",
+          type: "eat",
+          area: "Binondo",
+          address: "Ongpin Street, Binondo, Manila",
+          detail: "A century-old Binondo deli and bakery best known for hopia, tikoy, mooncakes, and easy-to-pack food gifts.",
+          cuisine: "Chinese-Filipino bakery and deli",
+          order: "Ube hopia, tikoy, mooncakes, or a mixed pastry box.",
+          image: commonsImageUrl("Eng Bee Tin Manila 09.jpg"),
+          seedRank: 110,
+          sourceLabel: "Wikimedia Commons",
+          sourceUrl: "https://commons.wikimedia.org/wiki/File:Eng_Bee_Tin_Manila_09.jpg",
+          sourceId: "commons:eng-bee-tin-food",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "SwarmCheng / Wikimedia Commons"
+        },
+        {
+          name: "Divisoria Market",
+          type: "buy",
+          area: "Divisoria / Binondo",
+          detail: "Manila's high-energy bargain-shopping district, known for wholesale goods, textiles, clothing, household items, and dense market streets.",
+          bestFor: "Bargain shopping, textiles, clothing, household goods, and market browsing",
+          image: commonsImageUrl("Divisoria San Nicolas Binondo Districts 05.jpg"),
+          lat: 14.6058,
+          lon: 120.972,
+          seedRank: 116,
+          categoryLead: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Divisoria",
+          sourceId: "wikipedia:divisoria",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "SM Mall of Asia",
+          wikipediaTitle: "SM Mall of Asia",
+          type: "buy",
+          area: "Bay City, Pasay",
+          detail: "A major waterfront retail and entertainment complex with extensive dining, shopping, and sunset views along Manila Bay.",
+          bestFor: "Mainstream retail, dining, entertainment, and waterfront time",
+          image: commonsImageUrl("SM Mall of Asia, Pasay, Sep 2025 (2).jpg"),
+          lat: 14.5352,
+          lon: 120.9822,
+          seedRank: 114,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/SM_Mall_of_Asia",
+          sourceId: "wikipedia:sm-mall-of-asia",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "Eng Bee Tin Chinese Deli Shop",
+          aliases: ["Eng Bee Tin"],
+          type: "buy",
+          area: "Binondo",
+          detail: "A practical Chinatown stop for hopia, mooncakes, ube pastries, and packaged Filipino-Chinese food gifts.",
+          bestFor: "Edible gifts, hopia, mooncakes, and Binondo specialties",
+          image: commonsImageUrl("Eng Bee Tin Manila 01.jpg"),
+          seedRank: 112,
+          sourceLabel: "Wikimedia Commons",
+          sourceUrl: "https://commons.wikimedia.org/wiki/File:Eng_Bee_Tin_Manila_01.jpg",
+          sourceId: "commons:eng-bee-tin-shop",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "SwarmCheng / Wikimedia Commons"
+        }
+      ]
+    },
     {
       aliases: ["bohol", "bohol philippines"],
       country: ["philippines", "ph"],
@@ -1465,6 +1709,55 @@ out center tags 120;`;
     });
   }
 
+  function isExternalResearchSource(value) {
+    const source = String(value || "").trim();
+    return Boolean(source) && !/^(?:adtona|plantoguide)(?:\b|$)/i.test(source);
+  }
+
+  function isResearchedCatalogItem(item = {}) {
+    const sourceLabels = [
+      item.sourceLabel,
+      item.sourceAttribution,
+      ...(Array.isArray(item.sources)
+        ? item.sources.flatMap((source) => [source?.label, source?.attribution])
+        : [])
+    ];
+    return Boolean(item?.name)
+      && !item.placeholder
+      && !item.researchPrompt
+      && sourceLabels.some(isExternalResearchSource);
+  }
+
+  function catalogResearchQuality(catalog = {}) {
+    const orderedAttractions = catalog.attractions || [];
+    const attractions = orderedAttractions.filter(isResearchedCatalogItem);
+    const food = ["breakfast", "lunch", "dinner"]
+      .flatMap((slot) => catalog.food?.[slot] || [])
+      .filter(isResearchedCatalogItem);
+    const shopping = (catalog.shopping || []).filter(isResearchedCatalogItem);
+    const uniqueCount = (items) => new Set(items.map((item) => slugify(item.name)).filter(Boolean)).size;
+    return {
+      realSee: uniqueCount(attractions),
+      picturedSee: uniqueCount(attractions.filter((item) => usablePlaceImage(item.image))),
+      realEat: uniqueCount(food),
+      realBuy: uniqueCount(shopping),
+      topSeeHasImage: Boolean(usablePlaceImage(orderedAttractions[0]?.image))
+    };
+  }
+
+  // A live result may still be useful when one public source times out, but it must not become
+  // a 30-day, device-specific source of truth unless it has enough named places and a real
+  // leading photo. Thin catalogs remain visible and retryable instead of poisoning the cache.
+  function catalogHasResearchDepth(catalog, destination, geocode) {
+    if (!catalogHasSeededAnchors(catalog, destination, geocode)) return false;
+    const quality = catalogResearchQuality(catalog);
+    return quality.realSee >= 4
+      && quality.picturedSee >= 1
+      && quality.topSeeHasImage
+      && quality.realEat >= 2
+      && quality.realBuy >= 1;
+  }
+
   // Word-boundary matchers so "park" cannot match "ballpark"/"parking" and inflate
   // non-tourist venues (sports arenas were outranking landmarks via substring hits).
   const TOURISM_KEYWORD_MATCHERS = new Map(
@@ -1497,7 +1790,24 @@ out center tags 120;`;
   }
 
   function rankDynamicItems(items = [], destination = "") {
-    return [...items].sort((a, b) => tourismScore(b, destination) - tourismScore(a, destination));
+    return [...items].sort((a, b) => {
+      // A source-backed destination profile can explicitly designate the opening card. Compare
+      // this before volatile pageview/source scores so separate devices cannot choose different
+      // first recommendations merely because one public endpoint returned richer metadata.
+      const destinationLeadDifference = Number(Boolean(b.destinationLead)) - Number(Boolean(a.destinationLead));
+      if (destinationLeadDifference) return destinationLeadDifference;
+      const categoryLeadDifference = Number(Boolean(b.categoryLead)) - Number(Boolean(a.categoryLead));
+      if (categoryLeadDifference) return categoryLeadDifference;
+      const scoreDifference = tourismScore(b, destination) - tourismScore(a, destination);
+      if (scoreDifference) return scoreDifference;
+      const popularityDifference = (Number(b.popularity) || 0) - (Number(a.popularity) || 0);
+      if (popularityDifference) return popularityDifference;
+      const osmScoreDifference = (Number(b.osmScore) || 0) - (Number(a.osmScore) || 0);
+      if (osmScoreDifference) return osmScoreDifference;
+      const imageDifference = Number(Boolean(usablePlaceImage(b.image))) - Number(Boolean(usablePlaceImage(a.image)));
+      if (imageDifference) return imageDifference;
+      return normalizeDestinationText(a.name).localeCompare(normalizeDestinationText(b.name), "en");
+    });
   }
 
   function distributeFoodItems(eatItems = [], destination, fallbackArea) {
@@ -1516,7 +1826,10 @@ out center tags 120;`;
     // into dinner — otherwise lunch is left with only generic filler.
     const flexible = [];
     eatItems.forEach((item) => {
-      const text = `${item.name} ${item.cuisine || ""} ${item.detail || ""}`.toLowerCase();
+      const text = `${item.name} ${item.cuisine || ""} ${item.detail || ""}`
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
       if (/cafe|coffee|bakery|brunch|breakfast|pastry|donut|bagel/.test(text)) pushUnique("breakfast", item);
       else if (/food hall|food court|marketplace|market|hawker|fast food/.test(text)) pushUnique("lunch", item);
       else if (/fine dining|steakhouse|izakaya|wine bar|tasting menu|bistro|trattoria|fine-dining/.test(text)) pushUnique("dinner", item);
@@ -1574,24 +1887,68 @@ out center tags 120;`;
     });
   }
 
+  function itemTypeConfidence(item = {}) {
+    const type = ["see", "eat", "buy"].includes(item.type) ? item.type : "";
+    if (!type) return -1;
+    let confidence = type === "see" ? 0 : 100;
+    if (item.destinationAnchor || item.destinationFallback || item.seeded || Number(item.seedRank) > 0) confidence += 30;
+    if (/openstreetmap/i.test(item.sourceLabel || "")) confidence += 24;
+    if (Number.isInteger(item.wikivoyageRank)) confidence += 20;
+    if (/wikipedia category/i.test(item.sourceLabel || "")) confidence += 16;
+    if (type === "eat" && (item.cuisine || item.order)) confidence += 8;
+    if (type === "buy" && item.bestFor) confidence += 8;
+    return confidence;
+  }
+
+  function mergedItemType(primary = {}, secondary = {}) {
+    const candidates = [primary, secondary]
+      .filter((item) => ["see", "eat", "buy"].includes(item.type))
+      .sort((a, b) => {
+        const confidenceDifference = itemTypeConfidence(b) - itemTypeConfidence(a);
+        if (confidenceDifference) return confidenceDifference;
+        const stablePriority = { eat: 3, buy: 2, see: 1 };
+        return stablePriority[b.type] - stablePriority[a.type];
+      });
+    return candidates[0]?.type || primary.type || secondary.type || "see";
+  }
+
   function mergeItemRecords(primary, secondary) {
     const mergedSources = itemSources({ ...secondary, sources: [...itemSources(primary), ...itemSources(secondary)] });
     const aliases = [...new Set([
       ...(Array.isArray(primary.aliases) ? primary.aliases : []),
       ...(Array.isArray(secondary.aliases) ? secondary.aliases : [])
     ].map((value) => String(value || "").trim()).filter(Boolean))];
+    const earliestWikivoyageRank = [primary.wikivoyageRank, secondary.wikivoyageRank]
+      .filter((value) => Number.isInteger(value))
+      .reduce((lowest, value) => Math.min(lowest, value), Number.POSITIVE_INFINITY);
+    const primaryImage = usablePlaceImage(primary.image);
+    const secondaryImage = usablePlaceImage(secondary.image);
     return {
       ...secondary,
       ...primary,
+      type: mergedItemType(primary, secondary),
       area: primary.area || secondary.area || "",
       detail: primary.detail || secondary.detail || "",
       address: primary.address || secondary.address || "",
       officialUrl: primary.officialUrl || secondary.officialUrl || "",
-      image: usablePlaceImage(primary.image) || usablePlaceImage(secondary.image) || "",
+      image: primaryImage || secondaryImage || "",
+      imageSource: primaryImage
+        ? (primary.imageSource || primary.sourceUrl || "")
+        : secondaryImage
+          ? (secondary.imageSource || secondary.sourceUrl || "")
+          : (primary.imageSource || secondary.imageSource || ""),
+      wikipediaTitle: primary.wikipediaTitle || secondary.wikipediaTitle || "",
       lat: coordinate(primary.lat) ?? coordinate(secondary.lat),
       lon: coordinate(primary.lon) ?? coordinate(secondary.lon),
       aliases,
+      popularity: Math.max(Number(primary.popularity) || 0, Number(secondary.popularity) || 0),
+      rankBoost: Math.max(Number(primary.rankBoost) || 0, Number(secondary.rankBoost) || 0),
+      osmScore: Math.max(Number(primary.osmScore) || 0, Number(secondary.osmScore) || 0),
+      seedRank: Math.max(Number(primary.seedRank) || 0, Number(secondary.seedRank) || 0),
+      ...(Number.isFinite(earliestWikivoyageRank) ? { wikivoyageRank: earliestWikivoyageRank } : {}),
       destinationAnchor: Boolean(primary.destinationAnchor || secondary.destinationAnchor),
+      destinationLead: Boolean(primary.destinationLead || secondary.destinationLead),
+      categoryLead: Boolean(primary.categoryLead || secondary.categoryLead),
       destinationFallback: Boolean(primary.destinationFallback || secondary.destinationFallback),
       sourceLabel: primary.sourceLabel || secondary.sourceLabel || "",
       sourceUrl: primary.sourceUrl || secondary.sourceUrl || "",
@@ -1637,6 +1994,8 @@ out center tags 120;`;
       address: item.address || "",
       officialUrl: item.officialUrl || "",
       image: usablePlaceImage(item.image),
+      imageSource: item.imageSource || "",
+      wikipediaTitle: item.wikipediaTitle || "",
       lat: coordinate(item.lat),
       lon: coordinate(item.lon),
       aliases: Array.isArray(item.aliases) ? [...item.aliases] : [],
@@ -1648,6 +2007,11 @@ out center tags 120;`;
       sources: itemSources(item),
       popularity: Number(item.popularity) || 0,
       rankBoost: Number(item.rankBoost) || 0,
+      osmScore: Number(item.osmScore) || 0,
+      seedRank: Number(item.seedRank) || 0,
+      destinationLead: Boolean(item.destinationLead),
+      categoryLead: Boolean(item.categoryLead),
+      ...(Number.isInteger(item.wikivoyageRank) ? { wikivoyageRank: item.wikivoyageRank } : {}),
       placeholder: Boolean(item.placeholder)
     };
   }
@@ -1773,7 +2137,7 @@ out center tags 120;`;
       if (!geocode) return recordOutcome(null);
       const slug = slugify([geocode.name, geocode.admin1, geocode.country].filter(Boolean).join(" "));
       const cached = dynamicCatalogCache.get(slug);
-      if (cached && catalogHasSeededAnchors(cached, destination, geocode)) {
+      if (cached && catalogHasResearchDepth(cached, destination, geocode)) {
         const matchPattern = cached.matchPattern || destinationMatchPattern([destination, geocode?.name]);
         return recordOutcome({ ...cached, matchPattern, matchFlags: cached.matchFlags || "iu", match: new RegExp(matchPattern, cached.matchFlags || "iu") });
       }
@@ -1796,8 +2160,10 @@ out center tags 120;`;
       const osm = await osmPromise;
       const catalog = assembleDynamicCatalog(destination, geocode, { wikivoyageTitle: voyage.title, wikivoyageItems: voyage.items, wikipediaItems, osmItems: osm });
       if (!catalog) return recordOutcome(null);
-      const cacheable = { ...catalog, match: undefined };
-      dynamicCatalogCache.set(slug, cacheable);
+      if (catalogHasResearchDepth(catalog, destination, geocode)) {
+        const cacheable = { ...catalog, match: undefined };
+        dynamicCatalogCache.set(slug, cacheable);
+      }
       return recordOutcome(catalog);
     } catch (_) {
       return recordOutcome(null);
@@ -1806,7 +2172,7 @@ out center tags 120;`;
     }
   }
 
-  const api = { geocodeDestination, parseWikivoyageListings, stripWikitext, buildDynamicCatalog, dynamicCatalogCache, assembleDynamicCatalog, hasSeededDestinationCatalog, catalogHasSeededAnchors, fetchWikipediaCategoryPlaces, fetchOpenStreetMapRecommendations, slugify, destinationMatchPattern, isWikimediaThrottled, wikimediaRetryAfterMs, noteWikimediaRateLimit, getLastResearchOutcome };
+  const api = { geocodeDestination, parseWikivoyageListings, stripWikitext, buildDynamicCatalog, dynamicCatalogCache, assembleDynamicCatalog, hasSeededDestinationCatalog, catalogHasSeededAnchors, catalogResearchQuality, catalogHasResearchDepth, fetchWikipediaCategoryPlaces, fetchOpenStreetMapRecommendations, slugify, destinationMatchPattern, isWikimediaThrottled, wikimediaRetryAfterMs, noteWikimediaRateLimit, getLastResearchOutcome };
   Object.assign(global, api);
   if (typeof module !== "undefined") module.exports = api;
 })(typeof globalThis !== "undefined" ? globalThis : window);

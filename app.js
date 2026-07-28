@@ -542,7 +542,12 @@ async function ensureDynamicCatalog(destination, options = {}) {
   if (!destination || (existingStatic && !existingStatic.dynamic && !options.enrich) || typeof buildDynamicCatalog !== "function") return existingStatic || null;
   const availableGeocode = destinationResearchState.geocode && sameResearchQuery(destination) ? destinationResearchState.geocode : null;
   const existing = destinationCatalogs.find((catalog) => catalog.dynamic && catalog.match.test(destination));
-  if (existing && (typeof catalogHasSeededAnchors !== "function" || catalogHasSeededAnchors(existing, destination))) {
+  const existingHasEnoughResearch = existing && (
+    typeof catalogHasResearchDepth === "function"
+      ? catalogHasResearchDepth(existing, destination, availableGeocode)
+      : (typeof catalogHasSeededAnchors !== "function" || catalogHasSeededAnchors(existing, destination, availableGeocode))
+  );
+  if (existingHasEnoughResearch) {
     const availableSlug = availableGeocode && typeof slugify === "function" ? slugify([availableGeocode.name, availableGeocode.admin1, availableGeocode.country].filter(Boolean).join(" ")) : null;
     if (!availableSlug || !existing.slug || existing.slug === availableSlug) return existing;
   }
@@ -2197,6 +2202,8 @@ function createSuggestionGroups(destination) {
     address: item.address || "",
     officialUrl: item.officialUrl || "",
     image: item.image || "",
+    imageSource: item.imageSource || "",
+    wikipediaTitle: item.wikipediaTitle || "",
     sourceLabel: item.sourceLabel || "",
     sourceUrl: item.sourceUrl || "",
     sourceId: item.sourceId || "",

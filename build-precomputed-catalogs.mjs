@@ -38,7 +38,7 @@ const PREVIOUS_CATALOGS_URL = process.env.PREVIOUS_CATALOGS_URL
 // hand-written catalogs are authoritative but thin on dining and shopping (~9 eat / 3 shop),
 // and the client merges these researched catalogs into them as enrichment.
 const CITIES = [
-  "London", "Paris", "Tokyo", "New York", "Rome", "Lisbon", "Honolulu", "Vancouver", "Seattle",
+  "London", "Paris", "Tokyo", "Manila", "New York", "Rome", "Lisbon", "Honolulu", "Vancouver", "Seattle",
   "Las Vegas", "Los Angeles", "San Diego", "San Francisco", "Chicago", "Miami", "Orlando",
   "New Orleans", "Boston", "Washington", "Austin", "Nashville", "Denver", "Philadelphia",
   "Barcelona", "Madrid", "Seville", "Amsterdam", "Berlin", "Munich", "Vienna", "Prague",

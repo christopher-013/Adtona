@@ -1,5 +1,15 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.44 consistent live destination catalogs
+
+- Prevents incomplete, imageless public-source results from becoming a
+  device-local 30-day catalog, while keeping thin results visible and retryable.
+- Makes duplicate merging and recommendation tie-breaking deterministic so the
+  same source data produces the same order on desktop and mobile.
+- Adds a source-backed Manila baseline led by Rizal Park, preserves exact
+  Wikipedia image titles through suggestion rendering, and includes Manila in
+  deploy-time precomputed catalogs.
+
 ## v5.3.11 viewport-fit Adventure cards
 
 - Keeps the complete Adventure decision flow inside one standard desktop or
