@@ -7998,3 +7998,96 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
     padding-block: 16px;
   }
 }
+
+/* v5.3.51: One navigation geometry for every post-basics workflow screen.
+   Step 2 already had the intended compact treatment, but Steps 3 and 4 inherited
+   the generic 28px number marker. That made the same four arrows six pixels taller.
+   Keep every dimension that contributes to the row in this final shared rule so
+   active-step styling can change color without changing the menu's size. */
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress,
+.builder.builder-wide .trip-form[data-current-step="3"] .form-progress,
+.builder.builder-wide .trip-form[data-current-step="4"] .form-progress {
+  width: 100%;
+  height: auto;
+  margin: 3px 0 6px;
+  gap: 4px;
+  align-self: start;
+  align-items: start;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress span,
+.builder.builder-wide .trip-form[data-current-step="3"] .form-progress span,
+.builder.builder-wide .trip-form[data-current-step="4"] .form-progress span {
+  height: auto;
+  min-height: 0;
+  padding: 5px 18px 5px 15px;
+  gap: 4px;
+  justify-content: center;
+}
+
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress span b,
+.builder.builder-wide .trip-form[data-current-step="3"] .form-progress span b,
+.builder.builder-wide .trip-form[data-current-step="4"] .form-progress span b {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  font-size: 9px;
+}
+
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small,
+.builder.builder-wide .trip-form[data-current-step="3"] .form-progress span small,
+.builder.builder-wide .trip-form[data-current-step="4"] .form-progress span small {
+  gap: 2px;
+}
+
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small strong,
+.builder.builder-wide .trip-form[data-current-step="3"] .form-progress span small strong,
+.builder.builder-wide .trip-form[data-current-step="4"] .form-progress span small strong {
+  font-size: 10px;
+  line-height: 1.05;
+}
+
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small em,
+.builder.builder-wide .trip-form[data-current-step="3"] .form-progress span small em,
+.builder.builder-wide .trip-form[data-current-step="4"] .form-progress span small em {
+  font-size: 7px;
+  line-height: 1.1;
+}
+
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress,
+  .builder.builder-wide .trip-form[data-current-step="3"] .form-progress,
+  .builder.builder-wide .trip-form[data-current-step="4"] .form-progress {
+    margin: 3px 0 5px;
+    gap: 2px;
+  }
+
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span,
+  .builder.builder-wide .trip-form[data-current-step="3"] .form-progress span,
+  .builder.builder-wide .trip-form[data-current-step="4"] .form-progress span {
+    padding-block: 4px;
+    gap: 2px;
+  }
+
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span b,
+  .builder.builder-wide .trip-form[data-current-step="3"] .form-progress span b,
+  .builder.builder-wide .trip-form[data-current-step="4"] .form-progress span b {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+    font-size: 8px;
+  }
+
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small strong,
+  .builder.builder-wide .trip-form[data-current-step="3"] .form-progress span small strong,
+  .builder.builder-wide .trip-form[data-current-step="4"] .form-progress span small strong {
+    font-size: 8px;
+  }
+
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small em,
+  .builder.builder-wide .trip-form[data-current-step="3"] .form-progress span small em,
+  .builder.builder-wide .trip-form[data-current-step="4"] .form-progress span small em {
+    font-size: 6px;
+  }
+}

@@ -1,5 +1,13 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.51 Consistent workflow navigation
+
+- Uses one shared set of arrow, marker, label, gap, and padding dimensions for
+  the Step 2, Step 3, and Step 4 workflow menus.
+- Keeps the four workflow buttons equal in width and prevents the active step
+  from changing the menu height.
+- Applies the same compact responsive geometry across the workflow on phones.
+
 ## v5.3.50 Verified destinations and typo recovery
 
 - Blocks Adventure until a non-catalog destination resolves through the existing live geocoder.

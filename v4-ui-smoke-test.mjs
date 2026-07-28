@@ -244,6 +244,26 @@ assert.match(styles, /v5\.3\.48:[\s\S]*?wizard-actions\.question-actions[\s\S]{0
 assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?min-height:\s*clamp\(290px,\s*43vh,\s*390px\)[\s\S]*?font-size:\s*clamp\(20px,\s*5\.8vw,\s*24px\)/, "Mobile guided questions must retain a large card and readable heading");
 assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.quick-pick[\s\S]{0,180}?min-height:\s*40px[\s\S]{0,120}?font-size:\s*13px/, "Mobile guided choice buttons must remain easy to tap");
 
+// The shared workflow menu must not resize when the active step changes. Steps 3 and 4
+// once inherited a 28px marker while Adventure used 22px, making their arrows six pixels
+// taller even though the menu contained the same labels.
+const unifiedWorkflowNavigationStyles = styles.slice(styles.indexOf("v5.3.51: One navigation geometry"));
+assert.match(
+  unifiedWorkflowNavigationStyles,
+  /data-current-step="2"\] \.form-progress,\s*[\s\S]{0,180}?data-current-step="3"\] \.form-progress,\s*[\s\S]{0,180}?data-current-step="4"\] \.form-progress\s*\{[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/,
+  "Steps 2, 3, and 4 must share one equal-width four-arrow navigation grid"
+);
+assert.match(
+  unifiedWorkflowNavigationStyles,
+  /data-current-step="2"\] \.form-progress span b,\s*[\s\S]{0,220}?data-current-step="4"\] \.form-progress span b\s*\{[^}]*width:\s*22px[^}]*height:\s*22px[^}]*flex:\s*0 0 22px/,
+  "Desktop workflow markers must use the same 22px geometry on every step"
+);
+assert.match(
+  unifiedWorkflowNavigationStyles,
+  /@media \(max-width:\s*760px\)[\s\S]*?data-current-step="2"\] \.form-progress span b,\s*[\s\S]{0,220}?data-current-step="4"\] \.form-progress span b\s*\{[^}]*width:\s*20px[^}]*height:\s*20px[^}]*flex-basis:\s*20px/,
+  "Mobile workflow markers must use the same 20px geometry on every step"
+);
+
 // Multi-select answers sit on one comma-separated line rather than one per line, so every
 // choice stays visible without scrolling inside the box.
 assert.match(script, /mustDos:\s*\{ mode: "list", sep: ", "/, "Must-do activities must be comma separated");
