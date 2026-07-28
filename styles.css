@@ -7562,3 +7562,10 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
     padding: 4px 7px;
   }
 }
+
+/* The start screen stays clean: the privacy notice belongs to the workflow steps only.
+   Needs to outrank the `.builder .trip-form > p.security-note` display rule above,
+   which is why the step attribute is included here. */
+.builder .trip-form[data-current-step="1"] > p.security-note {
+  display: none;
+}
