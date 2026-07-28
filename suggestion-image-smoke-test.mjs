@@ -3,6 +3,12 @@ import assert from "node:assert/strict";
 import vm from "node:vm";
 
 const source = readFileSync("app.js", "utf8");
+assert.match(source, /const MAX_SUGGESTION_IMAGE_LOOKUPS = 2;/, "Mobile-safe image lookup concurrency must stay bounded");
+assert.match(source, /const maxAttempts = 3;/, "Image API requests must retry transient mobile failures");
+assert.match(source, /setTimeout\(\(\) => controller\.abort\(\), 9000\)/, "Image API requests must have a hard timeout");
+assert.match(source, /suggestionImageMissState/, "Temporary image misses must expire and remain retryable");
+assert.match(source, /catalogImageFailed/, "Failed catalog images must trigger an exact-place recovery lookup");
+assert.match(source, /forceRefresh: true/, "Image recovery must bypass a stale miss cache");
 const helperStart = source.indexOf("const IMAGE_MATCH_STOP_WORDS");
 const helperEnd = source.indexOf("function isRemoteSuggestionImage", helperStart);
 assert.ok(helperStart >= 0 && helperEnd > helperStart, "Suggestion image helper block must remain testable");

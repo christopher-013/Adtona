@@ -271,10 +271,14 @@ const liveWeatherCache = new Map();
 const selectedSuggestions = new Map();
 const rejectedSuggestions = new Map();
 const suggestionImageCache = new Map();
+const suggestionImageMissState = new Map();
 const suggestionImageLookups = new Map();
 const suggestionImageQueue = [];
 let activeSuggestionImageLookups = 0;
-const MAX_SUGGESTION_IMAGE_LOOKUPS = 4;
+// Cellular connections and shared mobile IPs are more likely to trip Wikimedia's rate
+// limits. Two concurrent lookups are still fast enough for the visible card plus prefetch,
+// while being substantially more reliable than the previous burst of four requests.
+const MAX_SUGGESTION_IMAGE_LOOKUPS = 2;
 // URLs whose pixels we've already told the browser to preload, so we don't double-request.
 const preloadedImageUrls = new Set();
 let suggestionLookup = new Map();
@@ -2476,19 +2480,34 @@ function queueSuggestionImageLookup(cacheKey, task) {
 }
 
 async function fetchSuggestionImage(url) {
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    const response = await fetch(url, { headers: { "Api-User-Agent": "Adtona/5.0 (https://christopher-013.github.io/PlanToGuide/)" } });
-    if (response.ok) return response.json();
-    if (response.status === 429) {
-      // Trip the shared Wikimedia circuit breaker instead of retrying into the penalty window.
-      if (typeof noteWikimediaRateLimit === "function") noteWikimediaRateLimit(Number(response.headers.get("Retry-After") || 0));
-      throw new Error("Image lookup rate limited");
+  const maxAttempts = 3;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 9000);
+    try {
+      const response = await fetch(url, {
+        headers: { "Api-User-Agent": "Adtona/5.3 (https://adtona.com/)" },
+        signal: controller.signal
+      });
+      if (response.ok) return response.json();
+      if (response.status === 429) {
+        // Trip the shared Wikimedia circuit breaker instead of retrying into the penalty
+        // window. The card-level retry sweep will resume after Retry-After expires.
+        if (typeof noteWikimediaRateLimit === "function") noteWikimediaRateLimit(Number(response.headers.get("Retry-After") || 0));
+        throw new Error("Image lookup rate limited");
+      }
+      if (attempt >= maxAttempts - 1 || (response.status < 500 && response.status !== 408 && response.status !== 425)) {
+        throw new Error("Image lookup unavailable");
+      }
+    } catch (error) {
+      if (/rate limited/i.test(String(error?.message || ""))) throw error;
+      if (attempt >= maxAttempts - 1) throw error;
+    } finally {
+      clearTimeout(timer);
     }
-    if (attempt === 0 && response.status >= 500) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      continue;
-    }
-    throw new Error("Image lookup unavailable");
+    // A short progressive pause is friendlier to a slow cellular connection and avoids
+    // immediately repeating a request while the public endpoint is recovering.
+    await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
   }
   throw new Error("Image lookup unavailable");
 }
@@ -2553,13 +2572,24 @@ function representativeImageKeyword(suggestion, destination) {
 // (Wikipedia/Commons with a destination-scoped then name-only query), otherwise a
 // representative cuisine/category photo. Result is cached per place; "" means keep the
 // placeholder (and may be retried while rate limited).
-async function resolveSuggestionImage(suggestion, destination) {
+async function resolveSuggestionImage(suggestion, destination, options = {}) {
   if (!suggestion || suggestion.researchPrompt) return { source: "", imageSource: "" };
-  if (isRemoteSuggestionImage(suggestion.image)) return { source: suggestion.image, imageSource: suggestion.imageSource || "catalog" };
+  if (isRemoteSuggestionImage(suggestion.image) && !options.ignoreCatalogImage) {
+    return { source: suggestion.image, imageSource: suggestion.imageSource || "catalog" };
+  }
   const cacheKey = `${suggestion.name}|${destination}`.toLowerCase();
+  if (options.forceRefresh) {
+    suggestionImageCache.delete(cacheKey);
+    suggestionImageMissState.delete(cacheKey);
+  }
   if (suggestionImageCache.has(cacheKey)) {
     const cached = suggestionImageCache.get(cacheKey);
-    return { source: cached || "", imageSource: cached ? "cache" : "" };
+    if (cached) return { source: cached, imageSource: "cache" };
+    const miss = suggestionImageMissState.get(cacheKey);
+    if (miss && Date.now() < miss.retryAt) return { source: "", imageSource: "" };
+    // Empty image results are temporary. Public endpoints can time out or throttle mobile
+    // users, so allow the next retry sweep to query again after a bounded cool-down.
+    suggestionImageCache.delete(cacheKey);
   }
   if (typeof isWikimediaThrottled === "function" && isWikimediaThrottled()) return { source: "", imageSource: "" };
   try {
@@ -2604,6 +2634,7 @@ async function resolveSuggestionImage(suggestion, destination) {
     });
     if (resolved.source) {
       suggestionImageCache.set(cacheKey, resolved.source);
+      suggestionImageMissState.delete(cacheKey);
       return resolved;
     }
     // No generic "representative" keyword photo here on purpose. Searching Commons for a
@@ -2613,7 +2644,15 @@ async function resolveSuggestionImage(suggestion, destination) {
     // caller to draw the bundled category illustration, which is accurate by construction,
     // and the retry sweep still upgrades the card if a real match appears later.
     // Nothing found: cache the miss (unless throttled) so we don't re-hammer the API.
-    if (!(typeof isWikimediaThrottled === "function" && isWikimediaThrottled())) suggestionImageCache.set(cacheKey, "");
+    if (!(typeof isWikimediaThrottled === "function" && isWikimediaThrottled())) {
+      const previousMisses = suggestionImageMissState.get(cacheKey)?.attempts || 0;
+      const attempts = previousMisses + 1;
+      suggestionImageCache.set(cacheKey, "");
+      suggestionImageMissState.set(cacheKey, {
+        attempts,
+        retryAt: Date.now() + Math.min(30_000, 4000 * (2 ** Math.min(attempts - 1, 3)))
+      });
+    }
     return { source: "", imageSource: "" };
   } catch (_) {
     return { source: "", imageSource: "" };
@@ -2639,7 +2678,7 @@ async function warmSuggestionImage(suggestion, destination) {
 }
 
 // Preload the next few unreviewed cards in the deck so advancing feels instant.
-function prefetchSuggestionImages(group, fromPosition, count = 5) {
+function prefetchSuggestionImages(group, fromPosition, count = 3) {
   if (!group || !Array.isArray(group.items)) return;
   const reviewed = new Set((suggestionDeckHistory[activeSuggestionCategory] || []).map((entry) => entry.key));
   const destination = (destinationInput?.value || "").trim();
@@ -2670,11 +2709,34 @@ async function hydrateSuggestionImage(imageElement, suggestion, destination) {
     if (imageElement.dataset.imageSource === "bundled") return;
     applyImage(bundledSuggestionImage(suggestion, destination), "bundled");
   };
-  imageElement.addEventListener("error", showBundledScene);
+  const recoverExactPlaceImage = async () => {
+    showBundledScene();
+    imageElement.dataset.catalogImageFailed = "true";
+    if (suggestion.researchPrompt || imageElement.dataset.imageRecovery === "loading") return;
+    const attempt = Number(imageElement.dataset.imageRecoveryAttempts || 0) + 1;
+    if (attempt > 3) return;
+    imageElement.dataset.imageRecoveryAttempts = String(attempt);
+    imageElement.dataset.imageRecovery = "loading";
+    await new Promise((resolve) => setTimeout(resolve, 700 * attempt));
+    const recoverySuggestion = { ...suggestion, image: "" };
+    const recovered = await resolveSuggestionImage(recoverySuggestion, destination, {
+      ignoreCatalogImage: true,
+      forceRefresh: true
+    });
+    imageElement.dataset.imageRecovery = "ready";
+    if (recovered.source) applyImage(recovered.source, recovered.imageSource);
+    else if (attempt < 3) setTimeout(recoverExactPlaceImage, 1800 * attempt);
+  };
+  imageElement.addEventListener("error", recoverExactPlaceImage);
   if (!isRemoteSuggestionImage(imageElement.currentSrc || imageElement.src)) showBundledScene();
   if (suggestion.researchPrompt) { imageElement.dataset.imageLookup = "ready"; return; }
   imageElement.dataset.imageLookup = "loading";
-  const { source, imageSource } = await resolveSuggestionImage(suggestion, destination);
+  const catalogImageFailed = imageElement.dataset.catalogImageFailed === "true";
+  const { source, imageSource } = await resolveSuggestionImage(
+    catalogImageFailed ? { ...suggestion, image: "" } : suggestion,
+    destination,
+    { ignoreCatalogImage: catalogImageFailed }
+  );
   if (source) {
     applyImage(source, imageSource);
   } else {

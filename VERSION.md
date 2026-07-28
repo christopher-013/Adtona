@@ -1,5 +1,13 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.46 resilient suggestion photos
+
+- Limits concurrent Wikimedia image lookups to reduce mobile rate limiting, retries
+  transient failures with bounded backoff, and gives every lookup a hard timeout.
+- Treats empty image results as temporary and retries them after a cool-down.
+- If a catalog image fails to load, resolves the exact Wikipedia/Commons place
+  image before falling back permanently to the bundled illustration.
+
 ## v5.3.45 bounded production catalog builds
 
 - Bounds deploy-time catalog and image research with hard request and workflow
