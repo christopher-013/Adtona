@@ -7569,3 +7569,57 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
 .builder .trip-form[data-current-step="1"] > p.security-note {
   display: none;
 }
+
+/* The workflow progress menu must never absorb the form's flexible grid row. On phones
+   the row template leaves the progress in a stretchable track, so while the Adventure
+   deck was still loading (short content, tall free space) the chevrons stretched to
+   ~480px and filled the screen. Sizing it to its content keeps the bar compact in every
+   state; `align-items: start` stops the chevrons stretching inside it as well. */
+.trip-form .form-progress {
+  align-self: start;
+  align-items: start;
+}
+
+/* F (small screens): Step 2 runs in "adventure" mode below 680px, which uses a more
+   compact progress bar than the generic one (smaller markers, no sub-labels, tighter
+   padding). Mirror that on Steps 3/4 so the top navigation stays identical there too —
+   without this the bar sat ~18px lower and ~9px taller on Steps 3 and 4. */
+@media (max-width: 680px) {
+  .builder.builder-wide .trip-form[data-current-step="3"],
+  .builder.builder-wide .trip-form[data-current-step="4"] {
+    padding-top: 6px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .form-progress,
+  .builder.builder-wide .trip-form[data-current-step="4"] .form-progress {
+    gap: 2px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .form-progress span,
+  .builder.builder-wide .trip-form[data-current-step="4"] .form-progress span {
+    gap: 3px;
+    padding-block: 4px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .form-progress span b,
+  .builder.builder-wide .trip-form[data-current-step="4"] .form-progress span b {
+    width: 17px;
+    height: 17px;
+    flex-basis: 17px;
+    font-size: 7px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .form-progress span small strong,
+  .builder.builder-wide .trip-form[data-current-step="4"] .form-progress span small strong {
+    font-size: clamp(7px, 2.1vw, 9px);
+    line-height: 1;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .form-progress span small em,
+  .builder.builder-wide .trip-form[data-current-step="4"] .form-progress span small em {
+    display: none;
+  }
+}
+/* Below 680px Step 2 also hides the step-row (its title/counter duplicate the progress
+   bar). Match it on Steps 3/4 so the progress bar sits at the same y on every step. */
+@media (max-width: 680px) {
+  .builder.builder-wide .trip-form[data-current-step="3"] > .step-row,
+  .builder.builder-wide .trip-form[data-current-step="4"] > .step-row {
+    display: none;
+  }
+}

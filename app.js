@@ -2491,13 +2491,6 @@ function prefetchSuggestionImages(group, fromPosition, count = 5) {
 
 async function hydrateSuggestionImage(imageElement, suggestion, destination) {
   if (!imageElement) return;
-  const placeholder = suggestionImagePlaceholder(suggestion);
-  const restorePlaceholder = () => {
-    if (imageElement.dataset.imageSource === "placeholder" && imageElement.src === placeholder) return;
-    imageElement.src = placeholder;
-    imageElement.classList.add("is-placeholder");
-    imageElement.dataset.imageSource = "placeholder";
-  };
   const applyImage = (source, sourceName) => {
     if (!source || !imageElement.isConnected) return;
     imageElement.src = source;
@@ -2505,8 +2498,17 @@ async function hydrateSuggestionImage(imageElement, suggestion, destination) {
     imageElement.classList.toggle("is-fallback", sourceName === "bundled");
     imageElement.dataset.imageSource = sourceName;
   };
-  imageElement.addEventListener("error", restorePlaceholder);
-  if (!isRemoteSuggestionImage(imageElement.currentSrc || imageElement.src)) restorePlaceholder();
+  // Show the bundled category scene straight away rather than bare initials. The live
+  // Wikimedia lookup below is frequently throttled on mobile/cellular, and while it is
+  // pending the card would otherwise sit on initials indefinitely — desktop only looks
+  // right because its lookup resolves fast enough to hide the gap. Flagged as a fallback
+  // so the retry sweep still upgrades it to a real photo once a lookup succeeds.
+  const showBundledScene = () => {
+    if (imageElement.dataset.imageSource === "bundled") return;
+    applyImage(bundledSuggestionImage(suggestion, destination), "bundled");
+  };
+  imageElement.addEventListener("error", showBundledScene);
+  if (!isRemoteSuggestionImage(imageElement.currentSrc || imageElement.src)) showBundledScene();
   if (suggestion.researchPrompt) { imageElement.dataset.imageLookup = "ready"; return; }
   imageElement.dataset.imageLookup = "loading";
   const { source, imageSource } = await resolveSuggestionImage(suggestion, destination);
