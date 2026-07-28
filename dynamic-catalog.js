@@ -344,20 +344,13 @@
     return usablePlaceImage(thumbnail.source);
   }
 
-  // Venues that serve food or drink you sit down with — these belong in "Places to eat"
-  // even when Wikivoyage files them under {{drink}}.
-  const FOOD_SERVING_PATTERN = /\b(caf[eé]|coffee|espresso|tea\s?(?:house|room|shop|stand)?|teahouse|bakery|bakeries|patisserie|p[aâ]tisserie|juice|smoothie|dessert|ice[\s-]?cream|gelato|chocolat|creamery|brunch|breakfast|lunch|dinner|restaurant|bistro|brasserie|diner|eatery|izakaya|tapas|deli|delicatessen|food|dishes|cuisine|menu|meals?)\b/i;
-  // Pure nightlife: dancing, DJs and live music venues rather than somewhere to eat.
-  const NIGHTLIFE_PATTERN = /\b(night\s?club|nightclub|dance\s?floors?|dancefloor|discoth[eè]que|\bdisco\b|\bdjs?\b|clubbing|karaoke|cabaret|strip\s?club|hostess\s?(?:bar|club)|live\s?house|rave|after[\s-]?party|gay\s?bar|dive\s?bar|cocktail\s?lounge)\b/i;
+  // Pure nightlife: dancing, DJs and live music venues rather than somewhere to eat. Bare
+  // "club" is included because venues like "Cafe de Jumpin'" carry a food-sounding name and
+  // only the description reveals what they are.
+  const NIGHTLIFE_PATTERN = /\b(night\s?club|nightclub|dance\s?floors?|dancefloor|discoth[eè]que|\bdisco\b|\bdjs?\b|clubbing|\bclub\b|karaoke|cabaret|strip\s?club|hostess\s?(?:bar|club)|live\s?house|rave|after[\s-]?party|gay\s?bar|dive\s?bar|cocktail\s?lounge)\b/i;
 
   function isNightlifeListing(name = "", description = "") {
     return NIGHTLIFE_PATTERN.test(`${name} ${description}`);
-  }
-
-  function isFoodServingListing(name = "", description = "") {
-    const text = `${name} ${description}`;
-    if (isNightlifeListing(name, description)) return false;
-    return FOOD_SERVING_PATTERN.test(text);
   }
 
   function parseListingTemplate(content, pageTitle) {
@@ -381,8 +374,12 @@
     // Mapping it wholesale onto "eat" listed nightlife under "Places to eat" (a dance club
     // described as having three dance floors, for example). Keep only the food-serving
     // drink listings; drop pure nightlife, which fits none of the see/eat/buy categories.
+    // {{drink}} is Wikivoyage's bar/pub/nightclub section, so nothing from it becomes a
+    // place to eat. Testing the name for food words was not enough: "Cafe de Jumpin'" is a
+    // nightclub whose name merely starts with "Cafe". Places to eat come from the {{eat}}
+    // section, which is also the list travellers recognise.
     const type = /drink/.test(category)
-      ? (isFoodServingListing(name, description) ? "eat" : "")
+      ? ""
       : /eat/.test(category) ? "eat" : /buy/.test(category) ? "buy" : /see|do/.test(category) ? "see" : "";
     if (!type) return null;
     // Belt and braces: a listing filed under {{eat}} that reads purely as nightlife is
@@ -409,13 +406,24 @@
 
   function parseWikivoyageListings(wikitext = "", pageTitle = "") {
     const seen = new Set();
-    return extractTemplates(wikitext).map((template) => parseListingTemplate(template, pageTitle)).filter((item) => {
+    const items = extractTemplates(wikitext).map((template) => parseListingTemplate(template, pageTitle)).filter((item) => {
       if (!item) return false;
       const key = slugify(item.name);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
+    // Wikivoyage sections are written with the best-known places first, so a listing's
+    // position within its own section is a genuine popularity signal. Record it; the
+    // ranker uses it to lead with the opening entries of the Eat list rather than
+    // whichever name happens to score well on keywords.
+    const positions = new Map();
+    items.forEach((item) => {
+      const next = positions.get(item.type) || 0;
+      item.wikivoyageRank = next;
+      positions.set(item.type, next + 1);
+    });
+    return items;
   }
 
   function findDistrictTitles(wikitext = "", pageTitle = "") {
@@ -718,6 +726,18 @@
     return score;
   }
 
+  // OpenStreetMap's wikipedia tag ("en:Dotonbori") names the exact article for a place.
+  // That is an authoritative link rather than a guess, so the app can fetch that page's
+  // photo directly — no title matching, and it fills in cards that would otherwise fall
+  // back to a category illustration.
+  function osmWikipediaTitle(tags = {}) {
+    const value = String(tags.wikipedia || "").trim();
+    if (!value) return "";
+    const match = value.match(/^([a-z-]{2,12}):(.+)$/i);
+    if (match) return match[1].toLowerCase() === "en" ? match[2].trim() : "";
+    return value;
+  }
+
   function osmImage(tags = {}) {
     const commonsValue = String(tags.wikimedia_commons || "").trim();
     if (/^File:/i.test(commonsValue)) return commonsImageUrl(commonsValue);
@@ -768,7 +788,8 @@
         sourceId: `osm:${element.type}/${element.id}`,
         sourceLicense: "ODbL 1.0",
         sourceAttribution: "OpenStreetMap contributors",
-        osmScore: osmPopularityScore(tags)
+        osmScore: osmPopularityScore(tags),
+        wikipediaTitle: osmWikipediaTitle(tags)
       };
     }
     const bestFor = shopLabel(tags);
@@ -788,7 +809,8 @@
       sourceId: `osm:${element.type}/${element.id}`,
       sourceLicense: "ODbL 1.0",
       sourceAttribution: "OpenStreetMap contributors",
-      osmScore: osmPopularityScore(tags)
+      osmScore: osmPopularityScore(tags),
+      wikipediaTitle: osmWikipediaTitle(tags)
     };
   }
 
@@ -1443,6 +1465,11 @@ out center tags 120;`;
     if (destinationName && normalizeDestinationText(text).includes(destinationName)) score += 10;
     if (item.image) score += 8;
     if (/wikipedia|wikivoyage/i.test(item.sourceLabel || "")) score += 4;
+    // Lead with the opening entries of a Wikivoyage section: those are the places the
+    // article's editors put first, and for destinations with no curated catalog they are
+    // the closest thing to a popularity ranking we have. The boost fades after the first
+    // few so it orders the head of the list without dominating the rest.
+    if (Number.isInteger(item.wikivoyageRank)) score += Math.max(0, 72 - (item.wikivoyageRank * 24));
     return score;
   }
 

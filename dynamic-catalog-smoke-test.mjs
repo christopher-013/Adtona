@@ -322,13 +322,30 @@ const categoryWikitext = [
 ].join("\n");
 const categoryItems = api.parseWikivoyageListings(categoryWikitext, "Tokyo");
 const eatNames = categoryItems.filter((item) => item.type === "eat").map((item) => item.name);
-for (const nightlife of ["Club Atom / STUDIO-A", "Blue Note Tokyo", "Karaoke Kan Bar"]) {
-  assert.ok(!eatNames.includes(nightlife), `Nightlife must not be listed as a place to eat: ${nightlife}`);
+// Nothing from the {{drink}} section becomes a place to eat: it is the bar/pub/nightclub
+// list, and a food-sounding name is not evidence ("Cafe de Jumpin'" is an Osaka nightclub).
+for (const drinkListing of ["Club Atom / STUDIO-A", "Blue Note Tokyo", "Cafe de l'Ambre", "Sakura Tea House"]) {
+  assert.ok(!eatNames.includes(drinkListing), `Drink-section listings must not be places to eat: ${drinkListing}`);
 }
-for (const food of ["Cafe de l'Ambre", "Sakura Tea House", "Sukiyabashi Jiro"]) {
-  assert.ok(eatNames.includes(food), `Food-serving listings must remain places to eat: ${food}`);
-}
+assert.ok(!eatNames.includes("Karaoke Kan Bar"), "An {{eat}} listing that reads as nightlife must still be rejected");
+assert.ok(eatNames.includes("Sukiyabashi Jiro"), "Genuine {{eat}} listings must remain places to eat");
 assert.ok(categoryItems.some((item) => item.name === "Senso-ji" && item.type === "see"), "Sights must stay in the see category");
 assert.ok(categoryItems.some((item) => item.name === "Nakamise Shopping Street" && item.type === "buy"), "Shopping must stay in the buy category");
+
+// Wikivoyage lists the best-known places first, so each listing keeps its position within
+// its own section; the ranker leads with the opening Eat entries for uncurated cities.
+const orderWikitext = [
+  "{{eat|name=First Eat|content=Famous restaurant.}}",
+  "{{eat|name=Second Eat|content=Another restaurant.}}",
+  "{{eat|name=Third Eat|content=A third restaurant.}}",
+  "{{see|name=First Sight|content=A landmark.}}"
+].join("\n");
+const ordered = api.parseWikivoyageListings(orderWikitext, "Osaka");
+const orderedEat = ordered.filter((item) => item.type === "eat");
+// Array.from rebuilds the list in this realm: the parsed items come from a vm context, and
+// deepStrictEqual compares prototypes, so a mapped array from there never matches.
+assert.deepEqual(Array.from(orderedEat, (item) => item.wikivoyageRank), [0, 1, 2], "Eat listings must keep their section order");
+assert.equal(ordered.find((item) => item.type === "see").wikivoyageRank, 0, "Section order is tracked per category, not globally");
+assert.ok(orderedEat[0].wikivoyageRank < orderedEat[2].wikivoyageRank, "Earlier Eat listings must outrank later ones");
 
 console.log("dynamic catalog smoke test passed");

@@ -2414,6 +2414,16 @@ async function resolveSuggestionImage(suggestion, destination) {
       // and rely on the Commons name match plus the representative photo below.
       const isEatShop = suggestion.category === "eat" || suggestion.category === "shop";
       let page = null;
+      // 0) An exact article title supplied by the source (OpenStreetMap's wikipedia tag).
+      // This is a stated link rather than a search guess, so it needs no title matching and
+      // resolves in one request — the cheapest way to fill a card that would otherwise show
+      // a category illustration.
+      if (suggestion.wikipediaTitle) {
+        const titleParams = new URLSearchParams({ action: "query", titles: suggestion.wikipediaTitle, prop: "pageimages", piprop: "thumbnail", pithumbsize: "520", format: "json", origin: "*" });
+        const titlePayload = await fetchSuggestionImage(`https://en.wikipedia.org/w/api.php?${titleParams}`);
+        const titledPage = Object.values(titlePayload?.query?.pages || {}).find((entry) => resolvedPageImage(entry));
+        if (titledPage) return { source: resolvedPageImage(titledPage), imageSource: "wikipedia" };
+      }
       // 1) Exact place on Wikipedia (name + destination) — attractions only.
       if (!isEatShop) {
         page = bestMatchingImagePage(await wikiSearch(`${queryName} ${destination}`), matchTarget, destination);
