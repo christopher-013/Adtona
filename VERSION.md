@@ -1,5 +1,11 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.48 Guided-question readability
+
+- Enlarges the active Step 3 and Step 4 question cards so the one-question flow uses the available desktop canvas.
+- Increases question headings, helper copy, fields, quick-pick choices, and Back/Skip/Next controls for easier reading and tapping.
+- Preserves responsive, phone-friendly sizing while keeping the guided card contained within the viewport.
+
 ## v5.3.47 Enter-key wizard navigation
 
 - Routes Enter from the Trip Basics destination or date fields through the same

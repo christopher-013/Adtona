@@ -7820,3 +7820,184 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   overflow-y: hidden;
   resize: none;
 }
+
+/* v5.3.48: Steps 3 and 4 are guided, one-question-at-a-time screens. Use the
+   available canvas for one generous, legible question card instead of preserving
+   the compact six-card-grid dimensions that preceded the guided flow. */
+[data-form-step="3"] .trip-style-grid,
+[data-form-step="4"] .trip-style-grid,
+.builder.builder-wide .trip-form[data-current-step="3"] .trip-style-grid,
+.builder.builder-wide .trip-form[data-current-step="4"] .trip-style-grid {
+  width: min(100%, 960px);
+}
+
+.builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question,
+.builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question,
+[data-form-step="3"] .style-question.is-current-question,
+[data-form-step="4"] .style-question.is-current-question {
+  min-height: clamp(260px, 34vh, 360px);
+  align-content: center;
+  gap: 13px;
+  padding: clamp(28px, 3vw, 38px) clamp(28px, 3.4vw, 44px);
+  border-radius: 28px;
+}
+
+.builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question > span,
+.builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question > span,
+[data-form-step="3"] .style-question.is-current-question > span,
+[data-form-step="4"] .style-question.is-current-question > span {
+  font-size: clamp(21px, 1.55vw, 27px);
+  line-height: 1.18;
+}
+
+.builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question small,
+.builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question small,
+[data-form-step="3"] .style-question.is-current-question small,
+[data-form-step="4"] .style-question.is-current-question small {
+  font-size: clamp(14px, .95vw, 17px);
+  line-height: 1.45;
+}
+
+.builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question input,
+.builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question select,
+.builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question textarea,
+.builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question input,
+.builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question select,
+.builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question textarea,
+[data-form-step="3"] .style-question.is-current-question input,
+[data-form-step="3"] .style-question.is-current-question select,
+[data-form-step="3"] .style-question.is-current-question textarea,
+[data-form-step="4"] .style-question.is-current-question input,
+[data-form-step="4"] .style-question.is-current-question select,
+[data-form-step="4"] .style-question.is-current-question textarea {
+  width: 100%;
+  min-height: 56px;
+  height: 56px;
+  max-height: none;
+  align-self: start;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question .quick-picks,
+.builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question .quick-picks,
+[data-form-step="3"] .style-question.is-current-question .quick-picks,
+[data-form-step="4"] .style-question.is-current-question .quick-picks {
+  gap: 9px;
+  margin-top: 4px;
+}
+
+.builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question .quick-pick,
+.builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question .quick-pick,
+[data-form-step="3"] .style-question.is-current-question .quick-pick,
+[data-form-step="4"] .style-question.is-current-question .quick-pick {
+  min-height: 42px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.builder.builder-wide .trip-form[data-current-step="3"] .wizard-actions.question-actions,
+.builder.builder-wide .trip-form[data-current-step="4"] .wizard-actions.question-actions,
+[data-form-step="3"] .wizard-actions.question-actions,
+[data-form-step="4"] .wizard-actions.question-actions {
+  width: min(100%, 960px);
+  margin-top: 14px;
+}
+
+.builder.builder-wide .trip-form[data-current-step="3"] .wizard-actions.question-actions .primary-button,
+.builder.builder-wide .trip-form[data-current-step="3"] .wizard-actions.question-actions .secondary-button,
+.builder.builder-wide .trip-form[data-current-step="4"] .wizard-actions.question-actions .primary-button,
+.builder.builder-wide .trip-form[data-current-step="4"] .wizard-actions.question-actions .secondary-button,
+[data-form-step="3"] .wizard-actions.question-actions .primary-button,
+[data-form-step="3"] .wizard-actions.question-actions .secondary-button,
+[data-form-step="4"] .wizard-actions.question-actions .primary-button,
+[data-form-step="4"] .wizard-actions.question-actions .secondary-button {
+  min-height: 58px;
+  padding: 13px 24px;
+  border-radius: 13px;
+  font-size: 16px;
+}
+
+.wizard-actions.question-actions .question-skip {
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question {
+    min-height: clamp(290px, 43vh, 390px);
+    gap: 10px;
+    padding: 20px 18px;
+    border-radius: 20px;
+  }
+
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question > span,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question > span {
+    font-size: clamp(20px, 5.8vw, 24px);
+  }
+
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question small,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question small {
+    font-size: 13px;
+  }
+
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question input,
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question select,
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question textarea,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question input,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question select,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question textarea {
+    min-height: 52px;
+    height: 52px;
+    padding: 11px 13px;
+    font-size: 16px;
+  }
+
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question .quick-picks,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question .quick-picks {
+    gap: 7px;
+    margin-top: 2px;
+  }
+
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question .quick-pick,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question .quick-pick {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .builder.builder-wide .trip-form[data-current-step="3"] .wizard-actions.question-actions,
+  .builder.builder-wide .trip-form[data-current-step="4"] .wizard-actions.question-actions {
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .builder.builder-wide .trip-form[data-current-step="3"] .wizard-actions.question-actions .primary-button,
+  .builder.builder-wide .trip-form[data-current-step="3"] .wizard-actions.question-actions .secondary-button,
+  .builder.builder-wide .trip-form[data-current-step="4"] .wizard-actions.question-actions .primary-button,
+  .builder.builder-wide .trip-form[data-current-step="4"] .wizard-actions.question-actions .secondary-button {
+    min-height: 54px;
+    padding: 11px 15px;
+    font-size: 14px;
+  }
+
+  .wizard-actions.question-actions .question-skip {
+    min-height: 42px;
+    padding: 9px 8px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 420px) and (max-height: 720px) {
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question.is-current-question,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question.is-current-question {
+    min-height: 250px;
+    padding-block: 16px;
+  }
+}

@@ -226,6 +226,13 @@ assert.match(script, /function bindQuestionSwipe\(section, step\)/, "The questio
 assert.match(script, /if \(deltaX < 0\) showStepQuestion\(step, questionPosition\[step\] \+ 1\);/, "A left swipe must skip to the next question");
 assert.match(script, /else showStepQuestion\(step, questionPosition\[step\] - 1\)/, "A right swipe must return to the previous question");
 assert.match(styles, /\.style-question\.is-current-question[\s\S]{0,400}?border-radius:\s*22px[\s\S]{0,200}?box-shadow/s, "The question must render as a contained card like the Adventure deck");
+assert.match(styles, /v5\.3\.48:[\s\S]*?width:\s*min\(100%,\s*960px\)/, "Guided question cards must use more of the desktop canvas");
+assert.match(styles, /v5\.3\.48:[\s\S]*?min-height:\s*clamp\(260px,\s*34vh,\s*360px\)/, "Desktop guided questions must render as a larger card");
+assert.match(styles, /v5\.3\.48:[\s\S]*?font-size:\s*clamp\(21px,\s*1\.55vw,\s*27px\)/, "Guided question headings must be comfortably readable");
+assert.match(styles, /v5\.3\.48:[\s\S]*?\.quick-pick[\s\S]{0,180}?min-height:\s*42px[\s\S]{0,120}?font-size:\s*14px/, "Desktop guided choice buttons must have generous tap targets and readable labels");
+assert.match(styles, /v5\.3\.48:[\s\S]*?wizard-actions\.question-actions[\s\S]{0,900}?min-height:\s*58px[\s\S]{0,120}?font-size:\s*16px/, "Desktop guided navigation buttons must be prominent and readable");
+assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?min-height:\s*clamp\(290px,\s*43vh,\s*390px\)[\s\S]*?font-size:\s*clamp\(20px,\s*5\.8vw,\s*24px\)/, "Mobile guided questions must retain a large card and readable heading");
+assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.quick-pick[\s\S]{0,180}?min-height:\s*40px[\s\S]{0,120}?font-size:\s*13px/, "Mobile guided choice buttons must remain easy to tap");
 
 // Multi-select answers sit on one comma-separated line rather than one per line, so every
 // choice stays visible without scrolling inside the box.
