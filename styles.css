@@ -7623,3 +7623,11 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
     display: none;
   }
 }
+
+/* The welcome tagline is an <h1> so search engines have a heading to index, but it must
+   render exactly like the eyebrow it replaced. Generic heading rules would otherwise
+   lighten it to 600 and cap it at 920px, which changed how the line wrapped. */
+.builder .builder-hero-message h1.eyebrow {
+  max-width: none;
+  font-weight: 700;
+}

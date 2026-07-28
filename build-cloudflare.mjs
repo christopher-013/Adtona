@@ -8,6 +8,7 @@ const outputDirectory = path.join(projectRoot, "dist");
 const requiredFiles = [
   "index.html",
   "robots.txt",
+  "sitemap.xml",
   "version.js",
   "catalogs.json",
   "dynamic-catalog.js",

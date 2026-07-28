@@ -23,7 +23,9 @@ const stepTwoHtml = html.slice(stepTwoStart, stepThreeStart);
 
 assert.match(stepOneHtml, /class="builder-brand home-brand-lockup"[\s\S]*?src="adtona-logo\.png"/, "The merged first screen must show the Adtona logo");
 assert.doesNotMatch(stepOneHtml, /Turn your trip plan into a mobile travel guide\./, "The opening screen must omit the redundant large headline");
-assert.match(stepOneHtml, /class="eyebrow">Build a shareable trip website[\s\S]{0,180}?free in your browser\.<\/p>/, "The compact product-value eyebrow must remain on Trip Basics");
+// The tagline is the page's crawlable <h1> as well as the visible eyebrow, so search
+// engines have a headline to index on the landing view.
+assert.match(stepOneHtml, /<h1 class="eyebrow">Build a shareable trip website[\s\S]{0,180}?free in your browser\.<\/h1>/, "The compact product-value eyebrow must remain on Trip Basics as the page heading");
 assert.doesNotMatch(stepOneHtml, /Plan your trip, then/, "The opening screen must omit the secondary tagline");
 assert.match(stepOneHtml, /<label class="sr-only" for="destination">Destination<\/label>/, "The destination control must retain an accessible label");
 assert.doesNotMatch(stepOneHtml, />Where\?</, "The compact first screen must not show a redundant Where heading");
