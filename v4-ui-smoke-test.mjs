@@ -211,3 +211,14 @@ assert.match(script, /function bindQuestionSwipe\(section, step\)/, "The questio
 assert.match(script, /if \(deltaX < 0\) showStepQuestion\(step, questionPosition\[step\] \+ 1\);/, "A left swipe must skip to the next question");
 assert.match(script, /else showStepQuestion\(step, questionPosition\[step\] - 1\)/, "A right swipe must return to the previous question");
 assert.match(styles, /\.style-question\.is-current-question[\s\S]{0,400}?border-radius:\s*22px[\s\S]{0,200}?box-shadow/s, "The question must render as a contained card like the Adventure deck");
+
+// Multi-select answers sit on one comma-separated line rather than one per line, so every
+// choice stays visible without scrolling inside the box.
+assert.match(script, /mustDos:\s*\{ mode: "list", sep: ", "/, "Must-do activities must be comma separated");
+assert.match(script, /avoidList:\s*\{ mode: "list", sep: ", "/, "Things to avoid must be comma separated");
+// Mobility keeps semicolons: one of its options ("Max ~5,000 steps/day") contains a comma,
+// so a comma separator would split that option in half.
+assert.match(script, /mobilityNeeds:\s*\{ mode: "list", sep: "; "/, "Mobility needs must keep its semicolon separator");
+assert.match(script, /parseList\(trip\.preferences\.mustDos\)/, "The packing list must split must-dos on commas as well as newlines");
+assert.match(script, /function autoSizeTextarea\(field\)/, "Multi-select boxes must grow to fit instead of scrolling");
+assert.doesNotMatch(html, /placeholder="One per line"/, "The comma-separated questions must not still say one per line");

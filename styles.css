@@ -7815,3 +7815,8 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
     box-shadow: 0 12px 32px rgba(28, 31, 38, .13);
   }
 }
+/* The comma-separated answers wrap rather than scroll; JS grows the box to fit. */
+[data-form-step="4"] .style-question textarea {
+  overflow-y: hidden;
+  resize: none;
+}

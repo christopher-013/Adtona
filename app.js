@@ -1647,8 +1647,8 @@ const QUICK_PICKS = {
   tripPurpose:      { mode: "set", items: ["First visit", "Return visit", "Anniversary", "Honeymoon", "Birthday", "Family vacation", "Business + leisure", "Foodie trip", "Relaxation"] },
   foodRestrictions: { mode: "list", sep: ", ", exclusive: /^none$/i, items: ["None", "Vegetarian", "Vegan", "Gluten-free", "Nut allergy", "Shellfish allergy", "Dairy-free", "Halal", "Kosher"] },
   mobilityNeeds:    { mode: "list", sep: "; ", exclusive: /^no limits$/i, items: ["No limits", "Prefer less walking", "Step-free access needed", "Frequent rest breaks", "Max ~5,000 steps/day", "Avoid steep hills", "Stroller-friendly"] },
-  mustDos:          { mode: "list", sep: "\n", items: ["Local cuisine", "Iconic landmarks", "Museums & art", "Local markets", "Scenic viewpoints", "Live music", "A day trip"] },
-  avoidList:        { mode: "list", sep: "\n", items: ["Long transit rides", "Big crowds", "Early mornings", "Late nights", "Tourist traps", "Lots of stairs", "Museums"] }
+  mustDos:          { mode: "list", sep: ", ", items: ["Local cuisine", "Iconic landmarks", "Museums & art", "Local markets", "Scenic viewpoints", "Live music", "A day trip"] },
+  avoidList:        { mode: "list", sep: ", ", items: ["Long transit rides", "Big crowds", "Early mornings", "Late nights", "Tourist traps", "Lots of stairs", "Museums"] }
 };
 
 // Curated "best areas to stay" for popular destinations — real visitor-friendly
@@ -1743,7 +1743,17 @@ function applyQuickPick(key, cfg, value) {
     field.value = parts.join(sep === "\n" ? "\n" : sep);
   }
   field.dispatchEvent(new Event("input", { bubbles: true }));
+  autoSizeTextarea(field);
   refreshQuickPickState(key, cfg);
+}
+
+// Grow a textarea to fit its content instead of showing a scrollbar. The multi-select
+// answers are a single comma-separated line, so this keeps every choice visible without
+// the traveler having to scroll inside a two-row box.
+function autoSizeTextarea(field) {
+  if (!field || field.tagName !== "TEXTAREA") return;
+  field.style.height = "auto";
+  field.style.height = `${Math.min(field.scrollHeight, 140)}px`;
 }
 
 function refreshQuickPickState(key, cfg) {
@@ -1780,7 +1790,7 @@ function renderQuickPicks() {
     const field = document.querySelector(`#${key}`);
     if (field && !field.dataset.quickPickBound) {
       field.dataset.quickPickBound = "1";
-      field.addEventListener("input", () => refreshQuickPickState(key, cfg));
+      field.addEventListener("input", () => { refreshQuickPickState(key, cfg); autoSizeTextarea(field); });
     }
     refreshQuickPickState(key, cfg);
   });
@@ -3872,7 +3882,9 @@ function buildPreTripChecklist() {
   items.push({ id: "emergency-offline", text: "Save emergency contacts and home base address offline", sub: (trip.preferences.homeBase ? `Home base: ${trip.preferences.homeBase}. ` : "") + "Local emergency number, embassy, insurance, and lodging address" });
   items.push({ id: "money", text: "Sort out local payment and cash", sub: "Notify your bank, load a travel card, and carry some local currency for transit and small vendors" });
   items.push({ id: "power", text: "Pack chargers, plug adapters, and a power bank", sub: `Bring the right plug adapters for ${trip.destination} plus a power bank for full days out` });
-  String(trip.preferences.mustDos || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean).slice(0, 4).forEach((must, index) => {
+  // parseList accepts commas as well as newlines: must-dos are entered comma separated
+  // now, and a newline-only split would treat the whole answer as a single must-do.
+  parseList(trip.preferences.mustDos).slice(0, 4).forEach((must, index) => {
     items.push({ id: `mustdo-${index}`, text: `Lock in must-do: ${must}`, sub: "Book or confirm this priority so it stays protected in the plan" });
   });
   return items;
