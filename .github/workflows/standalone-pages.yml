@@ -35,11 +35,11 @@ jobs:
         # catalog and merges the previous deploy's good entries, so coverage converges across
         # deploys. A bad research day must degrade coverage, never break the deploy: on a hard
         # crash, fall back to the previous deploy's file rather than shipping an empty one.
-        timeout-minutes: 50
+        timeout-minutes: 15
         run: |
-          node build-precomputed-catalogs.mjs --out precomputed-catalogs.json || echo "::warning::Precompute step failed; falling back to the previous deploy's catalogs."
+          timeout --signal=TERM --kill-after=30s 12m node build-precomputed-catalogs.mjs --out precomputed-catalogs.json || echo "::warning::Precompute step timed out or failed; falling back to the previous deploy's catalogs."
           if [ ! -s precomputed-catalogs.json ]; then
-            curl -fsS -o precomputed-catalogs.json "https://christopher-013.github.io/PlanToGuide/precomputed-catalogs.json" \
+            curl --connect-timeout 10 --max-time 30 -fsS -o precomputed-catalogs.json "https://christopher-013.github.io/Adtona/precomputed-catalogs.json" \
               || echo '{"generatedAt":"","count":0,"precomputedCatalogs":[]}' > precomputed-catalogs.json
           fi
       - name: Assemble standalone site

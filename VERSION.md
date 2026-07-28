@@ -1,5 +1,12 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.45 bounded production catalog builds
+
+- Bounds deploy-time catalog and image research with hard request and workflow
+  timeouts so a slow public source cannot hold a production release indefinitely.
+- Reuses the current Adtona production catalog when a fresh research run is
+  unavailable.
+
 ## v5.3.44 consistent live destination catalogs
 
 - Prevents incomplete, imageless public-source results from becoming a

@@ -28,11 +28,12 @@ import { writeFile } from "node:fs/promises";
 await import("./dynamic-catalog.js");
 const { buildDynamicCatalog, destinationMatchPattern, isWikimediaThrottled, wikimediaRetryAfterMs } = globalThis;
 
-const TOTAL_TIME_BUDGET_MS = 40 * 60 * 1000;
+const TOTAL_TIME_BUDGET_MS = 10 * 60 * 1000;
 const PER_CITY_DELAY_MS = 1500;
 const REFRESH_AFTER_MS = 14 * 24 * 60 * 60 * 1000;
+const BUILD_FETCH_TIMEOUT_MS = 10_000;
 const PREVIOUS_CATALOGS_URL = process.env.PREVIOUS_CATALOGS_URL
-  || "https://christopher-013.github.io/PlanToGuide/precomputed-catalogs.json";
+  || "https://christopher-013.github.io/Adtona/precomputed-catalogs.json";
 
 // Top tourist destinations. Curated catalogs.json cities are included on purpose: their
 // hand-written catalogs are authoritative but thin on dining and shopping (~9 eat / 3 shop),
@@ -64,6 +65,16 @@ function isRealItem(item) {
   return Boolean(label) && !/^plantoguide/i.test(label) && !item?.placeholder;
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = BUILD_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function catalogQuality(catalog) {
   const see = (catalog?.attractions || []).filter((item) => !item?.placeholder);
   const food = catalog?.food || {};
@@ -87,7 +98,7 @@ export function isGoodCatalog(catalog) {
 
 async function loadPreviousGoodCatalogs() {
   try {
-    const response = await fetch(PREVIOUS_CATALOGS_URL, { headers: { "cache-control": "no-cache" } });
+    const response = await fetchWithTimeout(PREVIOUS_CATALOGS_URL, { headers: { "cache-control": "no-cache" } });
     if (!response.ok) return [];
     const data = await response.json();
     const entries = Array.isArray(data?.precomputedCatalogs) ? data.precomputedCatalogs : [];
@@ -152,7 +163,7 @@ async function realPlaceImage(name, city) {
       action: "query", generator: "search", gsrsearch: `${name} ${city}`, gsrlimit: "6",
       prop: "pageimages", piprop: "thumbnail", pithumbsize: "640", format: "json", origin: "*"
     });
-    const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`, {
+    const response = await fetchWithTimeout(`https://en.wikipedia.org/w/api.php?${params}`, {
       headers: { "Api-User-Agent": IMAGE_USER_AGENT }
     });
     if (!response.ok) return "";
