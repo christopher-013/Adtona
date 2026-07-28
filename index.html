@@ -119,7 +119,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=5.3.31">
+  <link rel="stylesheet" href="styles.css?v=5.3.32">
 </head>
 <body>
   <main class="page-shell">
@@ -265,7 +265,7 @@
             <button class="primary-button final-create-button" id="createTripButton" type="submit"><span>Create Your Own Adventure</span><span aria-hidden="true">→</span></button>
           </div>
         </section>
-        <p class="form-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="#feedback" data-open-feedback>send feedback</a></p>
+        <p class="form-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="#feedback" data-open-feedback>send feedback</a> · <a class="privacy-link" href="#privacy" data-open-privacy>Privacy</a></p>
       </form>
     </section>
 
@@ -419,7 +419,7 @@
           <button class="app-nav-button" type="button" data-tab="ai"><span>✦</span><small>AI Export</small></button>
         </nav>
 
-        <p class="form-footnote app-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="#feedback" data-open-feedback>send feedback</a></p>
+        <p class="form-footnote app-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="#feedback" data-open-feedback>send feedback</a> · <a class="privacy-link" href="#privacy" data-open-privacy>Privacy</a></p>
       </div>
     </section>
   </main>
@@ -487,6 +487,15 @@
     </form>
   </dialog>
 
+  <dialog class="export-dialog privacy-dialog" id="privacyDialog" aria-labelledby="privacyDialogTitle">
+    <button class="export-dialog-close" id="privacyDialogClose" type="button" aria-label="Close">×</button>
+    <span class="export-dialog-icon" aria-hidden="true">✓</span>
+    <p class="eyebrow">Public-safe browser mode</p>
+    <h2 id="privacyDialogTitle">Privacy</h2>
+    <p>No API key, account, or usage charges. Your trip answers and saved draft stay on this device.</p>
+    <p>Destination and weather research contacts Open-Meteo, Wikimedia/Wikivoyage, and OpenStreetMap/Overpass, which receive your destination query and connection data.</p>
+  </dialog>
+
   <template id="activityTemplate">
     <article class="activity-card" tabindex="0">
       <div class="activity-time"></div>
@@ -513,13 +522,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=5.3.31"></script>
-  <script src="dynamic-catalog.js?v=5.3.31"></script>
-  <script src="export-styles.js?v=5.3.31"></script>
-  <script src="icon-source.js?v=5.3.31"></script>
-  <script src="photo-store.js?v=5.3.31"></script>
-  <script src="trip-schema.js?v=5.3.31"></script>
-  <script src="beta-tools.js?v=5.3.31"></script>
-  <script src="app.js?v=5.3.31"></script>
+  <script src="version.js?v=5.3.32"></script>
+  <script src="dynamic-catalog.js?v=5.3.32"></script>
+  <script src="export-styles.js?v=5.3.32"></script>
+  <script src="icon-source.js?v=5.3.32"></script>
+  <script src="photo-store.js?v=5.3.32"></script>
+  <script src="trip-schema.js?v=5.3.32"></script>
+  <script src="beta-tools.js?v=5.3.32"></script>
+  <script src="app.js?v=5.3.32"></script>
 </body>
 </html>

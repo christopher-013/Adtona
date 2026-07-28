@@ -789,6 +789,28 @@ function closeExportDialog() {
   else dialog.removeAttribute("open");
 }
 
+// The privacy notice lives behind a footnote link rather than an always-visible card.
+// Delegated so it works from either footnote (builder and generated app view).
+function closePrivacyDialog() {
+  const dialog = document.querySelector("#privacyDialog");
+  if (!dialog) return;
+  if (typeof dialog.close === "function") dialog.close();
+  else dialog.removeAttribute("open");
+}
+
+document.addEventListener("click", (event) => {
+  const link = event.target.closest?.("[data-open-privacy]");
+  if (link) {
+    event.preventDefault();
+    const dialog = document.querySelector("#privacyDialog");
+    if (!dialog) return;
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    return;
+  }
+  if (event.target.closest?.("#privacyDialogClose")) closePrivacyDialog();
+});
+
 async function exportTripPackage() {
   if (!trip) return;
   const exportButton = document.querySelector("#exportTripButton");

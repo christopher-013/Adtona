@@ -2104,6 +2104,7 @@ body:not(.trip-mode) .builder-copy { width: 100%; border: 0; border-radius: 0; }
 .export-button:hover { border-color: var(--gold); color: #101412; background: var(--gold); }
 a.export-button { display: inline-flex; align-items: center; text-decoration: none; }
 .feedback-link { color: var(--forest); font-weight: 700; }
+.privacy-link { color: var(--forest); font-weight: 700; }
 .export-dialog { width: min(520px, calc(100vw - 32px)); padding: 30px; border: 0; border-radius: 18px; color: var(--ink); background: #fffdf8; box-shadow: 0 28px 90px rgba(0,0,0,.34); }
 .export-dialog::backdrop { background: rgba(8,18,15,.66); backdrop-filter: blur(5px); }
 .export-dialog-close { position: absolute; right: 15px; top: 12px; border: 0; color: var(--muted); background: transparent; cursor: pointer; font-size: 25px; }
