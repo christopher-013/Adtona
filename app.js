@@ -1438,7 +1438,11 @@ function showFormStep(stepNumber) {
   if (stepNumber === 3 || stepNumber === 4) renderQuickPicks();
   forceWizardTop();
   requestAnimationFrame(() => {
-    const heading = document.querySelector(`[data-form-step="${stepNumber}"] h1, [data-form-step="${stepNumber}"] h2, [data-form-step="${stepNumber}"] h3`);
+    // Step changes move focus to the step's heading so screen readers announce them. The
+    // welcome tagline is an <h1> for search engines rather than a step title, so it is
+    // excluded — otherwise it took focus on load and rendered with a focus ring around it,
+    // and it also stole focus from the destination field.
+    const heading = document.querySelector(`[data-form-step="${stepNumber}"] h1:not(.eyebrow), [data-form-step="${stepNumber}"] h2, [data-form-step="${stepNumber}"] h3`);
     if (heading) {
       heading.setAttribute("tabindex", "-1");
       heading.focus({ preventScroll: true });

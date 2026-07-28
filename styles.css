@@ -7768,3 +7768,10 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
 .wizard-actions.question-actions [hidden] {
   display: none;
 }
+
+/* Step changes focus the step heading so screen readers announce them. That focus is
+   programmatic, not a keyboard action, so it should not paint a focus ring — :focus-visible
+   keeps the ring for anyone actually tabbing through. */
+.builder [tabindex="-1"]:focus:not(:focus-visible) {
+  outline: none;
+}
