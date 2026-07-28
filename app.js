@@ -3,6 +3,7 @@ const builder = document.querySelector("#builder");
 const result = document.querySelector("#result");
 const destinationInput = document.querySelector("#destination");
 const destinationError = document.querySelector("#destinationError");
+const destinationSuggestionButton = document.querySelector("#destinationSuggestionButton");
 const destinationModeBadge = document.querySelector("#destinationModeBadge");
 const knownDestinationList = document.querySelector("#knownDestinationList");
 const clearDestinationButton = document.querySelector("#clearDestinationButton");
@@ -339,6 +340,7 @@ document.querySelectorAll(".form-progress [data-go-step]").forEach((stage) => {
 destinationInput.addEventListener("input", () => {
   destinationInput.setCustomValidity("");
   destinationError.textContent = "";
+  hideDestinationSuggestion();
   updateDestinationModeBadge();
   updateDestinationClearButton();
 });
@@ -359,6 +361,7 @@ clearDestinationButton?.addEventListener("click", () => {
   destinationInput.value = "";
   destinationInput.setCustomValidity("");
   destinationError.textContent = "";
+  hideDestinationSuggestion();
   updateDestinationModeBadge();
   destinationResearchState = { query: "", geocode: null, status: "idle" };
   if (destinationResearchController) destinationResearchController.abort();
@@ -366,6 +369,18 @@ clearDestinationButton?.addEventListener("click", () => {
   rejectedSuggestions.clear();
   suggestionDestination = "";
   resetSuggestionDeckState();
+  updateDestinationClearButton();
+  destinationInput.focus();
+});
+destinationSuggestionButton?.addEventListener("click", () => {
+  const suggestedDestination = destinationSuggestionButton.dataset.destination || "";
+  if (!suggestedDestination) return;
+  destinationInput.value = suggestedDestination;
+  destinationInput.setCustomValidity("");
+  destinationError.textContent = "";
+  hideDestinationSuggestion();
+  normalizeSelectedDestination();
+  scheduleDestinationResearch();
   updateDestinationClearButton();
   destinationInput.focus();
 });
@@ -404,6 +419,74 @@ function normalizeDestinationName(value) {
 function resolveKnownDestination(value) {
   const normalized = normalizeDestinationName(value);
   return knownDestinations.find((destination) => normalizeDestinationName(destination.label) === normalized || destination.aliases.some((alias) => normalizeDestinationName(alias) === normalized));
+}
+
+function destinationEditDistance(leftValue, rightValue) {
+  const left = normalizeDestinationName(leftValue);
+  const right = normalizeDestinationName(rightValue);
+  if (left === right) return 0;
+  if (!left.length) return right.length;
+  if (!right.length) return left.length;
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  const beforePrevious = previous.slice();
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    const current = [leftIndex];
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const substitutionCost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
+      let distance = Math.min(
+        current[rightIndex - 1] + 1,
+        previous[rightIndex] + 1,
+        previous[rightIndex - 1] + substitutionCost
+      );
+      if (
+        leftIndex > 1
+        && rightIndex > 1
+        && left[leftIndex - 1] === right[rightIndex - 2]
+        && left[leftIndex - 2] === right[rightIndex - 1]
+      ) {
+        distance = Math.min(distance, beforePrevious[rightIndex - 2] + 1);
+      }
+      current[rightIndex] = distance;
+    }
+    beforePrevious.splice(0, beforePrevious.length, ...previous);
+    previous.splice(0, previous.length, ...current);
+  }
+  return previous[right.length];
+}
+
+function suggestKnownDestination(value) {
+  const normalizedInput = normalizeDestinationName(value);
+  if (normalizedInput.length < 4 || resolveKnownDestination(value)) return null;
+  let bestMatch = null;
+  knownDestinations.forEach((destination) => {
+    [destination.label, ...(destination.aliases || [])].forEach((candidate) => {
+      const normalizedCandidate = normalizeDestinationName(candidate);
+      if (!normalizedCandidate) return;
+      const distance = destinationEditDistance(normalizedInput, normalizedCandidate);
+      const comparisonLength = Math.max(normalizedInput.length, normalizedCandidate.length);
+      const allowedDistance = comparisonLength <= 4 ? 1 : comparisonLength <= 8 ? 2 : 3;
+      const ratio = distance / comparisonLength;
+      if (distance > allowedDistance || ratio > 0.28) return;
+      if (!bestMatch || distance < bestMatch.distance || (distance === bestMatch.distance && ratio < bestMatch.ratio)) {
+        bestMatch = { destination, distance, ratio };
+      }
+    });
+  });
+  return bestMatch?.destination || null;
+}
+
+function hideDestinationSuggestion() {
+  if (!destinationSuggestionButton) return;
+  destinationSuggestionButton.hidden = true;
+  destinationSuggestionButton.textContent = "";
+  delete destinationSuggestionButton.dataset.destination;
+}
+
+function showDestinationSuggestion(destination) {
+  if (!destinationSuggestionButton || !destination) return;
+  destinationSuggestionButton.dataset.destination = destination.label;
+  destinationSuggestionButton.textContent = `Use ${destination.label}`;
+  destinationSuggestionButton.hidden = false;
 }
 
 function normalizeSelectedDestination() {
@@ -465,7 +548,8 @@ function scheduleDestinationResearch() {
       const geocode = await geocodeDestination(query, { signal: destinationResearchController.signal });
       if (destinationInput.value.trim() === query && geocode) setLiveResearchState(query, geocode, "geocoded");
       else if (destinationInput.value.trim() === query) setLiveResearchState(query, null, "starter");
-    } catch (_) {
+    } catch (error) {
+      if (error?.name === "AbortError") return;
       if (destinationInput.value.trim() === query) setLiveResearchState(query, null, "starter");
     }
   }, 500);
@@ -493,6 +577,12 @@ function updateDestinationModeBadge() {
   } else if (destinationResearchState.status === "checking" && sameResearchQuery(value)) {
     destinationModeBadge.className = "destination-mode-badge dynamic";
     destinationModeBadge.textContent = "◌ Checking live destination sources…";
+  } else if (destinationResearchState.status === "invalid" && sameResearchQuery(value)) {
+    destinationModeBadge.className = "destination-mode-badge invalid";
+    destinationModeBadge.textContent = "× Destination not found";
+  } else if (destinationResearchState.status === "unavailable" && sameResearchQuery(value)) {
+    destinationModeBadge.className = "destination-mode-badge invalid";
+    destinationModeBadge.textContent = "! Destination verification unavailable";
   } else {
     destinationModeBadge.className = "destination-mode-badge starter";
     destinationModeBadge.textContent = "○ Starter mode: AI-ready research plan and website shell";
@@ -500,21 +590,77 @@ function updateDestinationModeBadge() {
 }
 
 async function goToPreferencesStep() {
-  if (!destinationInput.value.trim()) {
+  const enteredDestination = destinationInput.value.trim();
+  if (!enteredDestination) {
     destinationInput.reportValidity();
     return;
   }
   await catalogReadyPromise;
-  const knownDestination = resolveKnownDestination(destinationInput.value);
+  const knownDestination = resolveKnownDestination(enteredDestination);
   if (knownDestination) {
     destinationInput.value = knownDestination.label;
     destinationError.textContent = "";
+    hideDestinationSuggestion();
     const curatedCatalog = getLiveOrCuratedCatalog(knownDestination.label);
     if (!curatedCatalog) startOrReuseDynamicCatalogResearch(knownDestination.label);
     else if (curatedNeedsEnrichment(knownDestination.label, curatedCatalog)) startOrReuseDynamicCatalogResearch(knownDestination.label, { enrich: true });
   } else {
-    const researchDestination = destinationInput.value.trim();
-    if (getLiveOrCuratedCatalog(researchDestination)) {
+    const typoSuggestion = suggestKnownDestination(enteredDestination);
+    if (typoSuggestion) {
+      clearTimeout(destinationResearchTimer);
+      if (destinationResearchController) destinationResearchController.abort();
+      destinationResearchState = { query: enteredDestination, geocode: null, status: "invalid" };
+      destinationInput.setCustomValidity("Choose the suggested destination or correct the spelling.");
+      destinationError.textContent = `We couldn’t verify “${enteredDestination}”. Did you mean ${typoSuggestion.label}?`;
+      showDestinationSuggestion(typoSuggestion);
+      updateDestinationModeBadge();
+      destinationInput.focus();
+      return;
+    }
+    const researchDestination = enteredDestination;
+    const existingCatalog = getLiveOrCuratedCatalog(researchDestination);
+    let verifiedGeocode = destinationResearchState.geocode && sameResearchQuery(researchDestination)
+      ? destinationResearchState.geocode
+      : null;
+    if (!existingCatalog && !verifiedGeocode && typeof geocodeDestination === "function") {
+      clearTimeout(destinationResearchTimer);
+      if (destinationResearchController) destinationResearchController.abort();
+      destinationResearchState = { query: researchDestination, geocode: null, status: "checking" };
+      destinationError.textContent = `Checking ${researchDestination}…`;
+      hideDestinationSuggestion();
+      updateDestinationModeBadge();
+      destinationInput.setAttribute("aria-busy", "true");
+      const continueButton = document.querySelector("#nextStepButton");
+      if (continueButton) continueButton.disabled = true;
+      destinationResearchController = new AbortController();
+      try {
+        verifiedGeocode = await geocodeDestination(researchDestination, { signal: destinationResearchController.signal });
+      } catch (error) {
+        if (error?.name !== "AbortError") destinationResearchState = { query: researchDestination, geocode: null, status: "unavailable" };
+      } finally {
+        destinationInput.removeAttribute("aria-busy");
+        if (continueButton) continueButton.disabled = false;
+      }
+      if (verifiedGeocode) setLiveResearchState(researchDestination, verifiedGeocode, "geocoded");
+    }
+    if (!existingCatalog && !verifiedGeocode) {
+      destinationResearchState = {
+        query: researchDestination,
+        geocode: null,
+        status: destinationResearchState.status === "unavailable" ? "unavailable" : "invalid"
+      };
+      destinationInput.setCustomValidity("Enter a city, region, or country that can be found.");
+      destinationError.textContent = destinationResearchState.status === "unavailable"
+        ? "We couldn’t verify this destination right now. Check your connection or choose a catalog destination."
+        : `We couldn’t find “${researchDestination}”. Check the spelling or try a nearby city, region, or country.`;
+      hideDestinationSuggestion();
+      updateDestinationModeBadge();
+      destinationInput.focus();
+      return;
+    }
+    destinationInput.setCustomValidity("");
+    hideDestinationSuggestion();
+    if (existingCatalog) {
       destinationError.textContent = "Live research catalog ready. Verify before travel.";
     } else {
       startOrReuseDynamicCatalogResearch(researchDestination);

@@ -1,5 +1,12 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.50 Verified destinations and typo recovery
+
+- Blocks Adventure until a non-catalog destination resolves through the existing live geocoder.
+- Keeps invalid entries such as random letters on Trip Basics with a clear correction message.
+- Suggests a clickable corrected catalog destination for close, common misspellings.
+- Distinguishes “not found” from a temporary destination-verification outage.
+
 ## v5.3.49 Enter-to-continue guided questions
 
 - Maps Enter in active Step 3 and Step 4 fields to the same action as the visible Next button.
