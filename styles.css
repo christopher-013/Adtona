@@ -7720,3 +7720,51 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
     margin-top: 3px;
   }
 }
+
+/* Steps 3 and 4 present one question at a time. Every field stays in the DOM so the
+   trip builder still reads them all; only the current question is visible, which keeps
+   the step readable on a phone instead of a six-card grid. */
+[data-form-step="3"] .style-question,
+[data-form-step="4"] .style-question {
+  display: none;
+}
+[data-form-step="3"] .style-question.is-current-question,
+[data-form-step="4"] .style-question.is-current-question {
+  display: grid;
+}
+[data-form-step="3"] .trip-style-grid,
+[data-form-step="4"] .trip-style-grid {
+  display: block;
+}
+/* Back and Skip sit together on the left, the continue action on the right. */
+.wizard-actions.question-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.wizard-actions.question-actions .primary-button {
+  width: auto;
+  min-width: 0;
+  margin-left: auto;
+  flex: 0 1 auto;
+  gap: 10px;
+  padding-inline: 22px;
+}
+.wizard-actions.question-actions .question-skip {
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.wizard-actions.question-actions .question-skip:hover {
+  color: var(--ink);
+}
+.wizard-actions.question-actions [hidden] {
+  display: none;
+}

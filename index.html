@@ -119,7 +119,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=5.3.33">
+  <link rel="stylesheet" href="styles.css?v=5.3.35">
 </head>
 <body>
   <main class="page-shell">
@@ -245,8 +245,10 @@
             <label class="style-question"><span>Who is traveling?</span><small>Helps tune breaks and activities.</small><select id="tripParty"><option value="solo">Solo</option><option value="couple" selected>Couple</option><option value="family">Family</option><option value="friends">Friends</option></select></label>
             <label class="style-question"><span>When should days begin?</span><small>We will shift the morning schedule.</small><select id="dayStart"><option value="early">Early · around 7:30</option><option value="standard" selected>Standard · around 8:30</option><option value="slow">Slow · around 10:00</option></select></label>
           </div>
-          <div class="wizard-actions final-actions">
+          <div class="wizard-actions final-actions question-actions">
             <button class="secondary-button" id="detailsBackButton" type="button">← Back</button>
+            <button class="text-button question-skip" type="button" data-skip-question>Skip</button>
+            <button class="primary-button question-next" type="button" data-next-question><span class="question-next-label">Next</span><span aria-hidden="true">→</span></button>
             <button class="primary-button final-create-button" id="constraintsStepButton" type="button"><span>Bookings & constraints</span><span aria-hidden="true">→</span></button>
           </div>
         </section>
@@ -260,8 +262,10 @@
             <label class="style-question"><span>Getting around</span><small>Sets route and rest guidance.</small><select id="transportStyle"><option value="transit" selected>Walking + public transit</option><option value="mixed">Transit + taxis</option><option value="low-walking">Keep walking minimal</option></select></label>
             <label class="style-question"><span>Daily budget</span><small>Guides meals and optional experiences.</small><select id="tripBudget"><option value="value">Value conscious</option><option value="balanced" selected>Balanced</option><option value="splurge">Room to splurge</option></select></label>
           </div>
-          <div class="wizard-actions final-actions">
+          <div class="wizard-actions final-actions question-actions">
             <button class="secondary-button" id="constraintsBackButton" type="button">← Back</button>
+            <button class="text-button question-skip" type="button" data-skip-question>Skip</button>
+            <button class="primary-button question-next" type="button" data-next-question><span class="question-next-label">Next</span><span aria-hidden="true">→</span></button>
             <button class="primary-button final-create-button" id="createTripButton" type="submit"><span>Create Your Own Adventure</span><span aria-hidden="true">→</span></button>
           </div>
         </section>
@@ -522,13 +526,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=5.3.33"></script>
-  <script src="dynamic-catalog.js?v=5.3.33"></script>
-  <script src="export-styles.js?v=5.3.33"></script>
-  <script src="icon-source.js?v=5.3.33"></script>
-  <script src="photo-store.js?v=5.3.33"></script>
-  <script src="trip-schema.js?v=5.3.33"></script>
-  <script src="beta-tools.js?v=5.3.33"></script>
-  <script src="app.js?v=5.3.33"></script>
+  <script src="version.js?v=5.3.35"></script>
+  <script src="dynamic-catalog.js?v=5.3.35"></script>
+  <script src="export-styles.js?v=5.3.35"></script>
+  <script src="icon-source.js?v=5.3.35"></script>
+  <script src="photo-store.js?v=5.3.35"></script>
+  <script src="trip-schema.js?v=5.3.35"></script>
+  <script src="beta-tools.js?v=5.3.35"></script>
+  <script src="app.js?v=5.3.35"></script>
 </body>
 </html>

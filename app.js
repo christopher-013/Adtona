@@ -295,6 +295,12 @@ const SUGGESTION_DECISION_EXIT_MS = 500;
 const SUGGESTION_DECISION_SWIPE_HOLD_MS = 0;
 const SUGGESTION_DECISION_SWIPE_EXIT_MS = 440;
 let currentFormStep = 1;
+// Steps 3 and 4 present one question at a time. Declared up here with the rest of the
+// wizard state because showFormStep() runs during start-up, before the question handlers
+// further down are reached — a const declared beside them would still be in its temporal
+// dead zone at that point and would abort the rest of this file.
+const QUESTION_STEPS = [3, 4];
+const questionPosition = { 3: 0, 4: 0 };
 const TRIP_BASICS_BRAND_REPLAY_INTERVAL_MS = 60_000;
 const CREATION_TRANSITION_DURATION_MS = 3600;
 let tripBasicsBrandReplayTimer = 0;
@@ -631,12 +637,57 @@ document.querySelector("#detailsStepButton").addEventListener("click", () => {
   showFormStep(3);
 });
 document.querySelector("#detailsBackButton").addEventListener("click", () => {
+  // Back walks the questions in reverse before it leaves the step.
+  if (questionPosition[3] > 0) { showStepQuestion(3, questionPosition[3] - 1); return; }
   activeSuggestionCategory = 2;
   renderSuggestionCategory();
   showFormStep(2);
 });
 document.querySelector("#constraintsStepButton").addEventListener("click", () => showFormStep(4));
-document.querySelector("#constraintsBackButton").addEventListener("click", () => showFormStep(3));
+document.querySelector("#constraintsBackButton").addEventListener("click", () => {
+  if (questionPosition[4] > 0) { showStepQuestion(4, questionPosition[4] - 1); return; }
+  showFormStep(3);
+});
+
+// Steps 3 and 4 ask one question at a time. Every field stays in the DOM (only its
+// visibility changes), so nothing here affects what getTripPreferences reads — skipping a
+// question simply leaves it at its default.
+function stepQuestions(step) {
+  return Array.from(document.querySelectorAll(`[data-form-step="${step}"] .style-question`));
+}
+
+function questionTitle(question) {
+  return question?.querySelector("span")?.textContent?.trim() || "Next";
+}
+
+function showStepQuestion(step, index) {
+  const questions = stepQuestions(step);
+  if (!questions.length) return;
+  const position = Math.max(0, Math.min(index, questions.length - 1));
+  questionPosition[step] = position;
+  questions.forEach((question, order) => question.classList.toggle("is-current-question", order === position));
+  const section = document.querySelector(`[data-form-step="${step}"]`);
+  const isLast = position === questions.length - 1;
+  const nextButton = section.querySelector("[data-next-question]");
+  const skipButton = section.querySelector("[data-skip-question]");
+  const advanceButton = section.querySelector("#constraintsStepButton, #createTripButton");
+  // The continue button names the question it leads to, so the traveler always knows what
+  // is coming next. On the final question it hands over to the step's own action.
+  if (nextButton) {
+    nextButton.hidden = isLast;
+    const label = nextButton.querySelector(".question-next-label");
+    if (label && !isLast) label.textContent = questionTitle(questions[position + 1]);
+  }
+  if (skipButton) skipButton.hidden = isLast;
+  if (advanceButton) advanceButton.hidden = !isLast;
+}
+
+QUESTION_STEPS.forEach((step) => {
+  const section = document.querySelector(`[data-form-step="${step}"]`);
+  if (!section) return;
+  section.querySelector("[data-next-question]")?.addEventListener("click", () => showStepQuestion(step, questionPosition[step] + 1));
+  section.querySelector("[data-skip-question]")?.addEventListener("click", () => showStepQuestion(step, questionPosition[step] + 1));
+});
 document.querySelector("#clearSelectionsButton").addEventListener("click", () => {
   selectedSuggestions.clear();
   rejectedSuggestions.clear();
@@ -1372,6 +1423,9 @@ function showFormStep(stepNumber) {
     step.hidden = !active;
     step.classList.toggle("active", active);
   });
+  // Steps 3 and 4 present one question at a time; entering the step restores whichever
+  // question the traveler was last on (so Back from Step 4 lands where they left off).
+  if (QUESTION_STEPS.includes(stepNumber)) showStepQuestion(stepNumber, questionPosition[stepNumber]);
   const displayedStep = stepNumber;
   document.querySelectorAll(".form-progress span").forEach((bar, index) => {
     bar.classList.toggle("active", index < displayedStep);

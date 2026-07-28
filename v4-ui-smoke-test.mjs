@@ -182,3 +182,20 @@ const obsoleteZeroSelectionGuard = /if\s*\(\s*!selectedSuggestions\.size\s*&&\s*
 assert.doesNotMatch(script, obsoleteZeroSelectionGuard, "Skipping every card must not dead-end the workflow");
 
 console.log("Merged welcome screen and four-action swipe-deck smoke test passed.");
+
+// Steps 3 and 4 ask one question at a time: the continue button names the question it
+// leads to, and every question can be skipped. Fields stay in the DOM so the trip builder
+// still reads answers given before the traveler moved on.
+assert.match(html, /data-form-step="3"[\s\S]*?data-next-question[\s\S]{0,200}?question-next-label/, "Step 3 must offer a continue button that names the next question");
+assert.match(html, /data-form-step="4"[\s\S]*?data-next-question[\s\S]{0,200}?question-next-label/, "Step 4 must offer a continue button that names the next question");
+assert.equal((html.match(/data-skip-question/g) || []).length, 2, "Both question steps must offer a skip control");
+assert.match(script, /function showStepQuestion\(step, index\)/, "One-question-at-a-time navigation must be implemented");
+assert.match(script, /label\.textContent = questionTitle\(questions\[position \+ 1\]\)/, "The continue button must be labelled with the following question");
+assert.match(styles, /\[data-form-step="3"\] \.style-question,\s*\[data-form-step="4"\] \.style-question\s*\{[^}]*display:\s*none/s, "Only the current question may be visible");
+assert.match(styles, /\.style-question\.is-current-question,\s*\[data-form-step="4"\] \.style-question\.is-current-question\s*\{[^}]*display:\s*grid/s, "The current question must be shown");
+// The wizard state must be declared before showFormStep runs at start-up, or the const is
+// still in its temporal dead zone and the rest of app.js never executes.
+assert.ok(
+  script.indexOf("const QUESTION_STEPS") < script.indexOf("function showFormStep"),
+  "Question-step state must be declared before showFormStep to avoid a start-up TDZ error"
+);
