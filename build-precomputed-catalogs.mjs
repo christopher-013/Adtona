@@ -100,6 +100,90 @@ async function loadPreviousGoodCatalogs() {
   }
 }
 
+// --- Build-time photo resolution ----------------------------------------------------------
+// Resolves each place's OWN photo (the Wikipedia page image for "<name> <city>") server-side,
+// where there is no browser rate limit to trip over. This replaces the old generic keyword
+// baking: a place now gets its real picture or none at all, never a stand-in of somewhere else.
+// It matters most for precomputed cities, whose seeded catalogs carry no images — on mobile the
+// runtime lookups are routinely throttled, so those cards fell back to illustrations.
+const IMAGE_USER_AGENT = "Adtona/5.3 (https://adtona.com/)";
+const IMAGE_STOP_WORDS = new Set([
+  "the", "and", "of", "at", "in", "for", "a", "an", "de", "la", "le",
+  "restaurant", "cafe", "café", "bar", "shop", "store", "market", "hotel",
+  "state", "national", "monument", "park", "museum", "center", "centre", "district"
+]);
+const MAX_BAKED_IMAGES_PER_CITY = 40;
+const IMAGE_TITLE_DISTRACTOR = /\b(high school|elementary|middle school|school|university|college|academy|hospital|airport|railway|metro station|bus station|company|corporation|band|album|song|film|tv series|series|season \d|magazine|newspaper|footballer|football club|basketball|baseball|earthquake|hurricane|typhoon|election|list of)\b/i;
+
+function imageTokens(text = "") {
+  return String(text)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length > 2 && !IMAGE_STOP_WORDS.has(token));
+}
+
+// Accept a page only when its title genuinely names the place. Articles are frequently a
+// shorter form of the catalog name ("Waikiki" for "Waikiki Beach", "Pearl Harbor" for
+// "Pearl Harbor National Memorial"), so one set must contain the other in either direction
+// — requiring every name token to appear rejected those correct matches. The place name's
+// leading token must also be present, which is what keeps "Waikiki Beach Marriott" from
+// matching "Duke Kahanamoku Statue".
+function titleMatchesPlace(title, name, city) {
+  // Places lend their name to other things ("Diamond Head High School"). If the article is
+  // plainly a different kind of entity and the place name never said so, it is not a match.
+  if (IMAGE_TITLE_DISTRACTOR.test(String(title)) && !IMAGE_TITLE_DISTRACTOR.test(String(name))) return false;
+  const cityTokens = new Set(imageTokens(city));
+  const nameTokens = imageTokens(name).filter((token) => !cityTokens.has(token));
+  const titleTokens = imageTokens(title).filter((token) => !cityTokens.has(token));
+  if (!nameTokens.length || !titleTokens.length) return false;
+  if (!titleTokens.includes(nameTokens[0])) return false;
+  const nameSet = new Set(nameTokens);
+  const titleSet = new Set(titleTokens);
+  return titleTokens.every((token) => nameSet.has(token))
+    || nameTokens.every((token) => titleSet.has(token));
+}
+
+async function realPlaceImage(name, city) {
+  if (!name) return "";
+  try {
+    const params = new URLSearchParams({
+      action: "query", generator: "search", gsrsearch: `${name} ${city}`, gsrlimit: "6",
+      prop: "pageimages", piprop: "thumbnail", pithumbsize: "640", format: "json", origin: "*"
+    });
+    const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`, {
+      headers: { "Api-User-Agent": IMAGE_USER_AGENT }
+    });
+    if (!response.ok) return "";
+    const data = await response.json();
+    const pages = Object.values(data?.query?.pages || {})
+      .sort((a, b) => (a.index || 0) - (b.index || 0));
+    for (const page of pages) {
+      const source = page?.thumbnail?.source || "";
+      if (!source) continue;
+      if (/\.svg(?:[?#]|$)/i.test(source)) continue;
+      if (titleMatchesPlace(page.title || "", name, city)) return source;
+    }
+  } catch (_) { /* leave imageless; the app draws its category illustration */ }
+  return "";
+}
+
+async function bakeCatalogImages(catalog, city) {
+  const targets = [];
+  ["breakfast", "lunch", "dinner"].forEach((slot) =>
+    (catalog?.food?.[slot] || []).forEach((item) => { if (item && !item.image && !item.placeholder) targets.push(item); }));
+  (catalog?.shopping || []).forEach((item) => { if (item && !item.image && !item.placeholder) targets.push(item); });
+  (catalog?.attractions || []).forEach((item) => { if (item && !item.image && !item.placeholder) targets.push(item); });
+  let baked = 0;
+  for (const item of targets.slice(0, MAX_BAKED_IMAGES_PER_CITY)) {
+    const source = await realPlaceImage(item.name, city);
+    if (source) { item.image = source; baked += 1; }
+    await new Promise((resolve) => setTimeout(resolve, 120));
+  }
+  return baked;
+}
+
 function previousForCity(previous, city) {
   const lower = city.toLowerCase();
   return previous.find((entry) => String(entry.sourceCity || "").toLowerCase() === lower)
@@ -158,14 +242,13 @@ async function main() {
     try {
       const catalog = await buildDynamicCatalog(city);
       if (catalog && isGoodCatalog(catalog)) {
-        // Deliberately no longer bakes generic "representative" Commons photos onto items
-        // that lack one. Those are keyword searches, not the venue, so they shipped wrong
-        // images for precomputed cities (a random dinner-table snapshot standing in for a
-        // named Tokyo venue). Items keep only their own source image; the app draws its
-        // bundled category illustration when there isn't one.
+        // Bakes each place's OWN photo (never a generic keyword stand-in). Precomputed
+        // cities otherwise ship imageless, because the seeded catalogs carry no images and
+        // the runtime lookups are routinely throttled on mobile.
+        const bakedImages = await bakeCatalogImages(catalog, city);
         catalogs.push({ ...catalog, match: undefined, matchPattern: augmentedMatchPattern(city, catalog), sourceCity: city, builtAt: new Date().toISOString() });
         const quality = catalogQuality(catalog);
-        console.log(`ok: ${city} (see ${quality.realSee} / eat ${quality.realEat} / buy ${quality.realBuy})`);
+        console.log(`ok: ${city} (see ${quality.realSee} / eat ${quality.realEat} / buy ${quality.realBuy} / photos ${bakedImages})`);
       } else if (catalog) {
         rejected.push(city);
         const quality = catalogQuality(catalog);

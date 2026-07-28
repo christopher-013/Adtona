@@ -7631,3 +7631,91 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   max-width: none;
   font-weight: 700;
 }
+
+/* Step 2 on phones: lay the form out as a flex column instead of a fixed row template.
+   The template only declared two rows (auto + 1fr) while three children are visible
+   (brand, progress, deck), so the progress bar took the flexible track — leaving ~208px
+   of dead space under the navigation, and pushing the deck into whatever was left. A
+   flex column sizes the nav to its content and gives the remainder to the deck, whatever
+   the number of visible children, so it cannot regress if a row is shown or hidden. */
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="2"],
+  .builder.builder-wide.builder-adventure .trip-form[data-current-step="2"] {
+    display: flex;
+    flex-direction: column;
+  }
+  .builder.builder-wide.builder-adventure .trip-form[data-current-step="2"] > .workflow-brand,
+  .builder.builder-wide.builder-adventure .trip-form[data-current-step="2"] > .step-row,
+  .builder.builder-wide.builder-adventure .trip-form[data-current-step="2"] > .form-progress,
+  .builder.builder-wide .trip-form[data-current-step="2"] > .workflow-brand,
+  .builder.builder-wide .trip-form[data-current-step="2"] > .step-row,
+  .builder.builder-wide .trip-form[data-current-step="2"] > .form-progress {
+    flex: 0 0 auto;
+  }
+  .builder.builder-wide.builder-adventure .trip-form[data-current-step="2"] > .form-step.active,
+  .builder.builder-wide .trip-form[data-current-step="2"] > .form-step.active {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+}
+
+/* Steps 3/4 on phones: the earlier compression shrank the question text to 7.5-10px to
+   make everything fit. Removing the privacy card freed enough room to put legibility
+   back — the option labels, hints and controls grow, and the Back/Create buttons shrink
+   to pay for it (the buttons were the largest text on the screen). */
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question > span,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question > span {
+    font-size: 13px;
+    line-height: 1.25;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question small,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question small {
+    font-size: 9.5px;
+    line-height: 1.3;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question select,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question select,
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question input,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question input,
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question textarea,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question textarea {
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .quick-picks button,
+  .builder.builder-wide .trip-form[data-current-step="4"] .quick-picks button {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question {
+    gap: 3px;
+    padding: 9px 10px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .wizard-actions .primary-button,
+  .builder.builder-wide .trip-form[data-current-step="4"] .wizard-actions .primary-button,
+  .builder.builder-wide .trip-form[data-current-step="3"] .wizard-actions .secondary-button,
+  .builder.builder-wide .trip-form[data-current-step="4"] .wizard-actions .secondary-button {
+    min-height: 42px;
+    font-size: 11px;
+  }
+}
+/* Tighten only the spacing (not the type) so Step 4's longer question list still fits. */
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="3"] .trip-style-grid,
+  .builder.builder-wide .trip-form[data-current-step="4"] .trip-style-grid {
+    gap: 5px;
+    margin: 4px 0;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .style-question,
+  .builder.builder-wide .trip-form[data-current-step="4"] .style-question {
+    padding: 7px 9px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .quick-picks,
+  .builder.builder-wide .trip-form[data-current-step="4"] .quick-picks {
+    gap: 3px;
+    margin-top: 3px;
+  }
+}
