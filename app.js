@@ -3213,7 +3213,10 @@ function buildTrip(destination, start, end, wishes, selections = [], preferences
       date,
       preferences
     );
-    activities = fillFullDay(activities, { relaxed: 6, balanced: 8, packed: 10 }[preferences.pace] || 8, seenRecommendations, destination, date, preferences, dayZones[index]);
+    // Build toward a complete 9-event day. The real time budget in fillFullDay
+    // naturally settles slower starts at 7 events and standard starts around 8,
+    // while early starts can use all 9 without compressing meals or travel.
+    activities = fillFullDay(activities, 9, seenRecommendations, destination, date, preferences, dayZones[index]);
     activities = assignDistinctActivityIcons(activities, index);
     activities.forEach((item) => { item.status = guide.researchMode || item.researchPrompt ? "Needs verification" : "Recommended"; });
     return {
@@ -3493,13 +3496,13 @@ function createActivities(index, totalDays, ideas, destination, guide, selectedF
 
   const breakfastTime = preferences.start === "early" ? "07:30" : preferences.start === "slow" ? "10:00" : "08:30";
   const morningTime = preferences.start === "early" ? "09:00" : preferences.start === "slow" ? "11:30" : "10:00";
-  const dinnerTime = preferences.evening === "quiet" ? "18:30" : preferences.evening === "nightlife" ? "20:00" : "19:30";
+  const dinnerTime = preferences.evening === "quiet" ? "18:30" : preferences.evening === "nightlife" ? "20:00" : "19:00";
   const zoneNote = zone ? `Today stays centered on ${zone.name}, minimizing cross-city travel.` : "Today follows one compact district.";
   const routeNote = preferences.transport === "low-walking" ? `${zoneNote} Keep walking segments short and use door-to-door transport.` : preferences.transport === "mixed" ? `${zoneNote} Use transit for the main route and a taxi when it saves energy.` : `${zoneNote} Connect nearby stops by walking and public transit.`;
   const priorityNote = (item) => item?.favorite ? " Favorite from your Adventure selections; scheduled before ordinary picks when the route allows." : item?.userSelected ? " Prioritized from your Adventure selections." : "";
   const breakfastActivity = activity("Eat", "☕", breakfastTime, `Breakfast: ${breakfast.name}`, `${breakfast.detail} ${areaText(breakfast)} Allow at least 60 minutes.${priorityNote(breakfast)}`, "Recommended", breakfast);
-  const firstSightActivity = activity(index === 0 ? "Arrival" : "See", index === 0 ? "🧳" : "🏛️", morningTime, firstSight.name, `${firstSight.detail} ${areaText(firstSight)} Allow about 2–3 hours including nearby streets. ${routeNote}${priorityNote(firstSight)}`, "Recommended", firstSight);
-  const lunchActivity = activity("Eat", "🍽️", "12:30", `Lunch: ${lunch.name}`, `${lunch.detail} ${areaText(lunch)} Allow about 90 minutes, including possible queues, and check current opening days.${priorityNote(lunch)}`, "Recommended", lunch);
+  const firstSightActivity = activity(index === 0 ? "Arrival" : "See", index === 0 ? "🧳" : "🏛️", morningTime, firstSight.name, `${firstSight.detail} ${areaText(firstSight)} Allow about 90 minutes, with more time available when the attraction warrants it. ${routeNote}${priorityNote(firstSight)}`, "Recommended", firstSight);
+  const lunchActivity = activity("Eat", "🍽️", "12:30", `Lunch: ${lunch.name}`, `${lunch.detail} ${areaText(lunch)} Allow at least 60 minutes, including possible queues, and check current opening days.${priorityNote(lunch)}`, "Recommended", lunch);
   const dinnerActivity = activity("Evening", "🌙", dinnerTime, `${index === totalDays - 1 ? "Farewell dinner" : "Dinner"}: ${dinner.name}`, `${dinner.detail} ${areaText(dinner)} Allow about 90 minutes. Reserve when possible and verify current hours.${preferences.notes ? ` Plan around this note: ${preferences.notes}.` : ""}${priorityNote(dinner)}`, "Recommended", dinner);
   const secondSightActivity = activity("See", "📍", "14:30", secondSight.name, `${secondSight.detail} ${areaText(secondSight)} Keep the route flexible for transit and photos.${priorityNote(secondSight)}`, "Recommended", secondSight);
   const shopActivity = activity("Shop", "🛍️", "17:00", shop.name, `${shop.detail} ${areaText(shop)} Allow time to browse without crossing the city.${priorityNote(shop)}`, "Recommended", shop);
@@ -3507,6 +3510,13 @@ function createActivities(index, totalDays, ideas, destination, guide, selectedF
   shopActivity._userPriority = Boolean(shop.userSelected);
   secondSightActivity._favoritePriority = Boolean(secondSight.favorite);
   shopActivity._favoritePriority = Boolean(shop.favorite);
+  breakfastActivity.durationMinutes = 60;
+  firstSightActivity.durationMinutes = 90;
+  lunchActivity.durationMinutes = 60;
+  dinnerActivity.durationMinutes = 90;
+  secondSightActivity.durationMinutes = 90;
+  shopActivity.durationMinutes = 60;
+  [breakfastActivity, lunchActivity, dinnerActivity].forEach((item) => { item.mealAnchor = true; });
   const flexiblePlaceActivities = shop.userSelected && !secondSight.userSelected
     ? [shopActivity, secondSightActivity]
     : [secondSightActivity, shopActivity];
@@ -3625,7 +3635,14 @@ function scheduleDayActivities(activities, preferences = {}) {
     if (firstTime !== secondTime) return firstTime - secondTime;
     return first._order - second._order;
   };
-  const isFixed = (item) => /confirmed/i.test(String(item.status || "")) && Number.isFinite(timeToMinutes(item._requestedTime));
+  // Generated meals are real schedule anchors, not merely high-priority items.
+  // This keeps breakfast aligned with the selected day start, lunch between noon
+  // and 2 PM, and dinner between 6 and 8 PM. Confirmed traveler bookings remain
+  // fixed at their supplied times and take precedence over generated flexibility.
+  const isFixed = (item) => (
+    (Boolean(item.mealAnchor) || /confirmed/i.test(String(item.status || "")))
+    && Number.isFinite(timeToMinutes(item._requestedTime))
+  );
   const fixed = input.filter(isFixed).sort(byRequestedTime);
   const flexible = input.filter((item) => !isFixed(item)).sort(byRequestedTime);
   const output = [];
@@ -3680,7 +3697,7 @@ function scheduleDayActivities(activities, preferences = {}) {
   }
 
   const desiredEnd = Math.round(({ quiet: 20.5, flexible: 21.5, nightlife: 23 }[preferences.evening] ?? 21.5) * 60);
-  if (cursor > desiredEnd) {
+  if (cursor > desiredEnd && output.length > 7) {
     const removableCandidates = [...output].reverse().filter((item) => !item.anchor && !/confirmed/i.test(String(item.status || "")) && !["Booking", "Must do"].includes(item.type));
     const removable = removableCandidates.find((item) => !item._userPriority && !item._favoritePriority)
       || removableCandidates.find((item) => !item._favoritePriority)

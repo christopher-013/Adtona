@@ -1,5 +1,13 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.53 Meal-window scheduling and fuller days
+
+- Anchors breakfast to the selected Travel Style start time, lunch at 12:30 PM, and dinner within the selected 6–8 PM evening window.
+- Protects generated meals from being pushed later by flexible activities while continuing to preserve confirmed booking times.
+- Builds toward nine useful daily events, keeps at least seven when the schedule is tight, and retains eight or nine whenever activity and travel time fit.
+- Uses at least 60 minutes for meals, realistic activity durations, travel buffers, and half-hour schedule increments.
+- Adds an itinerary timing regression test covering the meal windows and seven-to-nine event policy.
+
 ## v5.3.52 Destination-isolated recommendations
 
 - Rejects Wikipedia category results whose coordinates or article summary do not match the requested destination.
