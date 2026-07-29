@@ -9,6 +9,8 @@ const requiredFiles = [
   "index.html",
   "robots.txt",
   "sitemap.xml",
+  // IndexNow proves domain ownership by serving this key file, so it must ship.
+  "7d1c404caea77020637baef4b69b0b96.txt",
   "version.js",
   "catalogs.json",
   "dynamic-catalog.js",

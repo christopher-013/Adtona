@@ -50,7 +50,7 @@ jobs:
       - name: Verify artifact contents
         run: |
           missing=0
-          for f in index.html robots.txt sitemap.xml version.js catalogs.json precomputed-catalogs.json dynamic-catalog.js styles.css app.js beta-tools.js trip-schema.js export-styles.js icon-source.js photo-store.js sw.js manifest.webmanifest icons/icon-192.png icons/icon-512.png icons/favicon-32.png adtona-logo.png adtona-mark.png plan-x-guide-centered-compass-morph-clean-x.svg; do
+          for f in index.html robots.txt sitemap.xml 7d1c404caea77020637baef4b69b0b96.txt version.js catalogs.json precomputed-catalogs.json dynamic-catalog.js styles.css app.js beta-tools.js trip-schema.js export-styles.js icon-source.js photo-store.js sw.js manifest.webmanifest icons/icon-192.png icons/icon-512.png icons/favicon-32.png adtona-logo.png adtona-mark.png plan-x-guide-centered-compass-morph-clean-x.svg; do
             if [ ! -f "_site/$f" ]; then
               echo "::error::Missing required file in deployment artifact: $f"
               missing=1
@@ -66,3 +66,13 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Notify search engines
+        # Runs after the deploy so the URL being announced is already live. One IndexNow
+        # ping reaches Bing, Yandex, Seznam and Naver. The Bing URL Submission API needs a
+        # real Webmaster Tools credential, so it is skipped unless the secret is set.
+        # A search-engine ping must never fail a release.
+        continue-on-error: true
+        env:
+          BING_WEBMASTER_API_KEY: ${{ secrets.BING_WEBMASTER_API_KEY }}
+        run: node submit-indexnow.mjs

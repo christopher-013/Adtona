@@ -119,7 +119,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=5.3.59">
+  <link rel="stylesheet" href="styles.css?v=5.3.60">
 </head>
 <body>
   <main class="page-shell">
@@ -271,6 +271,44 @@
         </section>
         <p class="form-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="#feedback" data-open-feedback>send feedback</a> · <a class="privacy-link" href="#privacy" data-open-privacy>Privacy</a></p>
       </form>
+
+      <!-- Crawlable landing content. The wizard is built by JavaScript, so without this a
+           search engine saw only the tagline — and the FAQ structured data in the head had
+           no visible counterpart, which Google requires. It sits below the full-height
+           welcome screen, so the first view is unchanged, and only shows on Trip Basics. -->
+      <section class="landing-about" aria-label="About Adtona">
+        <h2>Adtona is a free AI travel planner</h2>
+        <p class="landing-lede">Build a shareable trip website, printable itinerary, and AI-ready planning file, free in your browser.</p>
+
+        <h3>What Adtona builds for your trip</h3>
+        <ul>
+          <li><strong>A shareable trip website</strong> — a day-by-day guide you can send to whoever is travelling with you.</li>
+          <li><strong>A printable itinerary</strong> — the same plan laid out to read on paper or save offline.</li>
+          <li><strong>An AI-ready planning file</strong> — a source-of-truth document for ChatGPT, Claude, or another assistant to refine, which Adtona can then re-import.</li>
+        </ul>
+
+        <h3>How it works</h3>
+        <ol>
+          <li>Enter your destination and dates.</li>
+          <li>Swipe through real places to see, eat, and shop, keeping the ones you want.</li>
+          <li>Answer a few questions about pace, group, and constraints — every one optional.</li>
+          <li>Adtona builds the day-by-day plan, with weather and practical details to verify.</li>
+        </ol>
+
+        <h3>Questions travellers ask</h3>
+        <dl class="landing-faq">
+          <dt>Is Adtona free to use?</dt>
+          <dd>Yes. Adtona is free and runs in your browser. There is no account to create, no API key to supply, and no usage charges.</dd>
+          <dt>What does Adtona create for my trip?</dt>
+          <dd>Adtona builds a shareable trip website, a printable day-by-day itinerary, and an AI-ready planning file you can hand to ChatGPT, Claude, or another AI assistant to refine.</dd>
+          <dt>Does Adtona store my trip data?</dt>
+          <dd>Your trip answers and saved draft stay on your device. Destination and weather research contacts Open-Meteo, Wikimedia/Wikivoyage, and OpenStreetMap/Overpass, which receive your destination query and connection data.</dd>
+          <dt>Can I use Adtona with ChatGPT or Claude?</dt>
+          <dd>Yes. Adtona exports an AI-ready planning file that acts as a source of truth for your trip, and it can re-import the updated plan an AI assistant returns.</dd>
+        </dl>
+
+        <p class="landing-sources">Destination research draws on Wikipedia, Wikivoyage, OpenStreetMap, and Open-Meteo. Always verify hours, prices, and bookings before you travel.</p>
+      </section>
     </section>
 
     <section class="result" id="result" hidden>
@@ -526,13 +564,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=5.3.59"></script>
-  <script src="dynamic-catalog.js?v=5.3.59"></script>
-  <script src="export-styles.js?v=5.3.59"></script>
-  <script src="icon-source.js?v=5.3.59"></script>
-  <script src="photo-store.js?v=5.3.59"></script>
-  <script src="trip-schema.js?v=5.3.59"></script>
-  <script src="beta-tools.js?v=5.3.59"></script>
-  <script src="app.js?v=5.3.59"></script>
+  <script src="version.js?v=5.3.60"></script>
+  <script src="dynamic-catalog.js?v=5.3.60"></script>
+  <script src="export-styles.js?v=5.3.60"></script>
+  <script src="icon-source.js?v=5.3.60"></script>
+  <script src="photo-store.js?v=5.3.60"></script>
+  <script src="trip-schema.js?v=5.3.60"></script>
+  <script src="beta-tools.js?v=5.3.60"></script>
+  <script src="app.js?v=5.3.60"></script>
 </body>
 </html>
