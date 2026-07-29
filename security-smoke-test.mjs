@@ -132,3 +132,17 @@ pass(!/payload\.email|Contact \(optional\)/.test(feedbackWorker),
   "feedback Worker must not publish contact information");
 
 console.log(`Security smoke test passed (${checks} checks).`);
+
+// Links built from third-party catalog data (Google Maps searches, Wikipedia/Wikivoyage/
+// OpenStreetMap source URLs) are not editorial endorsements, so they carry nofollow as
+// Google advises for untrusted external destinations — and so a spam URL arriving in a
+// data source can never pass authority from this site.
+{
+  const appSource = readFileSync("app.js", "utf8");
+  const externalLinks = appSource.match(/rel="[^"]*noopener noreferrer"/g) || [];
+  pass(externalLinks.length > 0, "Generated external links must set rel");
+  pass(
+    externalLinks.every((rel) => rel.includes("nofollow")),
+    "Every generated external link must be nofollow, noopener and noreferrer"
+  );
+}

@@ -2221,7 +2221,7 @@ function sourceCreditHtml(item = {}) {
   const url = escapeHtml(safeUrl);
   const license = item.sourceLicense ? ` · ${escapeHtml(item.sourceLicense)}` : "";
   const attribution = item.sourceAttribution ? ` · ${escapeHtml(item.sourceAttribution)}` : "";
-  return `<a class="source-credit" href="${url}" target="_blank" rel="noopener noreferrer">Source: ${label}${license}${attribution} ↗</a>`;
+  return `<a class="source-credit" href="${url}" target="_blank" rel="nofollow noopener noreferrer">Source: ${label}${license}${attribution} ↗</a>`;
 }
 
 function sourceCreditElement(item = {}) {
@@ -2315,7 +2315,7 @@ function renderSuggestionDeckCard(group, section) {
   const favorite = Boolean(selectedValue?.favorite);
   const meta = suggestionMeta(suggestion).filter(Boolean).map(escapeHtml).join(" · ");
   const remaining = group.items.length - reviewed.size;
-  deck.innerHTML = `<article class="suggestion-bubble suggestion-swipe-card${selected ? " selected" : ""}${favorite ? " favorite" : ""}" data-suggestion-key="${escapeHtml(suggestion.key)}" tabindex="0" aria-label="${escapeHtml(suggestion.name)}. Swipe right or press the right arrow to include. Swipe left or press the left arrow to skip. Press F or double-tap to favorite."><div class="suggestion-swipe-image-wrap"><img class="suggestion-card-image" src="${escapeHtml(suggestion.image || suggestionImagePlaceholder(suggestion))}" alt="" aria-hidden="true" loading="eager" draggable="false"><span class="suggestion-deck-progress">${reviewed.size + 1} of ${group.items.length}</span></div><div class="suggestion-card-body"><span class="suggestion-card-top"><strong>${escapeHtml(suggestion.name)}</strong></span>${favorite ? '<span class="suggestion-selected-badge favorite">★ Favorite</span>' : selected ? '<span class="suggestion-selected-badge">Already included</span>' : ""}<span class="suggestion-card-meta">${meta}</span><span class="suggestion-card-detail">${escapeHtml(suggestion.detail)}</span><span class="suggestion-card-links">${sourceCreditHtml(suggestion)}<a class="suggestion-map-link" href="${googleMapsSearchUrl(suggestion.name, "", destinationInput.value.trim())}" target="_blank" rel="noopener noreferrer">Verify current details on Google Maps ↗</a></span></div><span class="suggestion-decision-overlay skip" aria-hidden="true"><span>✕</span><strong>Skip</strong></span><span class="suggestion-decision-overlay include" aria-hidden="true"><span>♥</span><strong>Include</strong></span><span class="suggestion-decision-overlay favorite" aria-hidden="true"><span>★</span><strong>Favorite</strong></span></article>`;
+  deck.innerHTML = `<article class="suggestion-bubble suggestion-swipe-card${selected ? " selected" : ""}${favorite ? " favorite" : ""}" data-suggestion-key="${escapeHtml(suggestion.key)}" tabindex="0" aria-label="${escapeHtml(suggestion.name)}. Swipe right or press the right arrow to include. Swipe left or press the left arrow to skip. Press F or double-tap to favorite."><div class="suggestion-swipe-image-wrap"><img class="suggestion-card-image" src="${escapeHtml(suggestion.image || suggestionImagePlaceholder(suggestion))}" alt="" aria-hidden="true" loading="eager" draggable="false"><span class="suggestion-deck-progress">${reviewed.size + 1} of ${group.items.length}</span></div><div class="suggestion-card-body"><span class="suggestion-card-top"><strong>${escapeHtml(suggestion.name)}</strong></span>${favorite ? '<span class="suggestion-selected-badge favorite">★ Favorite</span>' : selected ? '<span class="suggestion-selected-badge">Already included</span>' : ""}<span class="suggestion-card-meta">${meta}</span><span class="suggestion-card-detail">${escapeHtml(suggestion.detail)}</span><span class="suggestion-card-links">${sourceCreditHtml(suggestion)}<a class="suggestion-map-link" href="${googleMapsSearchUrl(suggestion.name, "", destinationInput.value.trim())}" target="_blank" rel="nofollow noopener noreferrer">Verify current details on Google Maps ↗</a></span></div><span class="suggestion-decision-overlay skip" aria-hidden="true"><span>✕</span><strong>Skip</strong></span><span class="suggestion-decision-overlay include" aria-hidden="true"><span>♥</span><strong>Include</strong></span><span class="suggestion-decision-overlay favorite" aria-hidden="true"><span>★</span><strong>Favorite</strong></span></article>`;
   actions.innerHTML = `<button type="button" class="suggestion-action-button suggestion-redo-button suggestion-undo-button"${history.length ? "" : " disabled"} aria-label="Redo last recommendation choice" title="Redo"><span aria-hidden="true">↶</span></button><button type="button" class="suggestion-action-button suggestion-skip-button" aria-label="Skip ${escapeHtml(suggestion.name)}" title="Skip"><span aria-hidden="true">✕</span></button><button type="button" class="suggestion-action-button suggestion-include-button" aria-label="Include ${escapeHtml(suggestion.name)}" title="Include"><span aria-hidden="true">♥</span></button><button type="button" class="suggestion-action-button suggestion-favorite-button" aria-label="Favorite ${escapeHtml(suggestion.name)} and prioritize it earlier" title="Favorite"><span aria-hidden="true">★</span></button>`;
   if (status) status.textContent = `${suggestion.name}. ${remaining} recommendations remain in ${group.label}.`;
 
@@ -4258,7 +4258,7 @@ function renderHomeNextStop(day) {
         <div class="ns-row"><strong>${escapeHtml(name)}</strong><span class="ns-time">${escapeHtml(nextStop.time)}</span></div>
         ${address ? `<p class="ns-addr">📍 ${escapeHtml(address)}</p>` : ""}
       </div>
-      <div class="ns-actions"><a class="ns-btn maps" href="${googleMapsSearchUrl(name, nextStop.area || "")}" target="_blank" rel="noopener noreferrer">🗺️ Open in Maps</a><button type="button" class="ns-btn" data-open-itinerary>📅 Full Day</button></div>
+      <div class="ns-actions"><a class="ns-btn maps" href="${googleMapsSearchUrl(name, nextStop.area || "")}" target="_blank" rel="nofollow noopener noreferrer">🗺️ Open in Maps</a><button type="button" class="ns-btn" data-open-itinerary>📅 Full Day</button></div>
     </article>`;
     container.querySelector("[data-open-itinerary]")?.addEventListener("click", () => switchAppTab("itinerary"));
     return;
@@ -4307,7 +4307,7 @@ function renderHomeNextReservation(day) {
       ${when ? `<p class="nrc-when">${escapeHtml(when)}</p>` : ""}
       ${address ? `<p class="nrc-addr">📍 ${escapeHtml(address)}</p>` : ""}
       ${details ? `<p class="nrc-conf">📋 ${escapeHtml(details)}</p>` : ""}
-      <a class="nrc-maps-btn" href="${googleMapsSearchUrl(next.name, address)}" target="_blank" rel="noopener noreferrer">🗺️ Open in Maps</a>
+      <a class="nrc-maps-btn" href="${googleMapsSearchUrl(next.name, address)}" target="_blank" rel="nofollow noopener noreferrer">🗺️ Open in Maps</a>
     </div>
   </article>`;
 }
@@ -4395,7 +4395,7 @@ function renderHomeEmergency() {
   const isPrompt = entries.length === 1 && entries[0][1] === "Emergency card";
   const homeBase = trip.preferences.homeBase || "";
   const rows = isPrompt ? "" : entries.map(([icon, label, value]) => `<div class="emg-row"><span class="emg-label">${displayIcon(icon)} ${escapeHtml(label)}</span><span class="emg-value">${escapeHtml(value)}</span></div>`).join("");
-  const homeRow = homeBase ? `<div class="emg-row"><span class="emg-label">🏨 Home base</span><span class="emg-value"><a href="${googleMapsSearchUrl(homeBase)}" target="_blank" rel="noopener noreferrer">${escapeHtml(homeBase)} 🗺️</a></span></div>` : "";
+  const homeRow = homeBase ? `<div class="emg-row"><span class="emg-label">🏨 Home base</span><span class="emg-value"><a href="${googleMapsSearchUrl(homeBase)}" target="_blank" rel="nofollow noopener noreferrer">${escapeHtml(homeBase)} 🗺️</a></span></div>` : "";
   container.innerHTML = `<article class="home-widget emergency-widget"><div class="emg-title"><span aria-hidden="true">🚨</span> Emergency Contacts</div>${isPrompt ? `<p class="emg-prompt">${escapeHtml(entries[0][2])}</p>` : rows}${homeRow}</article>`;
 }
 
@@ -4820,7 +4820,7 @@ function renderRouteMapPreview(day) {
   const namedStops = day.activities.map((item) => cleanActivityTitle(item.title)).filter(Boolean);
   const routeUrl = googleMapsDirectionsUrl(namedStops);
   const embedUrl = googleMapsEmbedRouteUrl(namedStops);
-  container.innerHTML = `<section class="route-map-widget"><div class="widget-title"><span>🧭</span><div><p>${escapeHtml(formatDate(day.date, false))}</p><h3>Google Route Map</h3></div><a class="google-maps-link" href="${routeUrl}" target="_blank" rel="noopener noreferrer">Open full Google route ↗</a></div><div class="route-map-grid"><iframe class="google-route-frame" src="${embedUrl}" title="Google map of the ${escapeHtml(formatDate(day.date, false))} itinerary in ${escapeHtml(trip.destination)}" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe><ol>${namedStops.map((name, index) => `<li><span>${displayIcon(day.activities[index].icon)}</span><a href="${googleMapsSearchUrl(name)}" target="_blank" rel="noopener noreferrer"><b>${index + 1}.</b> ${escapeHtml(name)}</a></li>`).join("")}</ol></div><p class="map-estimate-note">The embedded Google map uses today’s ordered itinerary places. Open the full route for live traffic, transit schedules, and detailed turn-by-turn directions.</p></section>`;
+  container.innerHTML = `<section class="route-map-widget"><div class="widget-title"><span>🧭</span><div><p>${escapeHtml(formatDate(day.date, false))}</p><h3>Google Route Map</h3></div><a class="google-maps-link" href="${routeUrl}" target="_blank" rel="nofollow noopener noreferrer">Open full Google route ↗</a></div><div class="route-map-grid"><iframe class="google-route-frame" src="${embedUrl}" title="Google map of the ${escapeHtml(formatDate(day.date, false))} itinerary in ${escapeHtml(trip.destination)}" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe><ol>${namedStops.map((name, index) => `<li><span>${displayIcon(day.activities[index].icon)}</span><a href="${googleMapsSearchUrl(name)}" target="_blank" rel="nofollow noopener noreferrer"><b>${index + 1}.</b> ${escapeHtml(name)}</a></li>`).join("")}</ol></div><p class="map-estimate-note">The embedded Google map uses today’s ordered itinerary places. Open the full route for live traffic, transit schedules, and detailed turn-by-turn directions.</p></section>`;
 }
 
 function googleMapsEmbedRouteUrl(stops) {
@@ -4898,7 +4898,7 @@ function renderMapsList(day) {
 function renderFoodOptions() {
   const container = document.querySelector("#foodList");
   const activeZone = trip.days[activeDay].zone;
-  container.innerHTML = `<div class="selected-date-context"><span>Selected date · ${escapeHtml(activeZone ? activeZone.name : trip.destination)}</span><strong>${formatDate(trip.days[activeDay].date, false)}</strong><a class="google-maps-link" href="${googleMapsSearchUrl(`best restaurants ${activeZone ? activeZone.name : ""}`)}" target="_blank" rel="noopener noreferrer">Discover more on Google Maps ↗</a></div>`;
+  container.innerHTML = `<div class="selected-date-context"><span>Selected date · ${escapeHtml(activeZone ? activeZone.name : trip.destination)}</span><strong>${formatDate(trip.days[activeDay].date, false)}</strong><a class="google-maps-link" href="${googleMapsSearchUrl(`best restaurants ${activeZone ? activeZone.name : ""}`)}" target="_blank" rel="nofollow noopener noreferrer">Discover more on Google Maps ↗</a></div>`;
   [
     { label: "Breakfast", icon: "☕", options: trip.guide.food.breakfast },
     { label: "Lunch", icon: "🥪", options: trip.guide.food.lunch },
@@ -4920,7 +4920,7 @@ function renderFoodOptions() {
 function renderShoppingOptions() {
   const container = document.querySelector("#shopList");
   const activeZone = trip.days[activeDay].zone;
-  container.innerHTML = `<div class="selected-date-context"><span>Selected date · ${escapeHtml(activeZone ? activeZone.name : trip.destination)}</span><strong>${formatDate(trip.days[activeDay].date, false)}</strong><a class="google-maps-link" href="${googleMapsSearchUrl(`best shopping ${activeZone ? activeZone.name : ""}`)}" target="_blank" rel="noopener noreferrer">Discover more on Google Maps ↗</a></div><section class="option-group"><div class="option-group-heading"><span>🛍️</span><div><p>Popular near today’s route</p><h3>Where to shop</h3></div></div><div class="option-card-grid" id="shoppingOptionGrid"></div></section>`;
+  container.innerHTML = `<div class="selected-date-context"><span>Selected date · ${escapeHtml(activeZone ? activeZone.name : trip.destination)}</span><strong>${formatDate(trip.days[activeDay].date, false)}</strong><a class="google-maps-link" href="${googleMapsSearchUrl(`best shopping ${activeZone ? activeZone.name : ""}`)}" target="_blank" rel="nofollow noopener noreferrer">Discover more on Google Maps ↗</a></div><section class="option-group"><div class="option-group-heading"><span>🛍️</span><div><p>Popular near today’s route</p><h3>Where to shop</h3></div></div><div class="option-card-grid" id="shoppingOptionGrid"></div></section>`;
   const grid = container.querySelector("#shoppingOptionGrid");
   rankForZone(trip.guide.shopping, activeZone).slice(0, 3).forEach((option, index) => grid.appendChild(renderRecommendationCard(option, `Shopping option ${index + 1}`, "🛍️")));
   renderUserEntryCards(container, "shop", "Your saved shopping places");
@@ -5019,7 +5019,7 @@ function renderUserEntryCards(container, kind, heading) {
   entries.forEach((item) => {
     const card = document.createElement("article");
     card.className = "user-saved-card";
-    card.innerHTML = `<div><span class="status-tag status-confirmed">Saved</span><h4>${escapeHtml(item.title)}</h4><p>${escapeHtml(item.details || "Traveler-added place")}</p><small>${escapeHtml(item.date || "Date flexible")}</small><a class="google-maps-link" href="${googleMapsSearchUrl(item.title)}" target="_blank" rel="noopener noreferrer">Open in Google Maps ↗</a></div>`;
+    card.innerHTML = `<div><span class="status-tag status-confirmed">Saved</span><h4>${escapeHtml(item.title)}</h4><p>${escapeHtml(item.details || "Traveler-added place")}</p><small>${escapeHtml(item.date || "Date flexible")}</small><a class="google-maps-link" href="${googleMapsSearchUrl(item.title)}" target="_blank" rel="nofollow noopener noreferrer">Open in Google Maps ↗</a></div>`;
     list.appendChild(card);
   });
   container.appendChild(section);
@@ -5032,7 +5032,7 @@ function renderRecommendationCard(option, label, icon) {
   const rating = option.rating ? `<span class="place-fact"><b>⭐ Google rating</b>${escapeHtml(option.rating)} / 5 <em>· verify live</em></span>` : "";
   const address = option.address ? `<span class="place-fact"><b>📍 Address</b>${escapeHtml(option.address)}</span>` : `<span class="place-fact"><b>📍 Area</b>${escapeHtml(option.area || trip.destination)}</span>`;
   const specialty = option.order ? `<span class="place-fact"><b>🥢 What to order</b>${escapeHtml(option.order)}</span>` : option.bestFor ? `<span class="place-fact"><b>🛍️ Best for</b>${escapeHtml(option.bestFor)}</span>` : "";
-  article.innerHTML = `<img class="recommendation-photo" src="${escapeHtml(option.image || suggestionImagePlaceholder({ name: option.name, category }))}" alt="${escapeHtml(`${option.name} in ${trip.destination}`)}" loading="lazy"><span class="recommendation-icon" aria-hidden="true">${displayIcon(icon)}</span><div><span class="recommendation-label">${escapeHtml(label)}</span><h4>${escapeHtml(option.name)}</h4><p>${escapeHtml(option.detail)}</p><div class="place-facts">${rating}${address}${specialty}</div>${sourceCreditHtml(option)}<a class="google-maps-link" href="${googleMapsSearchUrl(option.name, option.address || option.area)}" target="_blank" rel="noopener noreferrer" aria-label="Find ${escapeHtml(option.name)} on Google Maps">Live details on Google Maps ↗</a></div>`;
+  article.innerHTML = `<img class="recommendation-photo" src="${escapeHtml(option.image || suggestionImagePlaceholder({ name: option.name, category }))}" alt="${escapeHtml(`${option.name} in ${trip.destination}`)}" loading="lazy"><span class="recommendation-icon" aria-hidden="true">${displayIcon(icon)}</span><div><span class="recommendation-label">${escapeHtml(label)}</span><h4>${escapeHtml(option.name)}</h4><p>${escapeHtml(option.detail)}</p><div class="place-facts">${rating}${address}${specialty}</div>${sourceCreditHtml(option)}<a class="google-maps-link" href="${googleMapsSearchUrl(option.name, option.address || option.area)}" target="_blank" rel="nofollow noopener noreferrer" aria-label="Find ${escapeHtml(option.name)} on Google Maps">Live details on Google Maps ↗</a></div>`;
   hydrateSuggestionImage(article.querySelector(".recommendation-photo"), { name: option.name, category, image: option.image || "" }, trip.destination);
   return article;
 }
@@ -5046,7 +5046,7 @@ function renderPlanningNote(text) {
 
 function renderCollection(selector, types, emptyText, includeMapLinks = false) {
   const container = document.querySelector(selector);
-  container.innerHTML = includeMapLinks ? `<div class="maps-destination-context"><span>Map context for</span><strong>${escapeHtml(trip.destination)}</strong><a class="google-maps-link" href="${googleMapsSearchUrl(`popular places to see eat and shop`, "")}" target="_blank" rel="noopener noreferrer">Explore ${escapeHtml(trip.destination)} on Google Maps ↗</a></div>` : "";
+  container.innerHTML = includeMapLinks ? `<div class="maps-destination-context"><span>Map context for</span><strong>${escapeHtml(trip.destination)}</strong><a class="google-maps-link" href="${googleMapsSearchUrl(`popular places to see eat and shop`, "")}" target="_blank" rel="nofollow noopener noreferrer">Explore ${escapeHtml(trip.destination)} on Google Maps ↗</a></div>` : "";
   const sourceDays = includeMapLinks ? [{ day: trip.days[activeDay], dayIndex: activeDay }] : trip.days.map((day, dayIndex) => ({ day, dayIndex }));
   const matches = sourceDays.flatMap(({ day, dayIndex }) => day.activities.filter((activity) => types.includes(activity.type)).map((activity) => ({ activity, dayIndex, day })));
   if (!matches.length) {
