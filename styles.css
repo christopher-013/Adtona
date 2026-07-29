@@ -8091,3 +8091,16 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
     font-size: 6px;
   }
 }
+
+/* The four dropdown questions are presented as the same tappable bubbles every other
+   question uses. The <select> stays in the DOM as the value of record — everything that
+   reads the answer is unchanged — but the chips are what the traveler sees and operates. */
+.style-question select.has-bubbles {
+  display: none;
+}
+.style-question .select-bubbles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 0;
+}

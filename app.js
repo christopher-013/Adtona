@@ -811,7 +811,9 @@ document.querySelector("#detailsBackButton").addEventListener("click", () => {
 document.querySelector("#constraintsStepButton").addEventListener("click", () => showFormStep(4));
 document.querySelector("#constraintsBackButton").addEventListener("click", () => {
   if (questionPosition[4] > 0) { showStepQuestion(4, questionPosition[4] - 1); return; }
-  showFormStep(3);
+  // Stepping back out of Constraints continues the reverse walk on the Travel style
+  // question the traveler was last on, rather than restarting that step.
+  showFormStep(3, { resumeQuestion: true });
 });
 
 // Steps 3 and 4 ask one question at a time. Every field stays in the DOM (only its
@@ -865,9 +867,52 @@ QUESTION_STEPS.forEach((step) => {
   // Picking from a dropdown is a complete answer, so move on as well.
   section.querySelectorAll(".style-question select").forEach((select) => {
     select.addEventListener("change", () => advanceQuestionAfterChoice(select));
+    renderSelectBubbles(select);
   });
   bindQuestionSwipe(section, step);
 });
+
+// Every other question offers its answers as tappable bubbles, so the dropdowns looked and
+// behaved differently for no reason. Each select keeps its place in the DOM — it stays the
+// value everything else reads — but is presented as the same chips, so choosing one also
+// advances the question exactly like a quick pick.
+function renderSelectBubbles(select) {
+  if (!select || select.dataset.bubblesBound === "1") return;
+  select.dataset.bubblesBound = "1";
+  const container = document.createElement("div");
+  container.className = "quick-picks select-bubbles";
+  container.setAttribute("aria-label", select.closest(".style-question")?.querySelector("span")?.textContent?.trim() || "Choices");
+  const options = Array.from(select.options);
+  options.forEach((option) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "quick-pick";
+    chip.dataset.value = option.value;
+    chip.textContent = option.textContent;
+    chip.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      select.value = option.value;
+      syncSelectBubbles(select);
+      // Dispatch so the existing change listener applies the answer and advances.
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    container.appendChild(chip);
+  });
+  select.insertAdjacentElement("afterend", container);
+  select.classList.add("has-bubbles");
+  select.addEventListener("change", () => syncSelectBubbles(select));
+  syncSelectBubbles(select);
+}
+
+function syncSelectBubbles(select) {
+  const container = select?.parentElement?.querySelector(".select-bubbles");
+  if (!container) return;
+  container.querySelectorAll(".quick-pick").forEach((chip) => {
+    chip.classList.toggle("is-active", chip.dataset.value === select.value);
+    chip.setAttribute("aria-pressed", chip.dataset.value === select.value ? "true" : "false");
+  });
+}
 
 // Answering advances to the next question. A short pause lets the traveler see their
 // choice register before the card changes. On the last question there is nowhere further
@@ -1675,7 +1720,7 @@ function showStartSplash(options = {}) {
   scheduleTripBasicsBrandReplay();
 }
 
-function showFormStep(stepNumber) {
+function showFormStep(stepNumber, options = {}) {
   currentFormStep = stepNumber;
   window.ptgTrack?.(`step_reached_${stepNumber}`);
   builder.classList.toggle("builder-wide", stepNumber > 1);
@@ -1687,9 +1732,13 @@ function showFormStep(stepNumber) {
     step.hidden = !active;
     step.classList.toggle("active", active);
   });
-  // Steps 3 and 4 present one question at a time; entering the step restores whichever
-  // question the traveler was last on (so Back from Step 4 lands where they left off).
-  if (QUESTION_STEPS.includes(stepNumber)) showStepQuestion(stepNumber, questionPosition[stepNumber]);
+  // Steps 3 and 4 present one question at a time. Arriving at a step walks its questions
+  // from the beginning again, with the previous answers still filled in — resuming on the
+  // last question meant a single Next jumped straight past everything else. Only the Back
+  // button resumes, so stepping backwards lands on the question the traveler was on.
+  if (QUESTION_STEPS.includes(stepNumber)) {
+    showStepQuestion(stepNumber, options.resumeQuestion ? questionPosition[stepNumber] : 0);
+  }
   const displayedStep = stepNumber;
   document.querySelectorAll(".form-progress span").forEach((bar, index) => {
     bar.classList.toggle("active", index < displayedStep);

@@ -294,3 +294,13 @@ assert.match(script, /const MAX_FREE_GAP_MINUTES = 150/, "The acceptable free-ti
 assert.match(script, /fillDaytimeGaps\(day, destination, preferences, seenRecommendations, dayZones\[index\]\)/, "Gap filling must run after scheduling, when real times are known");
 assert.match(script, /function genericMustDoIsCovered\(name, itineraryDays\)/, "Generic must-dos must be checked against what the plan already covers");
 assert.match(script, /\^local cuisine\$/, "\"Local cuisine\" must count as covered by an Eat stop");
+
+// Arriving at Steps 3/4 walks their questions from the beginning again (answers stay
+// filled in); only the Back button resumes the question the traveler was on.
+assert.match(script, /function showFormStep\(stepNumber, options = \{\}\)/, "showFormStep must accept navigation options");
+assert.match(script, /options\.resumeQuestion \? questionPosition\[stepNumber\] : 0/, "Arriving at a question step must restart it unless resuming");
+assert.match(script, /showFormStep\(3, \{ resumeQuestion: true \}\)/, "Back out of Constraints must resume Travel style, not restart it");
+// The dropdown questions offer the same bubbles as every other question.
+assert.match(script, /function renderSelectBubbles\(select\)/, "Dropdown answers must render as selectable bubbles");
+assert.match(script, /select\.dispatchEvent\(new Event\("change", \{ bubbles: true \}\)\)/, "Choosing a bubble must apply the value through the existing change path");
+assert.match(styles, /\.style-question select\.has-bubbles\s*\{[^}]*display:\s*none/s, "The native dropdown must give way to its bubbles");
