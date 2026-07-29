@@ -617,3 +617,27 @@ assert.ok(namesOfType("see").includes("Space Needle"), "Sightseeing categories m
 assert.ok(namesOfType("buy").includes("Westlake Center"), "Shopping categories must type their members as buy even when the title does not say so");
 
 console.log("dynamic catalog smoke test passed");
+
+// Wikipedia geosearch used to file every nearby article as a sight, so the restaurants and
+// markets it already found never reached the eat and shop decks, which padded themselves
+// with filler instead. An article's opening sentence is its definition, so it classifies
+// the place. Only that sentence counts: a museum whose second sentence mentions a nearby
+// restaurant is still a museum.
+const placeTypeSource = readFileSync("dynamic-catalog.js", "utf8");
+const placeTypeBody = placeTypeSource.slice(
+  placeTypeSource.indexOf("const PLACE_TYPE_EAT"),
+  placeTypeSource.indexOf("async function fetchWikipediaGeoPlaces")
+);
+const { wikipediaPlaceType } = new Function(`${placeTypeBody}; return { wikipediaPlaceType };`)();
+const placeTypeCases = [
+  ["Space Needle", "The Space Needle is an observation tower in Seattle, Washington.", "see"],
+  ["Pike Place Market", "Pike Place Market is a public market in Seattle, Washington, United States.", "buy"],
+  ["Canlis", "Canlis is a fine dining restaurant in Seattle, Washington.", "eat"],
+  ["Ivars", "Ivars is a seafood restaurant chain based in Seattle.", "eat"],
+  ["Westlake Center", "Westlake Center is a shopping mall in downtown Seattle.", "buy"],
+  ["Olympic Sculpture Park", "The Olympic Sculpture Park is a public park and outdoor museum in Seattle.", "see"],
+  ["Museum of Pop Culture", "The Museum of Pop Culture is a nonprofit museum. Nearby is a popular restaurant.", "see"]
+];
+for (const [title, extract, expected] of placeTypeCases) {
+  assert.equal(wikipediaPlaceType({ title, extract }), expected, `${title} must be classified as ${expected}`);
+}

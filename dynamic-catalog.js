@@ -506,6 +506,22 @@
     return true;
   }
 
+  // What kind of place an article describes, read from its opening summary ("Canlis is a
+  // fine dining restaurant in Seattle"). Wikipedia's first sentence is reliably a
+  // definition, so it classifies far better than the title alone.
+  const PLACE_TYPE_EAT = /\b(restaurant|restaurant chain|steakhouse|pizzeria|diner|eatery|bistro|brasserie|caf[eé]|coffeehouse|coffee house|coffee shop|coffee company|roastery|bakery|patisserie|creamery|ice cream|teahouse|tea house|izakaya|ramen|sushi|barbecue joint|food hall|brewpub)\b/i;
+  const PLACE_TYPE_BUY = /\b(shopping (?:mall|centre|center|district|street)|department store|marketplace|public market|farmers'? market|flea market|night market|bazaar|souk|arcade|outlet mall|emporium|bookstore|book shop)\b/i;
+
+  function wikipediaPlaceType(page = {}) {
+    // Strictly the opening sentence, which is Wikipedia's definition of the subject. Taking
+    // any more misreads a museum whose second sentence mentions a nearby restaurant.
+    const summary = String(page.extract || "").split(/(?<=\.)\s/)[0] || "";
+    const text = `${page.title || ""}. ${summary}`;
+    if (PLACE_TYPE_EAT.test(text)) return "eat";
+    if (PLACE_TYPE_BUY.test(text)) return "buy";
+    return "see";
+  }
+
   async function fetchWikipediaGeoPlaces(geocode, signal) {
     if (!geocode?.latitude || !geocode?.longitude) return [];
     const geo = await fetchJson(makeUrl(WIKIPEDIA_API, {
@@ -537,7 +553,13 @@
     }).map((page) => ({
       name: page.title,
       wikipediaTitle: page.title,
-      type: "see",
+      // Geosearch used to file everything as a sight, so the restaurants and markets it
+      // finds — already fetched, already local, already notable — never reached the eat and
+      // shop decks, which were left padding themselves with generic filler. The article's
+      // own summary says what a place is, so use it.
+      type: wikipediaPlaceType(page),
+      ...(wikipediaPlaceType(page) === "eat" ? { cuisine: "Notable local restaurant" } : {}),
+      ...(wikipediaPlaceType(page) === "buy" ? { bestFor: "Local shopping and browsing" } : {}),
       area: geocode.name,
       detail: String(page.extract || "A Wikipedia-listed landmark or neighborhood worth researching.").split(/\n/)[0].slice(0, 220),
       image: wikipediaThumbnail(page),
@@ -647,7 +669,10 @@
       // these categories still yield named, notable restaurants and coffee houses rather
       // than leaving the deck to generic "neighbourhood cafe" filler.
       `Restaurants in ${city}`,
-      `Coffeehouses in ${city}`
+      `Coffeehouses in ${city}`,
+      `Seafood restaurants in ${city}`,
+      `Bakeries in ${city}`,
+      `Markets in ${city}`
     ];
     const discovered = await discoverCategoryTitles(city, signal).catch(() => []);
     // Discovered titles come first, then only the static names not already covered by a
@@ -656,7 +681,7 @@
     const remainingStatic = staticNames.filter((name) => !discoveredTopics.has(CATEGORY_TOPICS.find((topic) => name.toLowerCase().startsWith(topic.toLowerCase()))));
     // Cap raised from 8 to 10 so the two dining categories are not crowded out by
     // discovered sightseeing ones — the dining fallback is the whole point of adding them.
-    const categoryNames = [...new Set([...discovered, ...remainingStatic])].slice(0, 10);
+    const categoryNames = [...new Set([...discovered, ...remainingStatic])].slice(0, 12);
     const categoryResults = await Promise.all(categoryNames.map(async (category) => {
       try {
         // incategory: search sorted by incoming links instead of list=categorymembers: the
