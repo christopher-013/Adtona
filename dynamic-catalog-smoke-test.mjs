@@ -641,3 +641,28 @@ const placeTypeCases = [
 for (const [title, extract, expected] of placeTypeCases) {
   assert.equal(wikipediaPlaceType({ title, extract }), expected, `${title} must be classified as ${expected}`);
 }
+
+// Real popularity must outrank keyword heuristics. The pageview score used to saturate at
+// 80 — reached around 1,000 views a day — so Seattle's 5,200-view Space Needle scored the
+// same as a 1,500-view museum and keyword matches decided the order, leading with Chihuly
+// Garden and Glass instead.
+const seattleCatalog = api.assembleDynamicCatalog("Seattle", { name: "Seattle", admin1: "Washington", country: "United States" }, {
+  wikipediaItems: [
+    { name: "Space Needle", type: "see", popularity: 5200, image: "x", sourceLabel: "Wikipedia", sourceId: "sea1", detail: "Observation tower." },
+    { name: "Pike Place Market", type: "buy", popularity: 4300, image: "x", sourceLabel: "Wikipedia", sourceId: "sea2", detail: "Public market." },
+    { name: "Museum of Pop Culture", type: "see", popularity: 1500, image: "x", sourceLabel: "Wikipedia", sourceId: "sea3", detail: "Museum." },
+    { name: "Chihuly Garden and Glass", type: "see", popularity: 900, image: "x", sourceLabel: "Wikipedia", sourceId: "sea4", detail: "Glass museum." }
+  ],
+  wikivoyageItems: [
+    { name: "Klondike Gold Rush NHP", type: "see", wikivoyageRank: 0, sourceLabel: "Wikivoyage", sourceId: "sea5", detail: "Small museum." },
+    { name: "Waterfall Garden Park", type: "see", wikivoyageRank: 2, sourceLabel: "Wikivoyage", sourceId: "sea6", detail: "Pocket park." },
+    { name: "Uwajimaya", type: "buy", wikivoyageRank: 0, sourceLabel: "Wikivoyage", sourceId: "sea7", detail: "Asian grocery." }
+  ]
+});
+assert.equal(seattleCatalog.attractions[0].name, "Space Needle", "The best-known sight must lead, not a keyword-heavy lesser one");
+assert.equal(seattleCatalog.shopping[0].name, "Pike Place Market", "The best-known market must lead the shopping deck");
+const seattleSee = seattleCatalog.attractions.map((item) => item.name);
+assert.ok(
+  seattleSee.indexOf("Space Needle") < seattleSee.indexOf("Klondike Gold Rush NHP"),
+  "A far more visited landmark must outrank the first Wikivoyage section listing"
+);

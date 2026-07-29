@@ -1834,7 +1834,13 @@ out center tags 120;`;
     // (always available for category items) plus log-scaled average daily Wikipedia
     // pageviews when present, so famous landmarks outrank obscure keyword-heavy pages.
     score += Number(item.rankBoost) || 0;
-    if (Number(item.popularity) > 0) score += Math.min(80, Math.round(Math.log10(Number(item.popularity) + 1) * 26));
+    // Pageviews are the one real measure of how well known a place is, so they must be able
+    // to outweigh the keyword heuristics above — which is what the comment claims but the
+    // old ceiling prevented. At 80 the scale saturated around 1,000 views a day, leaving a
+    // 5,200-view landmark (Space Needle) tied with a 1,500-view museum and letting keyword
+    // matches decide: Seattle led with Chihuly Garden and Glass instead. A higher ceiling
+    // keeps the log curve — so a merely popular place never buries a genuinely famous one.
+    if (Number(item.popularity) > 0) score += Math.min(160, Math.round(Math.log10(Number(item.popularity) + 1) * 40));
     if (item.seeded) score += 60;
     if (item.destinationAnchor) score += 60;
     const destinationName = normalizeDestinationText(String(destination || "").split(",")[0]);
