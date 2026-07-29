@@ -620,6 +620,9 @@ async function goToPreferencesStep() {
   // Cancel any pending debounced lookup up front so it cannot start midway through this
   // check and abort the verification below.
   clearTimeout(destinationResearchTimer);
+  // Leaving Trip Basics is the moment the destination is settled, so reconcile the
+  // place-specific answers here too — this catches every route into the later steps.
+  syncPreferencesToDestination();
   const enteredDestination = destinationInput.value.trim();
   if (!enteredDestination) {
     destinationInput.reportValidity();
@@ -826,6 +829,7 @@ document.querySelector("#detailsStepButton").addEventListener("click", () => {
     return;
   }
   preferenceError.textContent = "";
+  syncPreferencesToDestination();
   showFormStep(3);
 });
 document.querySelector("#detailsBackButton").addEventListener("click", () => {

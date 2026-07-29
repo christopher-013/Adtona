@@ -326,3 +326,12 @@ assert.match(script, /for \(let attempt = 0; attempt < 2; attempt \+= 1\)/, "An 
 assert.equal((html.match(/data-finish-questions/g) || []).length, 2, "Both question steps must offer Choose for me");
 assert.match(html, /data-finish-questions>Not sure where to begin\? Choose for me<\/button>/, "Choose for me must keep its wording");
 assert.match(script, /\[data-finish-questions\][\s\S]{0,320}?showStepQuestion\(4, stepQuestions\(4\)\.length - 1\)[\s\S]{0,120}?createTripButton/, "Choose for me must finish through the real create action");
+
+// Leaving Trip Basics settles the destination, so the place-specific answers are reconciled
+// there too. Checking only on entry to Steps 3/4 left routes uncovered: Los Angeles showed
+// LA's area chips with Tokyo's "Shinjuku" still typed in the home base field.
+assert.match(
+  script,
+  /clearTimeout\(destinationResearchTimer\);[\s\S]{0,320}?syncPreferencesToDestination\(\);/,
+  "Leaving Trip Basics must reconcile the answers with the destination"
+);
