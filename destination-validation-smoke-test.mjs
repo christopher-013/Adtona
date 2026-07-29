@@ -45,7 +45,10 @@ assert.equal(sandbox.suggestKnownDestination("asasdasd"), null, "Random letters 
 
 assert.match(html, /id="destinationSuggestionButton"[^>]*hidden/, "Trip Basics must include an initially hidden typo-correction action");
 assert.match(script, /const typoSuggestion = suggestKnownDestination\(enteredDestination\)/, "Destination validation must check local typo suggestions");
-assert.match(script, /verifiedGeocode = await geocodeDestination\(researchDestination/, "Unknown destinations must be geocoded before Adventure");
+// The geocode call moved into verifyDestinationGeocode() so an aborted check can be retried
+// instead of being reported as a misspelling; unknown destinations are still verified here.
+assert.match(script, /verifiedGeocode = await verifyDestinationGeocode\(researchDestination\)/, "Unknown destinations must be geocoded before Adventure");
+assert.match(script, /return await geocodeDestination\(destination, \{ signal: destinationResearchController\.signal \}\)/, "Verification must go through the live geocoder");
 assert.match(script, /if \(!existingCatalog && !verifiedGeocode\)[\s\S]{0,900}?We couldn’t find/, "Unresolved destinations must be blocked with a specific message");
 assert.match(script, /destinationInput\.focus\(\);\s*return;\s*}\s*destinationInput\.setCustomValidity\(""\)/, "The invalid-destination branch must return before Adventure renders");
 

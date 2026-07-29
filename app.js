@@ -589,7 +589,37 @@ function updateDestinationModeBadge() {
   }
 }
 
+// Verifies a destination through the live geocoder, retrying once if the attempt is aborted.
+//
+// Continuing within the typing debounce meant a lookup for this very destination could still
+// be in flight. Starting a new one aborts it — and because identical requests share a single
+// promise, that abort rejected the new attempt too, without ever re-fetching. The AbortError
+// was then indistinguishable from "no results", so real cities that are not in the curated
+// catalog (Berlin, Los Angeles) were reported as misspelled. An abort is our own doing, so
+// retry once on a fresh request, and never let one masquerade as a bad destination.
+async function verifyDestinationGeocode(destination) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    destinationResearchController = new AbortController();
+    try {
+      return await geocodeDestination(destination, { signal: destinationResearchController.signal });
+    } catch (error) {
+      if (error?.name !== "AbortError") {
+        destinationResearchState = { query: destination, geocode: null, status: "unavailable" };
+        return null;
+      }
+      // Let the shared in-flight entry clear before retrying, or the retry inherits it.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }
+  // Still aborted: we could not check, which is not the same as the place not existing.
+  destinationResearchState = { query: destination, geocode: null, status: "unavailable" };
+  return null;
+}
+
 async function goToPreferencesStep() {
+  // Cancel any pending debounced lookup up front so it cannot start midway through this
+  // check and abort the verification below.
+  clearTimeout(destinationResearchTimer);
   const enteredDestination = destinationInput.value.trim();
   if (!enteredDestination) {
     destinationInput.reportValidity();
@@ -632,11 +662,8 @@ async function goToPreferencesStep() {
       destinationInput.setAttribute("aria-busy", "true");
       const continueButton = document.querySelector("#nextStepButton");
       if (continueButton) continueButton.disabled = true;
-      destinationResearchController = new AbortController();
       try {
-        verifiedGeocode = await geocodeDestination(researchDestination, { signal: destinationResearchController.signal });
-      } catch (error) {
-        if (error?.name !== "AbortError") destinationResearchState = { query: researchDestination, geocode: null, status: "unavailable" };
+        verifiedGeocode = await verifyDestinationGeocode(researchDestination);
       } finally {
         destinationInput.removeAttribute("aria-busy");
         if (continueButton) continueButton.disabled = false;
@@ -868,6 +895,16 @@ QUESTION_STEPS.forEach((step) => {
   section.querySelectorAll(".style-question select").forEach((select) => {
     select.addEventListener("change", () => advanceQuestionAfterChoice(select));
     renderSelectBubbles(select);
+  });
+  // "Choose for me" leaves the remaining questions unanswered on purpose and builds the
+  // guide from whatever the traveler has already given. Every question is optional and each
+  // field keeps a sensible default, so the plan is complete either way — this just skips
+  // the asking. Jumps straight to Constraints' final question and triggers the real submit,
+  // so creation runs through exactly the same validation as answering every question.
+  section.querySelector("[data-finish-questions]")?.addEventListener("click", () => {
+    showFormStep(4);
+    showStepQuestion(4, stepQuestions(4).length - 1);
+    document.querySelector("#createTripButton")?.click();
   });
   bindQuestionSwipe(section, step);
 });

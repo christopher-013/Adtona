@@ -304,3 +304,15 @@ assert.match(script, /showFormStep\(3, \{ resumeQuestion: true \}\)/, "Back out 
 assert.match(script, /function renderSelectBubbles\(select\)/, "Dropdown answers must render as selectable bubbles");
 assert.match(script, /select\.dispatchEvent\(new Event\("change", \{ bubbles: true \}\)\)/, "Choosing a bubble must apply the value through the existing change path");
 assert.match(styles, /\.style-question select\.has-bubbles\s*\{[^}]*display:\s*none/s, "The native dropdown must give way to its bubbles");
+
+// A destination the geocoder was still checking must never be reported as misspelled: the
+// debounced lookup and the continue action shared one request, so aborting the first
+// rejected the second without re-fetching, and real cities (Berlin, Los Angeles) came back
+// as "check the spelling".
+assert.match(script, /async function verifyDestinationGeocode\(destination\)/, "Destination verification must be retryable");
+assert.match(script, /if \(error\?\.name !== "AbortError"\)[\s\S]{0,200}?status: "unavailable"/, "A failed check must read as unavailable, not invalid");
+assert.match(script, /for \(let attempt = 0; attempt < 2; attempt \+= 1\)/, "An aborted verification must be retried once on a fresh request");
+// "Choose for me" builds the guide from whatever has been answered so far.
+assert.equal((html.match(/data-finish-questions/g) || []).length, 2, "Both question steps must offer Choose for me");
+assert.match(html, /data-finish-questions>Not sure where to begin\? Choose for me<\/button>/, "Choose for me must keep its wording");
+assert.match(script, /\[data-finish-questions\][\s\S]{0,320}?showStepQuestion\(4, stepQuestions\(4\)\.length - 1\)[\s\S]{0,120}?createTripButton/, "Choose for me must finish through the real create action");
