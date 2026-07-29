@@ -131,7 +131,10 @@
     // Namespace changes invalidate older device-local catalogs that may have been saved after
     // only one public source returned. Those thin snapshots were the reason the same search
     // could show a different first place on desktop and mobile for 30 days.
-    return `ptg:dyncat7:${slug}:${global.PLANTOGUIDE_VERSION || "dev"}`;
+    // dyncat8 also invalidates catalogs created before Wikipedia category results were checked
+    // for geographic affinity. Those older catalogs could associate a globally notable but
+    // out-of-area restaurant (for example Vancouver's White Spot) with another city.
+    return `ptg:dyncat8:${slug}:${global.PLANTOGUIDE_VERSION || "dev"}`;
   }
 
   const dynamicCatalogCache = {
@@ -558,6 +561,35 @@
     return Math.round(days.reduce((sum, views) => sum + views, 0) / days.length);
   }
 
+  function geographicDistanceKm(lat1, lon1, lat2, lon2) {
+    const values = [lat1, lon1, lat2, lon2].map(Number);
+    if (!values.every(Number.isFinite)) return Number.POSITIVE_INFINITY;
+    const [fromLat, fromLon, toLat, toLon] = values.map((value) => value * Math.PI / 180);
+    const deltaLat = toLat - fromLat;
+    const deltaLon = toLon - fromLon;
+    const haversine = Math.sin(deltaLat / 2) ** 2
+      + Math.cos(fromLat) * Math.cos(toLat) * Math.sin(deltaLon / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(Math.max(0, 1 - haversine)));
+  }
+
+  // Category search is a discovery aid, not proof that every returned article is local.
+  // Require coordinates near the requested destination when present. For articles without
+  // coordinates, require the title or summary to identify the city, region, or country.
+  function wikipediaCategoryPageMatchesDestination(page = {}, geocode = {}) {
+    const destinationLat = coordinate(geocode.latitude);
+    const destinationLon = coordinate(geocode.longitude);
+    const pageLat = coordinate(page.coordinates?.[0]?.lat);
+    const pageLon = coordinate(page.coordinates?.[0]?.lon);
+    if ([destinationLat, destinationLon, pageLat, pageLon].every(Number.isFinite)) {
+      return geographicDistanceKm(destinationLat, destinationLon, pageLat, pageLon) <= 120;
+    }
+    const articleText = normalizeDestinationText(`${page.title || ""} ${page.extract || ""}`);
+    const localityTerms = [geocode.name, geocode.admin1, geocode.country]
+      .map(normalizeDestinationText)
+      .filter((value) => value.length >= 3);
+    return localityTerms.some((term) => articleText.includes(term));
+  }
+
   // Topics used to discover the destination's real category names. Many metro areas file their
   // headline attractions under regional categories ("Tourist attractions in the Las Vegas Valley",
   // not "... in Las Vegas"), so a fixed "in {city}" list misses them entirely.
@@ -676,7 +708,10 @@
       action: "query", pageids: ids.join("|"), prop: "pageviews|coordinates|pageimages|extracts|info", exintro: "1", explaintext: "1",
       piprop: "thumbnail", pithumbsize: "640", inprop: "url", format: "json", origin: "*"
     }), signal);
-    return Object.values(pages?.query?.pages || {}).filter((page) => wikipediaPageLooksVisitable(page)).map((page) => ({
+    return Object.values(pages?.query?.pages || {})
+      .filter((page) => wikipediaPageLooksVisitable(page))
+      .filter((page) => wikipediaCategoryPageMatchesDestination(page, geocode))
+      .map((page) => ({
       name: page.title,
       wikipediaTitle: page.title,
       type: foodPageIds.has(page.pageid) ? "eat"
@@ -2172,7 +2207,7 @@ out center tags 120;`;
     }
   }
 
-  const api = { geocodeDestination, parseWikivoyageListings, stripWikitext, buildDynamicCatalog, dynamicCatalogCache, assembleDynamicCatalog, hasSeededDestinationCatalog, catalogHasSeededAnchors, catalogResearchQuality, catalogHasResearchDepth, fetchWikipediaCategoryPlaces, fetchOpenStreetMapRecommendations, slugify, destinationMatchPattern, isWikimediaThrottled, wikimediaRetryAfterMs, noteWikimediaRateLimit, getLastResearchOutcome };
+  const api = { geocodeDestination, parseWikivoyageListings, stripWikitext, buildDynamicCatalog, dynamicCatalogCache, assembleDynamicCatalog, hasSeededDestinationCatalog, catalogHasSeededAnchors, catalogResearchQuality, catalogHasResearchDepth, fetchWikipediaCategoryPlaces, fetchOpenStreetMapRecommendations, wikipediaCategoryPageMatchesDestination, geographicDistanceKm, slugify, destinationMatchPattern, isWikimediaThrottled, wikimediaRetryAfterMs, noteWikimediaRateLimit, getLastResearchOutcome };
   Object.assign(global, api);
   if (typeof module !== "undefined") module.exports = api;
 })(typeof globalThis !== "undefined" ? globalThis : window);

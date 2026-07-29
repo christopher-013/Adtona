@@ -1,1 +1,1 @@
-globalThis.PLANTOGUIDE_VERSION = "5.3.51";
+globalThis.PLANTOGUIDE_VERSION = "5.3.52";

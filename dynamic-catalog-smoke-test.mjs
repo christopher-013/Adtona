@@ -593,11 +593,11 @@ const categoryFetch = async (url) => {
   }
   if (text.includes("pageids=")) {
     return { ok: true, json: async () => ({ query: { pages: {
-      1: { pageid: 1, title: "Canlis", extract: "Fine dining restaurant." },
-      2: { pageid: 2, title: "Pike Place Chowder", extract: "Seafood counter." },
-      3: { pageid: 3, title: "Starbucks Reserve Roastery", extract: "Coffee roastery." },
-      4: { pageid: 4, title: "Space Needle", extract: "Observation tower." },
-      5: { pageid: 5, title: "Westlake Center", extract: "A shopping mall downtown." }
+      1: { pageid: 1, title: "Canlis", extract: "Fine dining restaurant in Seattle." },
+      2: { pageid: 2, title: "Pike Place Chowder", extract: "Seafood counter in Seattle." },
+      3: { pageid: 3, title: "Starbucks Reserve Roastery", extract: "Coffee roastery in Seattle." },
+      4: { pageid: 4, title: "Space Needle", extract: "Observation tower in Seattle." },
+      5: { pageid: 5, title: "Westlake Center", extract: "A shopping mall in downtown Seattle." }
     } } }) };
   }
   return { ok: true, json: async () => ({}) };

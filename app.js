@@ -980,8 +980,22 @@ form.addEventListener("submit", async (event) => {
   const catalogWait = pendingDynamicCatalog && pendingDynamicCatalog.destination === finalDestination ? pendingDynamicCatalog.promise : Promise.resolve(null);
   const transitionPromise = showTripCreationTransition();
   await catalogWait;
-  const selections = [...selectedSuggestions.values()];
-  const rejectedSelections = [...rejectedSuggestions.values()];
+  const finalDestinationKey = normalizeDestinationName(finalDestination);
+  const activeLookupIsCurrent = normalizeDestinationName(suggestionDestination) === finalDestinationKey && suggestionLookup.size > 0;
+  // Recommendation objects belong to one destination. Require membership in the current
+  // catalog when it is available so legacy saved data and late research responses cannot
+  // carry a Vancouver restaurant into a later Seoul itinerary.
+  const belongsToCurrentDestination = (suggestion) => {
+    if (!suggestion || !String(suggestion.name || "").trim()) return false;
+    if (activeLookupIsCurrent) {
+      const current = suggestionLookup.get(suggestion.key);
+      return Boolean(current && normalizeDestinationName(current.name) === normalizeDestinationName(suggestion.name));
+    }
+    const destinationKey = normalizeDestinationName(suggestion.destinationKey || "");
+    return !destinationKey || destinationKey === finalDestinationKey;
+  };
+  const selections = [...selectedSuggestions.values()].filter(belongsToCurrentDestination);
+  const rejectedSelections = [...rejectedSuggestions.values()].filter(belongsToCurrentDestination);
   const preferences = getTripPreferences();
   trip = buildTrip(finalDestination, start, end, wishListInput.value.trim(), selections, preferences, rejectedSelections);
   activeDay = 0;
@@ -2381,6 +2395,7 @@ function createSuggestionGroups(destination) {
   };
   const toSuggestion = (item, category) => ({
     key: `${category}:${item.name.toLowerCase()}`,
+    destinationKey: normalizeDestinationName(destination),
     category,
     name: item.name,
     area: item.area,
@@ -5432,7 +5447,12 @@ function restoreSuggestionState(target, suggestions = [], fallbackCategory = "se
     if (!suggestion || !String(suggestion.name || "").trim()) return;
     const category = ["see", "eat", "shop"].includes(suggestion.category) ? suggestion.category : fallbackCategory;
     const key = String(suggestion.key || `${category}:${String(suggestion.name).toLowerCase()}`);
-    target.set(key, { ...suggestion, key, category });
+    target.set(key, {
+      ...suggestion,
+      key,
+      category,
+      destinationKey: normalizeDestinationName(suggestion.destinationKey || suggestionDestination || "")
+    });
   });
 }
 

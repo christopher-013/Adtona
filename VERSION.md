@@ -1,5 +1,12 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.52 Destination-isolated recommendations
+
+- Rejects Wikipedia category results whose coordinates or article summary do not match the requested destination.
+- Prevents saved or late-arriving recommendation objects from crossing into a newly selected destination.
+- Invalidates older device-local dynamic catalogs that may contain incorrectly associated places.
+- Adds a Seoul regression test proving Vancouver's White Spot and a Tokyo restaurant cannot enter the Seoul catalog.
+
 ## v5.3.51 Consistent workflow navigation
 
 - Uses one shared set of arrow, marker, label, gap, and padding dimensions for
