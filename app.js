@@ -1785,7 +1785,10 @@ function showFormStep(stepNumber, options = {}) {
   });
   document.querySelector("#formStepTitle").textContent = ["", "Trip basics", "Choose your adventure", "Travelers & style", "Bookings & constraints"][stepNumber];
   document.querySelector("#formStepCount").textContent = `Step ${displayedStep} of 4`;
-  if (stepNumber === 3 || stepNumber === 4) renderQuickPicks();
+  if (stepNumber === 3 || stepNumber === 4) {
+    syncPreferencesToDestination();
+    renderQuickPicks();
+  }
   forceWizardTop();
   requestAnimationFrame(() => {
     // Step changes move focus to the step's heading so screen readers announce them. The
@@ -2097,6 +2100,20 @@ function renderQuickPicks() {
 // field to the default it was authored with keeps this correct if the markup changes.
 const TRIP_PREFERENCE_FIELD_IDS = ["homeBase", "mustDos", "avoidList", "bookedItems"];
 
+// The destination the current answers were given for. Entering Travel style re-renders the
+// quick picks for whatever destination is now set, so the chips followed the traveler to a
+// new city while the typed answers did not — Kyoto showed Kyoto's areas with Tokyo's
+// "Shinjuku" still in the field. Keying the reset to this, and checking it on every entry to
+// Steps 3 and 4, clears them no matter which route changed the destination.
+let preferenceDestination = "";
+
+function syncPreferencesToDestination() {
+  const current = normalizeDestinationName(destinationInput.value.trim());
+  if (!current) return;
+  if (preferenceDestination && preferenceDestination !== current) resetTripPreferenceFields();
+  preferenceDestination = current;
+}
+
 function resetTripPreferenceFields() {
   TRIP_PREFERENCE_FIELD_IDS.forEach((id) => {
     const field = document.querySelector(`#${id}`);
@@ -2123,7 +2140,7 @@ function renderSuggestionPicker(destination) {
     // A different destination is a different trip, so the travel-style and constraints
     // answers start fresh too — otherwise a home base like "Asakusa" followed a traveler
     // from Osaka into a Seattle plan.
-    resetTripPreferenceFields();
+    syncPreferencesToDestination();
   }
   if (suggestionDeckDestination !== normalizeDestinationName(destination)) resetSuggestionDeckState(destination);
   suggestionDestination = normalizedDestination;

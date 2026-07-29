@@ -8104,18 +8104,87 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   gap: 6px;
   margin-top: 0;
 }
-/* "Choose for me" sits beside Back as a quiet alternative to answering everything. */
-.wizard-actions.question-actions .question-autofill {
-  padding: 6px 12px;
-  border: 1px solid rgba(36, 89, 76, .28);
+/* "Choose for me" sits top-right under the workflow diagram on Steps 3 and 4, exactly as it
+   does on Step 2 — same heading row, same green pill — so the shortcut is in one familiar
+   place across the whole workflow. */
+.builder.builder-wide .trip-form[data-current-step="3"] .suggestion-heading-row,
+.builder.builder-wide .trip-form[data-current-step="4"] .suggestion-heading-row {
+  display: flex;
+  min-width: 0;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+.builder.builder-wide .trip-form[data-current-step="3"] .suggestion-heading-row h2,
+.builder.builder-wide .trip-form[data-current-step="4"] .suggestion-heading-row h2 {
+  min-width: 0;
+}
+.builder.builder-wide .trip-form[data-current-step="3"] .suggestion-heading-row .suggestion-toolbar,
+.builder.builder-wide .trip-form[data-current-step="4"] .suggestion-heading-row .suggestion-toolbar {
+  display: block;
+  width: auto;
+  min-height: 0;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.builder.builder-wide .trip-form[data-current-step="3"] .suggestion-heading-row .suggestion-toolbar button,
+.builder.builder-wide .trip-form[data-current-step="4"] .suggestion-heading-row .suggestion-toolbar button {
+  width: auto;
+  min-height: 36px;
+  padding: 8px 14px;
+  font-size: 9px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="3"] .suggestion-heading-row,
+  .builder.builder-wide .trip-form[data-current-step="4"] .suggestion-heading-row {
+    align-items: center;
+    gap: 8px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"] .suggestion-heading-row .suggestion-toolbar button,
+  .builder.builder-wide .trip-form[data-current-step="4"] .suggestion-heading-row .suggestion-toolbar button {
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: 8px;
+  }
+}
+
+/* One shortcut button style across Steps 2, 3 and 4: white with green text, filling green
+   on hover, at the larger readable size. Declared after the step-2 toolbar rules so it wins
+   on every step rather than each one drifting to its own look. */
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row .suggestion-toolbar button,
+.builder.builder-wide .trip-form[data-current-step="3"] .suggestion-heading-row .suggestion-toolbar button,
+.builder.builder-wide .trip-form[data-current-step="4"] .suggestion-heading-row .suggestion-toolbar button,
+.builder .suggestion-heading-row .suggestion-toolbar button {
+  padding: 8px 15px;
+  border: 1px solid rgba(36, 89, 76, .32);
   border-radius: 999px;
   color: var(--forest);
-  background: transparent;
-  cursor: pointer;
+  background: #fffdf8;
+  box-shadow: none;
   font-size: 11px;
   font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: color .18s ease, background .18s ease;
 }
-.wizard-actions.question-actions .question-autofill:hover {
-  color: white;
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row .suggestion-toolbar button:hover,
+.builder.builder-wide .trip-form[data-current-step="3"] .suggestion-heading-row .suggestion-toolbar button:hover,
+.builder.builder-wide .trip-form[data-current-step="4"] .suggestion-heading-row .suggestion-toolbar button:hover,
+.builder .suggestion-heading-row .suggestion-toolbar button:hover {
+  color: #fffdf8;
   background: var(--forest);
+  transform: none;
+}
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row .suggestion-toolbar button,
+  .builder.builder-wide .trip-form[data-current-step="3"] .suggestion-heading-row .suggestion-toolbar button,
+  .builder.builder-wide .trip-form[data-current-step="4"] .suggestion-heading-row .suggestion-toolbar button {
+    padding: 7px 11px;
+    font-size: 10px;
+  }
 }

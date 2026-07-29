@@ -278,10 +278,20 @@ assert.doesNotMatch(html, /placeholder="One per line"/, "The comma-separated que
 // Choosing a different destination starts the travel-style and constraints answers fresh,
 // so a home base like "Asakusa" cannot follow a traveler from one city into another.
 assert.match(script, /function resetTripPreferenceFields\(\)/, "Switching destination must reset the wizard answers");
+// The reset is keyed to the destination the answers were given for, and re-checked on every
+// entry to Steps 3/4: the quick picks re-render for the new city on entry, so the chips
+// followed the traveler while the typed answers did not (Kyoto showing Tokyo's "Shinjuku").
+assert.match(script, /let preferenceDestination = ""/, "Answers must record the destination they belong to");
+assert.match(script, /function syncPreferencesToDestination\(\)/, "A destination change must be reconciled wherever it happens");
 assert.match(
   script,
-  /rejectedSuggestions\.clear\(\);[\s\S]{0,320}?resetTripPreferenceFields\(\);/,
-  "The reset must run on the same destination-change branch that clears deck selections"
+  /if \(preferenceDestination && preferenceDestination !== current\) resetTripPreferenceFields\(\);/,
+  "A different destination must clear the place-specific answers"
+);
+assert.match(
+  script,
+  /stepNumber === 3 \|\| stepNumber === 4\) \{\s*syncPreferencesToDestination\(\);/,
+  "Entering Travel style or Constraints must reconcile the answers with the destination"
 );
 assert.match(script, /field\.value = field\.defaultValue/, "Answers must return to the defaults authored in the markup");
 assert.match(script, /option\.defaultSelected/, "Dropdowns must return to their authored selected option");
