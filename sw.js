@@ -1,6 +1,7 @@
 importScripts("./version.js");
 
-const CACHE_NAME = `plantoguide-${self.PLANTOGUIDE_VERSION || "dev"}`;
+const RELEASE_VERSION = self.ADTONA_VERSION || self.PLANTOGUIDE_VERSION || "dev";
+const CACHE_NAME = `adtona-${RELEASE_VERSION}`;
 const PRECACHE_URLS = [
   "./",
   "index.html",
@@ -14,13 +15,17 @@ const PRECACHE_URLS = [
   "icon-source.js",
   "photo-store.js",
   "beta-tools.js",
-  "plan-x-guide-centered-compass-morph-clean-x.svg",
   "adtona-logo.png",
   "adtona-mark.png",
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",
-  "icons/favicon-32.png"
+  "icons/favicon-16.png",
+  "icons/favicon-32.png",
+  "icons/apple-touch-icon.png",
+  "icons/maskable-192.png",
+  "icons/maskable-512.png",
+  "icons/adtona-social-1200x630.png"
 ];
 const NETWORK_ONLY_HOSTS = new Set([
   "api.open-meteo.com",
@@ -42,7 +47,11 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => key.startsWith("plantoguide-") && !key.startsWith("plantoguide-export-") && key !== CACHE_NAME).map((key) => caches.delete(key))))
+      .then((keys) => Promise.all(keys.filter((key) => (
+        (key.startsWith("adtona-") || key.startsWith("plantoguide-"))
+        && !key.startsWith("plantoguide-export-")
+        && key !== CACHE_NAME
+      )).map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });

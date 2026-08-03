@@ -1,10 +1,12 @@
-# PlanToGuide trip schema (`plantoguide-trip`, version 3)
+# Adtona trip schema (`plantoguide-trip`, version 3)
 
 Every exported `TRIP-PLAN.md` ends with a **Machine-Readable Trip Data** section containing:
 
     ```json plantoguide-trip
 
-PlanToGuide can import the complete Markdown file, a fenced schema block, or the bare JSON object and re-render the trip website.
+Adtona can import the complete Markdown file, a fenced schema block, or the bare JSON object and re-render the trip website.
+
+The `plantoguide-trip` name is intentionally retained as the current machine-readable schema identifier so existing exports, browser drafts, and AI round trips continue to work. `xtravel-trip` remains a legacy import alias. A future schema version may introduce an `adtona-trip` alias only with a migration path.
 
 ## Top-level fields
 

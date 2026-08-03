@@ -13,7 +13,7 @@
   // rate-limit window. A 429 opens the Wikimedia circuit breaker below instead.
   const RETRYABLE_STATUS = new Set([500, 502, 503, 504]);
   const WIKIMEDIA_HOST_PATTERN = /(^|\.)wikipedia\.org$|(^|\.)wikivoyage\.org$/i;
-  const WIKIMEDIA_API_USER_AGENT = "Adtona/5.0 (https://christopher-013.github.io/PlanToGuide/)";
+  const WIKIMEDIA_API_USER_AGENT = "Adtona/5.4 (https://adtona.com/)";
   const RATE_LIMIT_DEFAULT_MS = 60000;
   const RATE_LIMIT_MAX_MS = 5 * 60000;
   const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -134,7 +134,7 @@
     // dyncat8 also invalidates catalogs created before Wikipedia category results were checked
     // for geographic affinity. Those older catalogs could associate a globally notable but
     // out-of-area restaurant (for example Vancouver's White Spot) with another city.
-    return `ptg:dyncat8:${slug}:${global.PLANTOGUIDE_VERSION || "dev"}`;
+    return `ptg:dyncat8:${slug}:${global.ADTONA_VERSION || global.PLANTOGUIDE_VERSION || "dev"}`;
   }
 
   const dynamicCatalogCache = {

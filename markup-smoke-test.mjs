@@ -16,7 +16,7 @@ const appFootnoteIndex = html.indexOf('<p class="form-footnote app-footnote"');
 assert.ok(appNavIndex >= 0, "Generated trip app must include the bottom navigation");
 assert.ok(appFootnoteIndex > appNavIndex, "Public-beta footnote must render below the bottom navigation");
 
-assert.ok(html.includes('class="site-footer landing-footer"'), "Trip Basics must include the compact Pictayo-style footer");
+assert.ok(html.includes('class="site-footer landing-footer"'), "Trip Basics must include the compact Adtona footer");
 assert.ok(html.includes('data-open-learn-more'), "The footer must expose a Learn More action");
 assert.ok(html.includes('data-open-feedback'), "The footer must expose Send feedback");
 assert.ok(html.includes('data-open-privacy'), "The footer must expose Privacy");
@@ -24,8 +24,9 @@ assert.ok(html.includes('id="learnMoreDialog"'), "Learn More must open a dedicat
 assert.ok(html.includes('id="learnMoreDialogTitle"'), "The Learn More lightbox must have an accessible title");
 assert.ok(!html.includes('class="landing-about"'), "Long-form information must not remain inline below the welcome screen");
 
-const version = versionSource.match(/PLANTOGUIDE_VERSION\s*=\s*["']([^"']+)/)?.[1];
-assert.ok(version, "version.js must define PLANTOGUIDE_VERSION");
+const version = versionSource.match(/ADTONA_VERSION\s*=\s*["']([^"']+)/)?.[1];
+assert.ok(version, "version.js must define ADTONA_VERSION");
+assert.match(versionSource, /PLANTOGUIDE_VERSION\s*=\s*globalThis\.ADTONA_VERSION/, "version.js must retain the PlanToGuide compatibility alias");
 const assetVersions = [...html.matchAll(/(?:styles\.css|(?:version|dynamic-catalog|export-styles|icon-source|photo-store|trip-schema|beta-tools|app)\.js)\?v=([^"']+)/g)].map((match) => match[1]);
 assert.ok(assetVersions.length >= 9, "index.html should version every core stylesheet and script");
 assert.ok(assetVersions.every((assetVersion) => assetVersion === version), "All index.html cache versions must match version.js");

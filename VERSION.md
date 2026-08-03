@@ -1,5 +1,14 @@
 # Adtona — Version 5 UI working copy
 
+## v5.4.0 Public-release branding and content polish
+
+- Establishes the public message hierarchy: “Free AI travel planner,” “Plan the trip. Build the guide. Go.,” and “Adto na. Go now.”
+- Expands the crawlable Learn More, privacy, and FAQ content while keeping the compact builder experience.
+- Updates search, Open Graph, Twitter, structured-data, manifest, favicon, Apple-touch, maskable, and social-preview metadata and assets.
+- Rebrands generated guides, printable output, ChatGPT App copy, documentation, and new export filenames to Adtona.
+- Preserves `plantoguide-trip`, `xtravel-trip`, `plantoguide-*` storage keys, MCP resource identifiers, and legacy export filename aliases for backwards compatibility.
+- Migrates the service-worker cache to `adtona-5.4.0` while cleaning obsolete Adtona and PlanToGuide application caches.
+
 ## v5.3.63 Compact footer and Learn More lightbox
 
 - Replaces the long information article below Trip Basics with a compact Pictayo-style footer.

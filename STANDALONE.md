@@ -1,4 +1,4 @@
-# Standalone PlanToGuide
+# Standalone Adtona
 
 The standalone edition is a static browser application. It does not use OpenAI, ChatGPT, an API key, Node.js, a database, or a backend server. It optionally reads current conditions from Open-Meteo's keyless public weather and geocoding endpoints; the bundled seasonal estimate remains available if that request fails.
 
@@ -17,7 +17,7 @@ For unsupported destinations, hosted/http deployments can also build a keyless l
 - `export-styles.js` — bundled stylesheet fallback used by ZIP export; regenerate it with `npm run build:export-styles` whenever `styles.css` changes
 - `icon-source.js` — bundled logo fallback used by standalone export
 - `photo-store.js` — IndexedDB photo payload storage used by the browser app
-- `plan-x-guide-centered-compass-morph-clean-x.svg` — animated application logo
+- `adtona-logo.png` and `adtona-mark.png` — Adtona brand assets
 - `manifest.webmanifest` and `sw.js` — installable/offline support for the hosted builder
 - `icons/icon-192.png` and `icons/icon-512.png` — home-screen install icons
 
@@ -35,7 +35,7 @@ Then open `http://127.0.0.1:8767`.
 
 ## Publish it on GitHub Pages
 
-The `standalone-pages.yml` workflow first runs `build-precomputed-catalogs.mjs` to research top tourist destinations server-side, then packages the required static app files, including `index.html`, `version.js`, `catalogs.json`, `precomputed-catalogs.json`, `dynamic-catalog.js`, `styles.css`, `app.js`, `trip-schema.js`, `export-styles.js`, `icon-source.js`, `photo-store.js`, `plan-x-guide-centered-compass-morph-clean-x.svg`, `manifest.webmanifest`, `sw.js`, `robots.txt`, and the `icons/` folder. In the repository settings, set **Pages → Source** to **GitHub Actions**, then push to the `main` branch.
+The `standalone-pages.yml` workflow first runs `build-precomputed-catalogs.mjs` to research top tourist destinations server-side, then packages the browser runtime, catalogs, Adtona logo assets, manifest, service worker, robots file, and icon directory. In the repository settings, set **Pages → Source** to **GitHub Actions**, then push to the `main` branch.
 
 ## Privacy and cost
 

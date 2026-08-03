@@ -141,7 +141,7 @@
           website: fields.website,
           page: location.pathname + location.hash,
           viewport: window.innerWidth + "x" + window.innerHeight,
-          version: globalThis.PLANTOGUIDE_VERSION || "",
+          version: globalThis.ADTONA_VERSION || globalThis.PLANTOGUIDE_VERSION || "",
           userAgent: navigator.userAgent
         })
       }).then(function (res) {

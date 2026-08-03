@@ -223,7 +223,7 @@ async function loadDestinationCatalogs() {
     renderKnownDestinationOptions();
     return;
   }
-  const version = encodeURIComponent(window.PLANTOGUIDE_VERSION || "3.1.0");
+  const version = encodeURIComponent(window.ADTONA_VERSION || window.PLANTOGUIDE_VERSION || "5.4.0");
   try {
     const response = await fetch("catalogs.json?v=" + version, { cache: "no-cache" });
     if (!response.ok) throw new Error("Catalog request failed: " + response.status);
@@ -1192,6 +1192,9 @@ function closeExportDialog() {
 
 // The privacy notice lives behind a footnote link rather than an always-visible card.
 // Delegated so it works from either footnote (builder and generated app view).
+let privacyDialogTrigger = null;
+let learnMoreDialogTrigger = null;
+
 function closePrivacyDialog() {
   const dialog = document.querySelector("#privacyDialog");
   if (!dialog) return;
@@ -1205,6 +1208,7 @@ document.addEventListener("click", (event) => {
     event.preventDefault();
     const dialog = document.querySelector("#privacyDialog");
     if (!dialog) return;
+    privacyDialogTrigger = link;
     if (typeof dialog.showModal === "function") dialog.showModal();
     else dialog.setAttribute("open", "");
     return;
@@ -1212,7 +1216,16 @@ document.addEventListener("click", (event) => {
   if (event.target.closest?.("#privacyDialogClose")) closePrivacyDialog();
 });
 
-// Pictayo-style Learn More lightbox. The content stays in the document for search
+document.querySelector("#privacyDialog")?.addEventListener("click", (event) => {
+  if (event.target === event.currentTarget) closePrivacyDialog();
+});
+
+document.querySelector("#privacyDialog")?.addEventListener("close", () => {
+  privacyDialogTrigger?.focus?.();
+  privacyDialogTrigger = null;
+});
+
+// Crawlable Learn More lightbox. The content stays in the document for search
 // engines and assistive technology, but no longer creates a long article below the
 // welcome screen.
 function closeLearnMoreDialog() {
@@ -1228,6 +1241,7 @@ document.addEventListener("click", (event) => {
     event.preventDefault();
     const dialog = document.querySelector("#learnMoreDialog");
     if (!dialog) return;
+    learnMoreDialogTrigger = link;
     if (typeof dialog.showModal === "function") dialog.showModal();
     else dialog.setAttribute("open", "");
     return;
@@ -1237,6 +1251,11 @@ document.addEventListener("click", (event) => {
 
 document.querySelector("#learnMoreDialog")?.addEventListener("click", (event) => {
   if (event.target === event.currentTarget) closeLearnMoreDialog();
+});
+
+document.querySelector("#learnMoreDialog")?.addEventListener("close", () => {
+  learnMoreDialogTrigger?.focus?.();
+  learnMoreDialogTrigger = null;
 });
 
 async function exportTripPackage() {
@@ -1273,11 +1292,11 @@ async function exportTripPackage() {
     websiteHtml = bundled.html;
     const markdown = createTripMarkdown();
     const runtime = createExportRuntime();
-    const inlineIcon = `data:image/svg+xml;base64,${window.PLANTOGUIDE_ICON_BASE64 || ""}`;
     const brandMark = await fetchBrandAssetForExport("adtona-mark.png", "image/png");
+    const brandLogo = await fetchBrandAssetForExport("adtona-logo.png", "image/png");
     lastStandaloneHtml = bundled.inlineHtml
-      .replaceAll("plan-x-guide-centered-compass-morph-clean-x.svg", inlineIcon)
       .replaceAll("adtona-mark.png", brandMark.dataUri || "adtona-mark.png")
+      .replaceAll("adtona-logo.png", brandLogo.dataUri || "adtona-logo.png")
       .replace('<link rel="stylesheet" href="styles.css">', `<style>${websiteCss}</style>`)
       .replace('<script src="app.js"><\/script>', `<script>${runtime}<\/script>`);
     const readme = `# ${trip.destination} Adtona Website
@@ -1292,10 +1311,11 @@ This package contains the complete visual trip website and a round-trip AI plann
 - \`manifest.webmanifest\` — install metadata for the guide
 - \`sw.js\` — offline cache for hosted guides
 - \`icons/\` — installable home-screen icons
-- \`plan-x-guide-centered-compass-morph-clean-x.svg\` — animated Adtona logo
+- \`adtona-logo.png\` and \`adtona-mark.png\` — Adtona brand assets
 - \`assets/\` — bundled banners and place graphics, when available
-- \`TRIP-PLAN.md\` — lightweight human-readable plan plus photo metadata
-- \`TRIP-DATA.json\` — complete machine-readable trip, including local photo data
+- \`ADTONA-TRIP-PLAN.md\` — lightweight human-readable plan plus photo metadata
+- \`ADTONA-TRIP-DATA.json\` — complete machine-readable trip, including local photo data
+- \`TRIP-PLAN.md\` and \`TRIP-DATA.json\` — legacy filename aliases for existing AI workflows
 - \`AGENT-INSTRUCTIONS.md\` — rules for continued AI planning
 - \`ATTRIBUTIONS.md\` — source links, licenses, and required credits for public recommendation data
 - \`README.md\` — this publishing guide
@@ -1306,7 +1326,7 @@ Once this guide is hosted over HTTPS and opened once, it works offline and can b
 
 ## Keep planning
 
-1. Give \`TRIP-PLAN.md\` to ChatGPT, Claude, or another AI assistant.
+1. Give \`ADTONA-TRIP-PLAN.md\` to ChatGPT, Claude, or another AI assistant.
 2. Ask it to return the complete updated file, including the \`json plantoguide-trip\` block.
 3. In Adtona, choose **Import updated plan** to re-render the website.
 4. Export a fresh package.
@@ -1324,18 +1344,20 @@ Open \`index.html\` locally, drag the folder to Netlify Drop, or upload it to an
       { name: "styles.css", content: websiteCss },
       { name: "app.js", content: runtime },
       { name: "manifest.webmanifest", content: exportManifest },
+      { name: "ADTONA-TRIP-PLAN.md", content: markdown },
+      { name: "ADTONA-TRIP-DATA.json", content: serializeTripJson(trip, { includePhotoData: true, photosWithData }) },
       { name: "TRIP-PLAN.md", content: markdown },
       { name: "TRIP-DATA.json", content: serializeTripJson(trip, { includePhotoData: true, photosWithData }) },
       { name: "AGENT-INSTRUCTIONS.md", content: createAgentInstructions(trip) },
       { name: "ATTRIBUTIONS.md", content: createAttributionsMarkdown(trip) },
       { name: "README.md", content: readme },
-      { name: "plan-x-guide-centered-compass-morph-clean-x.svg", content: base64ToBytes(window.PLANTOGUIDE_ICON_BASE64 || "") },
       ...(brandMark.bytes ? [{ name: "adtona-mark.png", content: brandMark.bytes }] : []),
+      ...(brandLogo.bytes ? [{ name: "adtona-logo.png", content: brandLogo.bytes }] : []),
       { name: "icons/icon-192.png", content: icon192 },
       { name: "icons/icon-512.png", content: icon512 },
       ...bundled.files
     ];
-    const PRECACHE_EXCLUDE = new Set(["TRIP-PLAN.md", "TRIP-DATA.json", "AGENT-INSTRUCTIONS.md", "README.md"]);
+    const PRECACHE_EXCLUDE = new Set(["ADTONA-TRIP-PLAN.md", "ADTONA-TRIP-DATA.json", "TRIP-PLAN.md", "TRIP-DATA.json", "AGENT-INSTRUCTIONS.md", "README.md"]);
     zipFiles.push({ name: "sw.js", content: createExportServiceWorker(zipFiles.map((file) => file.name).filter((name) => !PRECACHE_EXCLUDE.has(name)).concat("sw.js"), slug) });
     const zip = createZip(zipFiles);
     const url = URL.createObjectURL(zip);
@@ -1364,7 +1386,7 @@ Open \`index.html\` locally, drag the folder to Netlify Drop, or upload it to an
 
 function createCapturedExportWebsite(capturedViews) {
   const templates = capturedViews.map((view, index) => `<template data-export-template="${index}">${view}</template>`).join("");
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101412"><title>${escapeHtml(trip.destination)} · Adtona</title><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-192.png"><link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"></head><body class="trip-mode"><main class="page-shell"><section class="result">${capturedViews[0] || ""}</section></main>${templates}<script src="app.js"><\/script></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f5f1e8"><title>${escapeHtml(trip.destination)} · Adtona travel guide</title><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-192.png"><link rel="icon" href="adtona-mark.png" type="image/png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"></head><body class="trip-mode"><main class="page-shell"><section class="result">${capturedViews[0] || ""}</section></main>${templates}<script src="app.js"><\/script></body></html>`;
 }
 
 function waitForHydratedImages(root, timeout = 1800) {
@@ -1422,7 +1444,7 @@ function base64ToBytes(value) { return Uint8Array.from(atob(value), (character) 
 function createExportManifest(currentTrip) {
   const destination = currentTrip.destination || "Trip";
   return JSON.stringify({
-    name: `${destination} Guide`,
+    name: `${destination} · Adtona Travel Guide`,
     short_name: `${destination}`.slice(0, 24) || "Trip Guide",
     start_url: "./",
     scope: "./",
@@ -1431,22 +1453,16 @@ function createExportManifest(currentTrip) {
     theme_color: "#f5f1e8",
     icons: [
       {
-        src: "plan-x-guide-centered-compass-morph-clean-x.svg",
-        sizes: "512x512",
-        type: "image/svg+xml",
-        purpose: "any"
-      },
-      {
         src: "icons/icon-192.png",
         sizes: "192x192",
         type: "image/png",
-        purpose: "any maskable"
+        purpose: "any"
       },
       {
         src: "icons/icon-512.png",
         sizes: "512x512",
         type: "image/png",
-        purpose: "any maskable"
+        purpose: "any"
       }
     ]
   }, null, 2);
@@ -1455,7 +1471,7 @@ function createExportManifest(currentTrip) {
 function rasterizeBrandIconPng(size) {
   return new Promise((resolve, reject) => {
     const image = new Image();
-    const source = brandIconSource();
+    const source = "adtona-mark.png";
     const cleanup = () => {
       if (image.src.startsWith("blob:")) URL.revokeObjectURL(image.src);
     };
@@ -1568,7 +1584,7 @@ async function bundleExportImages(html) {
 function createExportWebsite() {
   const dayNav = trip.days.map((day, index) => `<a href="#day-${index + 1}">${escapeHtml(formatDate(day.date, false))}</a>`).join("");
   const days = trip.days.map((day, dayIndex) => `<section class="day" id="day-${dayIndex + 1}"><header><p>${escapeHtml(formatDate(day.date, true))}</p><h2>${escapeHtml(day.title)}</h2></header>${day.activities.map((item) => `<article class="stop"><time>${escapeHtml(item.time)}${item.endTime ? `<small>to ${escapeHtml(item.endTime)}</small>` : ""}</time><div><span>${escapeHtml(item.type)}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p>${item.travelMinutesToNext ? `<p class="travel">${escapeHtml(item.travelIconToNext || "🚇")} Approximately ${escapeHtml(String(item.travelMinutesToNext))} minutes to the next stop · ${escapeHtml(item.travelModeToNext || "local travel")}</p>` : ""}${item.sourceLabel && safeExternalUrl(item.sourceUrl) ? `<a href="${escapeHtml(safeExternalUrl(item.sourceUrl))}" target="_blank" rel="noopener">Source: ${escapeHtml(item.sourceLabel)}${item.sourceLicense ? ` · ${escapeHtml(item.sourceLicense)}` : ""} ↗</a>` : ""}<a href="${googleMapsSearchUrl(cleanActivityTitle(item.title))}" target="_blank" rel="noopener">Google Maps details ↗</a></div></article>`).join("")}</section>`).join("");
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(trip.destination)} Travel Guide · Adtona</title><link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css"></head><body><header class="hero" style="--banner:url('${escapeHtml(trip.guide.banner)}')"><p>Adtona</p><h1>${escapeHtml(trip.destination)}</h1><span>${escapeHtml(formatDate(trip.start, true))} — ${escapeHtml(formatDate(trip.end, true))}</span></header><nav>${dayNav}</nav><main>${days}</main><footer>Exported from Adtona · Verify live details before traveling · <a href="ATTRIBUTIONS.md">Sources and licenses</a>.</footer></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(trip.destination)} Travel Guide · Adtona</title><link rel="icon" href="adtona-mark.png" type="image/png"><link rel="stylesheet" href="styles.css"></head><body><header class="hero" style="--banner:url('${escapeHtml(trip.guide.banner)}')"><p>Adtona travel guide</p><h1>${escapeHtml(trip.destination)}</h1><span>${escapeHtml(formatDate(trip.start, true))} — ${escapeHtml(formatDate(trip.end, true))}</span></header><nav>${dayNav}</nav><main>${days}</main><footer>Exported from Adtona · Verify live details before traveling · <a href="ATTRIBUTIONS.md">Sources and licenses</a>.</footer></body></html>`;
 }
 
 function createAttributionsMarkdown(activeTrip = trip) {
@@ -1635,11 +1651,11 @@ function downloadTripMarkdown() {
   const blob = new Blob([createTripMarkdown()], { type: "text/markdown;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = `${trip.destination.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "trip"}-source-of-truth.md`;
+  link.download = `ADTONA-TRIP-PLAN-${trip.destination.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "trip"}.md`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
-function aiPrompt(platform) { return `Continue planning this trip in ${platform}. Treat the Markdown below as the source of truth. Preserve confirmed bookings, optimize geographically, research and verify live facts (hours, prices, closures, reservations, emergency and practical info), and ask before changing locked items.\n\nIMPORTANT — return format: reply with the COMPLETE updated TRIP-PLAN.md file, keeping every heading, and update the fenced \`\`\`json plantoguide-trip block at the end so it exactly matches your revised plan (same schema and field names, dates as YYYY-MM-DD). I will import that JSON block back into Adtona to re-render my trip website, so it must be complete and valid.\n\n${createTripMarkdown()}`; }
+function aiPrompt(platform) { return `Continue planning this trip in ${platform}. Treat the Markdown below as the source of truth. Preserve confirmed bookings, optimize geographically, research and verify live facts (hours, prices, closures, reservations, emergency and practical info), and ask before changing locked items.\n\nIMPORTANT — return format: reply with the COMPLETE updated ADTONA-TRIP-PLAN.md file, keeping every heading, and update the fenced \`\`\`json plantoguide-trip block at the end so it exactly matches your revised plan (same schema and field names, dates as YYYY-MM-DD). The plantoguide-trip name is a legacy compatibility identifier required by existing Adtona imports. I will import that JSON block back into Adtona to re-render my trip website, so it must be complete and valid.\n\n${createTripMarkdown()}`; }
 
 const TOAST_LIMIT = 3;
 function toastContainer() {
@@ -2821,7 +2837,7 @@ async function fetchSuggestionImage(url) {
     const timer = setTimeout(() => controller.abort(), 9000);
     try {
       const response = await fetch(url, {
-        headers: { "Api-User-Agent": "Adtona/5.3 (https://adtona.com/)" },
+        headers: { "Api-User-Agent": "Adtona/5.4 (https://adtona.com/)" },
         signal: controller.signal
       });
       if (response.ok) return response.json();
@@ -3136,7 +3152,7 @@ function switchAppTab(tabName) {
   });
   const activePanel = document.querySelector(`[data-panel="${tabName}"]`);
   if (activePanel) activePanel.scrollTop = 0;
-  announceReportStatus(`${titleCase(tabName === "ai" ? "AI export" : tabName)} tab selected for ${formatDate(trip.days[activeDay].date, false)}.`);
+  announceReportStatus(`${titleCase(tabName === "ai" ? "AI plan" : tabName)} tab selected for ${formatDate(trip.days[activeDay].date, false)}.`);
   requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
 }
 
@@ -4504,7 +4520,7 @@ function updateRefinementStatus() {
   if (!status) return;
   const count = Array.isArray(trip?.refinementInstructions) ? trip.refinementInstructions.length : 0;
   status.textContent = count
-    ? `${count} refinement instruction${count === 1 ? "" : "s"} will be included in AI exports.`
+    ? `${count} refinement instruction${count === 1 ? "" : "s"} will be included in the AI planning file and prompts.`
     : "No additional refinement instructions selected.";
 }
 

@@ -284,6 +284,20 @@ body.creating-trip { overflow:hidden !important; }
 
 /* Reference-theme pass: matches the original phone-first Tokyo planner */
 :root {
+  --adtona-sunrise: #ff7a1a;
+  --adtona-gold: #ffc328;
+  --adtona-coral: #f25532;
+  --adtona-island: #2fa84f;
+  --adtona-island-dark: #16763b;
+  --adtona-ocean: #147cc1;
+  --adtona-ocean-deep: #0b4d91;
+  --adtona-navy: #17324d;
+  --adtona-sand: #f5f1e8;
+  --adtona-surface: #fbfaf7;
+  --adtona-white: #ffffff;
+  --adtona-text: #1d2b36;
+  --adtona-muted: #66727d;
+  --adtona-border: #ded9cf;
   --ink: #1c1f26;
   --muted: #68707c;
   --paper: #f8f6f1;
@@ -8357,4 +8371,87 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   .info-dialog-card { max-height: calc(100dvh - 18px); padding: 22px 19px 20px; border-radius: 18px; }
   .info-dialog-body { max-height: calc(100dvh - 140px); padding-right: 4px; }
   .learn-more-content h2 { margin-right: 36px; font-size: 26px; }
+}
+
+/* Adtona public-release message hierarchy. The brand line remains concise while
+   the searchable product promise and AI handoff stay as real text in the page. */
+.builder:not(.builder-wide) .builder-hero-message h1 {
+  max-width: 900px;
+  margin: 4px auto 0;
+  color: var(--adtona-navy);
+  font: 600 clamp(34px, 4.1vw, 64px)/1.02 "Fraunces", serif;
+  letter-spacing: -.04em;
+}
+.builder:not(.builder-wide) .builder-hero-message > .eyebrow {
+  margin: 0 0 10px;
+  color: #a9500b;
+  font: 800 clamp(10px, .9vw, 13px)/1.3 "DM Sans", sans-serif;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  white-space: normal;
+}
+.builder:not(.builder-wide) .builder-hero-message .hero-support {
+  max-width: 850px;
+  margin: 16px auto 0;
+  color: #29485d;
+  font-size: clamp(14px, 1.15vw, 18px);
+  line-height: 1.5;
+}
+.builder:not(.builder-wide) .builder-hero-message .hero-secondary {
+  max-width: 830px;
+  margin: 8px auto 0;
+  color: var(--adtona-muted);
+  font-size: clamp(12px, .9vw, 14px);
+  line-height: 1.5;
+}
+.builder:not(.builder-wide) .builder-hero-message .hero-trust {
+  max-width: 720px;
+  margin: 10px auto 0;
+  color: var(--adtona-island-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+.builder .merged-start-continue {
+  color: var(--adtona-ocean-deep);
+  border-color: rgba(11,77,145,.3);
+}
+.builder .merged-start-continue .adtona-action-name,
+.builder .merged-start-continue > [aria-hidden="true"] {
+  color: var(--adtona-sunrise);
+  font-size: 11px;
+}
+.learn-more-content > p:not(.landing-lede):not(.landing-sources) {
+  margin: 0 0 10px;
+  color: #46605a;
+  font-size: 14px;
+  line-height: 1.58;
+}
+.site-footer strong { color: var(--adtona-navy); }
+
+@media (max-width: 760px) {
+  .builder:not(.builder-wide) .builder-hero-message h1 {
+    max-width: 420px;
+    font-size: clamp(30px, 9vw, 43px);
+  }
+  .builder:not(.builder-wide) .builder-hero-message .hero-support {
+    margin-top: 11px;
+    font-size: 12px;
+    line-height: 1.38;
+  }
+  .builder:not(.builder-wide) .builder-hero-message .hero-secondary {
+    display: none;
+  }
+  .builder:not(.builder-wide) .builder-hero-message .hero-trust {
+    margin-top: 7px;
+    font-size: 9.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }

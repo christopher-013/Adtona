@@ -22,11 +22,11 @@ const stepOneHtml = html.slice(stepOneStart, stepTwoStart);
 const stepTwoHtml = html.slice(stepTwoStart, stepThreeStart);
 
 assert.match(stepOneHtml, /class="builder-brand home-brand-lockup"[\s\S]*?src="adtona-logo\.png"/, "The merged first screen must show the Adtona logo");
-assert.doesNotMatch(stepOneHtml, /Turn your trip plan into a mobile travel guide\./, "The opening screen must omit the redundant large headline");
-// The tagline is the page's crawlable <h1> as well as the visible eyebrow, so search
-// engines have a headline to index on the landing view.
-assert.match(stepOneHtml, /<h1 class="eyebrow">Build a shareable trip website[\s\S]{0,180}?free in your browser\.<\/h1>/, "The compact product-value eyebrow must remain on Trip Basics as the page heading");
-assert.doesNotMatch(stepOneHtml, /Plan your trip, then/, "The opening screen must omit the secondary tagline");
+assert.match(stepOneHtml, /<p class="eyebrow">Free AI travel planner<\/p>/, "Trip Basics must state the product category");
+assert.match(stepOneHtml, /<h1>Plan the trip\. Build the guide\. Go\.<\/h1>/, "Trip Basics must use the Adtona primary tagline as its page heading");
+assert.match(stepOneHtml, /Create a shareable trip website, printable day-by-day itinerary, and AI-ready planning file—free in your browser\./, "Trip Basics must state the approved public promise");
+assert.match(stepOneHtml, /export a guide you can refine with ChatGPT, Claude, or another AI assistant\./, "Trip Basics must explain the AI refinement loop");
+assert.match(stepOneHtml, /No account or API key needed\. Your saved draft stays in this browser\./, "Trip Basics must expose the browser-local trust note");
 assert.match(stepOneHtml, /<label class="sr-only" for="destination">Destination<\/label>/, "The destination control must retain an accessible label");
 assert.doesNotMatch(stepOneHtml, />Where\?</, "The compact first screen must not show a redundant Where heading");
 assert.doesNotMatch(stepOneHtml, />When\?</, "The compact first screen must not show a redundant When heading");
@@ -34,7 +34,7 @@ assert.match(stepOneHtml, /<label for="startDate">Arrive<\/label>[\s\S]*?id="sta
 assert.match(script, /destinationInput\.value\s*=\s*"";/, "A new browser draft must start with a blank destination");
 assert.doesNotMatch(script, /destinationInput\.value\s*=\s*"Tokyo, Japan";/, "The destination field must no longer be prefilled with Tokyo, Japan");
 assert.match(stepOneHtml, /data-open-import[\s\S]{0,180}?Import your AI plan/, "The first screen must provide a compact AI-plan importer");
-assert.match(stepOneHtml, /id="nextStepButton"[^>]*type="button"[\s\S]{0,160}?Adto Na\. Go Now/, "The merged first screen must use the requested continue action");
+assert.match(stepOneHtml, /id="nextStepButton"[^>]*type="button"[\s\S]{0,180}?Adto na — start planning/, "The merged first screen must use the approved primary CTA");
 assert.match(
   script,
   /form\.addEventListener\("submit"[\s\S]{0,500}?currentFormStep === 1[\s\S]{0,220}?await goToPreferencesStep\(\);[\s\S]{0,80}?return;/,

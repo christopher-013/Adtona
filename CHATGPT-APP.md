@@ -1,4 +1,4 @@
-# PlanToGuide for ChatGPT
+# Adtona for ChatGPT
 
 This folder now contains a ChatGPT App built with the OpenAI Apps SDK and MCP Apps standard.
 
@@ -10,7 +10,7 @@ ChatGPT gathers three essentials in conversation:
 2. What dates are you going?
 3. What do you want to see, eat, and shop for?
 
-ChatGPT creates the detailed itinerary and calls `render_travel_itinerary`. The MCP server validates the structured itinerary and returns an interactive PlanToGuide widget. The server does **not** call the OpenAI API and does not need an OpenAI API key.
+ChatGPT creates the detailed itinerary and calls `render_travel_itinerary`. The MCP server validates the structured itinerary and returns an interactive Adtona widget. The server does **not** call the OpenAI API and does not need an OpenAI API key.
 
 ## Run locally
 
@@ -29,13 +29,13 @@ Open the standalone widget preview at `http://localhost:8787/preview`. The MCP e
 2. In ChatGPT, enable Developer mode under **Settings → Apps & Connectors → Advanced settings**.
 3. Under **Settings → Apps & Connectors**, create an app/connector.
 4. Use a connector URL ending in `/mcp`, such as `https://your-host.example/mcp`.
-5. Start a new conversation, add PlanToGuide from the **+ → More** menu, and say: `Plan a trip for me.`
+5. Start a new conversation, add Adtona from the **+ → More** menu, and say: `Plan a trip for me.`
 
 No authentication is required for this prototype because it stores no user accounts or private travel data. Add OAuth before introducing saved trips, bookings, or user-specific records.
 
 ## Suggested connector metadata
 
-- **Name:** PlanToGuide
+- **Name:** Adtona
 - **Description:** Creates a detailed, interactive day-by-day travel itinerary after asking where you are going, your dates, and what you want to see, eat, and shop for.
 
 ## Production notes
