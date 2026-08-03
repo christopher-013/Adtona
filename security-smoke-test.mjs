@@ -102,13 +102,17 @@ pass(!/feedbackEmail|["']email["']\s*:/.test(beta),
 pass(/feedbackWebsite/.test(beta),
   "feedback payload must include the anti-bot honeypot field");
 
-const feedbackAnchors = html.match(/<a\b[^>]*(?:feedback-link|feedback-header-link)[^>]*>/gi) || [];
-pass(feedbackAnchors.length >= 3, "Every public feedback entry point must remain present");
-for (const anchor of feedbackAnchors) {
-  pass(/href=["']#feedback["']/i.test(anchor),
-    `feedback entry point must open the in-app form: ${anchor.slice(0, 100)}`);
-  pass(!/github\.com|target=["']_blank/i.test(anchor),
-    `feedback entry point must not navigate away: ${anchor.slice(0, 100)}`);
+const feedbackControls = html.match(/<(?:a|button)\b[^>]*data-open-feedback[^>]*>/gi) || [];
+pass(feedbackControls.length >= 3, "Every public feedback entry point must remain present");
+for (const control of feedbackControls) {
+  pass(/data-open-feedback/i.test(control),
+    `feedback entry point must open the in-app form: ${control.slice(0, 100)}`);
+  if (/^<a\b/i.test(control)) {
+    pass(/href=["']#feedback["']/i.test(control),
+      `feedback links must target the in-app form: ${control.slice(0, 100)}`);
+  }
+  pass(!/github\.com|target=["']_blank/i.test(control),
+    `feedback entry point must not navigate away: ${control.slice(0, 100)}`);
 }
 pass(/id=["']feedbackWebsite["']/.test(html),
   "feedback dialog must include the honeypot field");

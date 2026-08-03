@@ -118,7 +118,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=5.3.62">
+  <link rel="stylesheet" href="styles.css?v=5.3.63">
 </head>
 <body>
   <main class="page-shell">
@@ -268,46 +268,16 @@
             <button class="primary-button final-create-button" id="createTripButton" type="submit"><span>Create Your Own Adventure</span><span aria-hidden="true">→</span></button>
           </div>
         </section>
-        <p class="form-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="#feedback" data-open-feedback>send feedback</a> · <a class="privacy-link" href="#privacy" data-open-privacy>Privacy</a></p>
+        <p class="form-footnote">No account needed. Your draft stays in this browser. <span aria-hidden="true">·</span> Public beta — <button class="footer-link feedback-link" type="button" data-open-feedback>Send feedback</button> <span aria-hidden="true">·</span> <button class="footer-link privacy-link" type="button" data-open-privacy>Privacy</button> <span aria-hidden="true">·</span> <button class="footer-link" type="button" data-open-learn-more>Learn More</button></p>
       </form>
 
-      <!-- Crawlable landing content. The wizard is built by JavaScript, so without this a
-           search engine saw only the tagline — and the FAQ structured data in the head had
-           no visible counterpart, which Google requires. It sits below the full-height
-           welcome screen, so the first view is unchanged, and only shows on Trip Basics. -->
-      <section class="landing-about" aria-label="About Adtona">
-        <h2>Adtona is a free AI travel planner</h2>
-        <p class="landing-lede">Build a shareable trip website, printable itinerary, and AI-ready planning file, free in your browser.</p>
-
-        <h3>What Adtona builds for your trip</h3>
-        <ul>
-          <li><strong>A shareable trip website</strong> — a day-by-day guide you can send to whoever is travelling with you.</li>
-          <li><strong>A printable itinerary</strong> — the same plan laid out to read on paper or save offline.</li>
-          <li><strong>An AI-ready planning file</strong> — a source-of-truth document for ChatGPT, Claude, or another assistant to refine, which Adtona can then re-import.</li>
-        </ul>
-
-        <h3>How it works</h3>
-        <ol>
-          <li>Enter your destination and dates.</li>
-          <li>Swipe through real places to see, eat, and shop, keeping the ones you want.</li>
-          <li>Answer a few questions about pace, group, and constraints — every one optional.</li>
-          <li>Adtona builds the day-by-day plan, with weather and practical details to verify.</li>
-        </ol>
-
-        <h3>Questions travellers ask</h3>
-        <dl class="landing-faq">
-          <dt>Is Adtona free to use?</dt>
-          <dd>Yes. Adtona is free and runs in your browser. There is no account to create, no API key to supply, and no usage charges.</dd>
-          <dt>What does Adtona create for my trip?</dt>
-          <dd>Adtona builds a shareable trip website, a printable day-by-day itinerary, and an AI-ready planning file you can hand to ChatGPT, Claude, or another AI assistant to refine.</dd>
-          <dt>Does Adtona store my trip data?</dt>
-          <dd>Your trip answers and saved draft stay on your device. Destination and weather research contacts Open-Meteo, Wikimedia/Wikivoyage, and OpenStreetMap/Overpass, which receive your destination query and connection data.</dd>
-          <dt>Can I use Adtona with ChatGPT or Claude?</dt>
-          <dd>Yes. Adtona exports an AI-ready planning file that acts as a source of truth for your trip, and it can re-import the updated plan an AI assistant returns.</dd>
-        </dl>
-
-        <p class="landing-sources">Destination research draws on Wikipedia, Wikivoyage, OpenStreetMap, and Open-Meteo. Always verify hours, prices, and bookings before you travel.</p>
-      </section>
+      <footer class="site-footer landing-footer">
+        <p class="site-footer-line"><strong>Adtona</strong> — Plan it. Build it. Go now. <span aria-hidden="true">·</span>
+          <button type="button" class="footer-link" data-open-feedback>Send feedback</button>
+          <span aria-hidden="true">·</span> <button type="button" class="footer-link" data-open-privacy>Privacy</button>
+          <span aria-hidden="true">·</span> <button type="button" class="footer-link" data-open-learn-more>Learn More</button>.
+        </p>
+      </footer>
     </section>
 
     <section class="result" id="result" hidden>
@@ -460,7 +430,7 @@
           <button class="app-nav-button" type="button" data-tab="ai"><span>✦</span><small>AI Export</small></button>
         </nav>
 
-        <p class="form-footnote app-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="#feedback" data-open-feedback>send feedback</a> · <a class="privacy-link" href="#privacy" data-open-privacy>Privacy</a></p>
+        <p class="form-footnote app-footnote">No account needed. Your draft stays in this browser. <span aria-hidden="true">·</span> Public beta — <button class="footer-link feedback-link" type="button" data-open-feedback>Send feedback</button> <span aria-hidden="true">·</span> <button class="footer-link privacy-link" type="button" data-open-privacy>Privacy</button> <span aria-hidden="true">·</span> <button class="footer-link" type="button" data-open-learn-more>Learn More</button></p>
       </div>
     </section>
   </main>
@@ -537,6 +507,47 @@
     <p>Destination and weather research contacts Open-Meteo, Wikimedia/Wikivoyage, and OpenStreetMap/Overpass, which receive your destination query and connection data.</p>
   </dialog>
 
+  <dialog class="info-dialog learn-more-dialog" id="learnMoreDialog" aria-labelledby="learnMoreDialogTitle">
+    <article class="info-dialog-card learn-more-dialog-card">
+      <button class="info-dialog-close" id="learnMoreDialogClose" type="button" aria-label="Close Learn More dialog">×</button>
+      <span class="info-dialog-icon" aria-hidden="true">✨</span>
+      <p class="eyebrow">Plan it. Build it. Go now.</p>
+      <div class="info-dialog-body learn-more-content">
+        <h2 id="learnMoreDialogTitle">Adtona is a free AI travel planner</h2>
+        <p class="landing-lede">Build a shareable trip website, printable itinerary, and AI-ready planning file, free in your browser.</p>
+
+        <h3>What Adtona builds for your trip</h3>
+        <ul>
+          <li><strong>A shareable trip website</strong> — a day-by-day guide you can send to whoever is travelling with you.</li>
+          <li><strong>A printable itinerary</strong> — the same plan laid out to read on paper or save offline.</li>
+          <li><strong>An AI-ready planning file</strong> — a source-of-truth document for ChatGPT, Claude, or another assistant to refine, which Adtona can then re-import.</li>
+        </ul>
+
+        <h3>How it works</h3>
+        <ol>
+          <li>Enter your destination and dates.</li>
+          <li>Swipe through real places to see, eat, and shop, keeping the ones you want.</li>
+          <li>Answer a few questions about pace, group, and constraints — every one optional.</li>
+          <li>Adtona builds the day-by-day plan, with weather and practical details to verify.</li>
+        </ol>
+
+        <h3>Questions travellers ask</h3>
+        <dl class="landing-faq">
+          <dt>Is Adtona free to use?</dt>
+          <dd>Yes. Adtona is free and runs in your browser. There is no account to create, no API key to supply, and no usage charges.</dd>
+          <dt>What does Adtona create for my trip?</dt>
+          <dd>Adtona builds a shareable trip website, a printable day-by-day itinerary, and an AI-ready planning file you can hand to ChatGPT, Claude, or another AI assistant to refine.</dd>
+          <dt>Does Adtona store my trip data?</dt>
+          <dd>Your trip answers and saved draft stay on your device. Destination and weather research contacts Open-Meteo, Wikimedia/Wikivoyage, and OpenStreetMap/Overpass, which receive your destination query and connection data.</dd>
+          <dt>Can I use Adtona with ChatGPT or Claude?</dt>
+          <dd>Yes. Adtona exports an AI-ready planning file that acts as a source of truth for your trip, and it can re-import the updated plan an AI assistant returns.</dd>
+        </dl>
+
+        <p class="landing-sources">Destination research draws on Wikipedia, Wikivoyage, OpenStreetMap, and Open-Meteo. Always verify hours, prices, and bookings before you travel.</p>
+      </div>
+    </article>
+  </dialog>
+
   <template id="activityTemplate">
     <article class="activity-card" tabindex="0">
       <div class="activity-time"></div>
@@ -563,13 +574,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=5.3.62"></script>
-  <script src="dynamic-catalog.js?v=5.3.62"></script>
-  <script src="export-styles.js?v=5.3.62"></script>
-  <script src="icon-source.js?v=5.3.62"></script>
-  <script src="photo-store.js?v=5.3.62"></script>
-  <script src="trip-schema.js?v=5.3.62"></script>
-  <script src="beta-tools.js?v=5.3.62"></script>
-  <script src="app.js?v=5.3.62"></script>
+  <script src="version.js?v=5.3.63"></script>
+  <script src="dynamic-catalog.js?v=5.3.63"></script>
+  <script src="export-styles.js?v=5.3.63"></script>
+  <script src="icon-source.js?v=5.3.63"></script>
+  <script src="photo-store.js?v=5.3.63"></script>
+  <script src="trip-schema.js?v=5.3.63"></script>
+  <script src="beta-tools.js?v=5.3.63"></script>
+  <script src="app.js?v=5.3.63"></script>
 </body>
 </html>

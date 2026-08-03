@@ -1212,6 +1212,33 @@ document.addEventListener("click", (event) => {
   if (event.target.closest?.("#privacyDialogClose")) closePrivacyDialog();
 });
 
+// Pictayo-style Learn More lightbox. The content stays in the document for search
+// engines and assistive technology, but no longer creates a long article below the
+// welcome screen.
+function closeLearnMoreDialog() {
+  const dialog = document.querySelector("#learnMoreDialog");
+  if (!dialog) return;
+  if (typeof dialog.close === "function") dialog.close();
+  else dialog.removeAttribute("open");
+}
+
+document.addEventListener("click", (event) => {
+  const link = event.target.closest?.("[data-open-learn-more]");
+  if (link) {
+    event.preventDefault();
+    const dialog = document.querySelector("#learnMoreDialog");
+    if (!dialog) return;
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    return;
+  }
+  if (event.target.closest?.("#learnMoreDialogClose")) closeLearnMoreDialog();
+});
+
+document.querySelector("#learnMoreDialog")?.addEventListener("click", (event) => {
+  if (event.target === event.currentTarget) closeLearnMoreDialog();
+});
+
 async function exportTripPackage() {
   if (!trip) return;
   const exportButton = document.querySelector("#exportTripButton");

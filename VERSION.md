@@ -1,5 +1,12 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.63 Compact footer and Learn More lightbox
+
+- Replaces the long information article below Trip Basics with a compact Pictayo-style footer.
+- Adds Send feedback, Privacy, and Learn More actions to the bottom of the builder and generated guide.
+- Moves Adtona's product overview, workflow, FAQ, and research notice into an accessible Learn More lightbox.
+- Keeps the detailed content in the document for search visibility without extending the welcome screen.
+
 ## v5.3.53 Meal-window scheduling and fuller days
 
 - Anchors breakfast to the selected Travel Style start time, lunch at 12:30 PM, and dinner within the selected 6–8 PM evening window.
