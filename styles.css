@@ -8900,3 +8900,20 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
 @media (max-width: 760px) {
   .privacy-dialog-body section { padding: 12px 13px; }
 }
+/* The card hid its overflow while the body carried a fixed max-height that did not account
+   for the icon, eyebrow and title above it — so the last section was clipped rather than
+   scrolled to. Making the card a flex column lets the body take exactly the space left and
+   scroll within it, whatever the header's height. */
+.privacy-dialog .info-dialog-card,
+.learn-more-dialog .info-dialog-card {
+  display: flex;
+  flex-direction: column;
+}
+.privacy-dialog .privacy-dialog-body,
+.learn-more-dialog .learn-more-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
