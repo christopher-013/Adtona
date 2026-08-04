@@ -8958,3 +8958,31 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   .trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name,
   .trip-basics-action-row.merged-start-actions .landing-alt strong { font-size: 12px; }
 }
+
+/* Feedback dialog actions: Cancel and Submit share one row and one width, so neither reads
+   as an afterthought stacked above a full-bleed button. */
+.feedback-dialog .import-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+.feedback-dialog .import-actions .secondary-button,
+.feedback-dialog .import-actions .primary-button {
+  width: auto;
+  min-width: 132px;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  flex: 0 1 auto;
+  justify-content: center;
+  padding: 11px 22px;
+  border-radius: 10px;
+  font: 700 13px "DM Sans", sans-serif;
+  line-height: 1;
+}
+@media (max-width: 560px) {
+  .feedback-dialog .import-actions .secondary-button,
+  .feedback-dialog .import-actions .primary-button { flex: 1 1 0; min-width: 0; }
+}

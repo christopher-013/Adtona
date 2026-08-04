@@ -152,9 +152,7 @@
         });
       }).then(function (data) {
         if (status) {
-          status.textContent = data.number
-            ? "Thank you — feedback #" + data.number + " was sent."
-            : "Thank you — your feedback was sent.";
+          status.textContent = "Thank you — feedback was sent.";
         }
         if (form.reset) form.reset();
         window.setTimeout(close, 1800);
