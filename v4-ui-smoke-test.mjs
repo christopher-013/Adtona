@@ -44,8 +44,8 @@ assert.doesNotMatch(stepOneHtml, />When\?</, "The compact first screen must not 
 assert.match(stepOneHtml, /<label for="startDate">Arrive<\/label>[\s\S]*?id="startDate"[\s\S]*?<label for="endDate">Depart<\/label>[\s\S]*?id="endDate"/, "Arrival and departure inputs must retain their individual labels");
 assert.match(script, /destinationInput\.value\s*=\s*"";/, "A new browser draft must start with a blank destination");
 assert.doesNotMatch(script, /destinationInput\.value\s*=\s*"Tokyo, Japan";/, "The destination field must no longer be prefilled with Tokyo, Japan");
-assert.match(stepOneHtml, /data-open-import[\s\S]{0,180}?Import your AI plan/, "The first screen must provide a compact AI-plan importer");
-assert.match(stepOneHtml, /id="nextStepButton"[^>]*type="button"[\s\S]{0,180}?Adto na — Go Now/, "The merged first screen must use the approved primary CTA");
+assert.match(stepOneHtml, /data-open-import[\s\S]{0,180}?Import AI Plan/, "The first screen must provide a compact AI-plan importer");
+assert.match(stepOneHtml, /id="nextStepButton"[^>]*type="button"[\s\S]{0,180}?Go Now/, "The merged first screen must use the approved primary CTA");
 assert.match(
   script,
   /form\.addEventListener\("submit"[\s\S]{0,500}?currentFormStep === 1[\s\S]{0,220}?await goToPreferencesStep\(\);[\s\S]{0,80}?return;/,

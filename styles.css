@@ -8986,3 +8986,8 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   .feedback-dialog .import-actions .secondary-button,
   .feedback-dialog .import-actions .primary-button { flex: 1 1 0; min-width: 0; }
 }
+/* Import reads first as the alternative entry point, with Go Now on the right as the action
+   the traveler lands on last. Visual order only — the markup keeps the primary first so the
+   tab order still reaches it before its alternative. */
+.trip-basics-action-row.merged-start-actions .merged-start-continue { order: 2; }
+.trip-basics-action-row.merged-start-actions .landing-alt { order: 1; }
