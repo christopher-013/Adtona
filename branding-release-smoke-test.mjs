@@ -15,7 +15,7 @@ assert.match(html, /<meta name="description" content="Build a shareable trip web
 assert.match(html, /<link rel="canonical" href="https:\/\/adtona\.com\/">/);
 assert.match(html, /<h1>Plan the trip\. Build the guide\. Go\.<\/h1>/);
 assert.match(html, /<p class="eyebrow">Free AI travel planner<\/p>/);
-assert.match(html, /Adtona was inspired by the Cebuano phrase “Adto na”—“Go now\.”/);
+assert.match(html, /Adtona was inspired by the Bisaya \(Cebuano\) phrase “Adto na”—“Go now\.”/);
 assert.match(html, /Export\. Refine\. Re-import\. Keep one source of truth\./);
 
 const jsonLdText = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
@@ -60,10 +60,10 @@ assert.deepEqual(pngDimensions("icons/maskable-192.png"), [192, 192]);
 assert.deepEqual(pngDimensions("icons/maskable-512.png"), [512, 512]);
 assert.deepEqual(pngDimensions("icons/adtona-social-1200x630.png"), [1200, 630]);
 
-assert.match(versionSource, /ADTONA_VERSION\s*=\s*"5\.4\.0"/);
+assert.match(versionSource, /ADTONA_VERSION\s*=\s*"5.4.1"/);
 assert.match(versionSource, /PLANTOGUIDE_VERSION\s*=\s*globalThis\.ADTONA_VERSION/);
-assert.equal(packageJson.version, "5.4.0");
-assert.match(serverSource, /McpServer\(\{ name: "plantoguide", version: "5\.4\.0" \}\)/);
+assert.equal(packageJson.version, "5.4.1");
+assert.match(serverSource, /McpServer\(\{ name: "plantoguide", version: "5.4.1" \}\)/);
 assert.match(serviceWorker, /`adtona-\$\{RELEASE_VERSION\}`/);
 assert.match(app, /ADTONA-TRIP-PLAN\.md/);
 assert.match(app, /ADTONA-TRIP-DATA\.json/);

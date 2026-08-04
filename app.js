@@ -1842,7 +1842,12 @@ function showFormStep(stepNumber, options = {}) {
     // welcome tagline is an <h1> for search engines rather than a step title, so it is
     // excluded — otherwise it took focus on load and rendered with a focus ring around it,
     // and it also stole focus from the destination field.
-    const heading = document.querySelector(`[data-form-step="${stepNumber}"] h1:not(.eyebrow), [data-form-step="${stepNumber}"] h2, [data-form-step="${stepNumber}"] h3`);
+    // Trip Basics is the landing view, not a step being announced: its heading is the
+    // marketing tagline, and focusing it drew a focus ring around the tagline the moment
+    // the page loaded. The wizard steps still move focus so screen readers announce them.
+    const heading = stepNumber === 1
+      ? null
+      : document.querySelector(`[data-form-step="${stepNumber}"] h1:not(.eyebrow), [data-form-step="${stepNumber}"] h2, [data-form-step="${stepNumber}"] h3`);
     if (heading) {
       heading.setAttribute("tabindex", "-1");
       heading.focus({ preventScroll: true });

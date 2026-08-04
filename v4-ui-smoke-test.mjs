@@ -25,8 +25,19 @@ assert.match(stepOneHtml, /class="builder-brand home-brand-lockup"[\s\S]*?src="a
 assert.match(stepOneHtml, /<p class="eyebrow">Free AI travel planner<\/p>/, "Trip Basics must state the product category");
 assert.match(stepOneHtml, /<h1>Plan the trip\. Build the guide\. Go\.<\/h1>/, "Trip Basics must use the Adtona primary tagline as its page heading");
 assert.match(stepOneHtml, /Create a shareable trip website, printable day-by-day itinerary, and AI-ready planning file—free in your browser\./, "Trip Basics must state the approved public promise");
-assert.match(stepOneHtml, /export a guide you can refine with ChatGPT, Claude, or another AI assistant\./, "Trip Basics must explain the AI refinement loop");
-assert.match(stepOneHtml, /No account or API key needed\. Your saved draft stays in this browser\./, "Trip Basics must expose the browser-local trust note");
+// The AI refinement loop and the no-account promise moved off Trip Basics into Learn More:
+// the welcome screen keeps the tagline and the one-line promise, and the detail is a click
+// away for anyone who wants it.
+assert.doesNotMatch(stepOneHtml, /export a guide you can refine with ChatGPT/, "Trip Basics must stay uncluttered");
+assert.doesNotMatch(stepOneHtml, /No account or API key needed/, "The no-account detail belongs in Learn More, not the welcome screen");
+const learnMoreHtml = html.slice(html.indexOf('id="learnMoreDialog"'));
+assert.match(learnMoreHtml, /export a guide you can refine with ChatGPT, Claude, or another AI assistant\./, "Learn More must explain the AI refinement loop");
+assert.match(learnMoreHtml, /No account or API key needed/, "Learn More must carry the no-account promise");
+assert.match(html, /data-open-learn-more>Learn More<\/button>(?!\.)/, "The Learn More link must not end in a period");
+// The trust note moved into Learn More with the rest of the detail; the footer still says
+// "No account needed. Your draft stays in this browser." on every screen.
+assert.match(learnMoreHtml, /Your saved draft stays in this browser\./, "Learn More must keep the browser-local trust note");
+assert.match(html, /No account needed\. Your draft stays in this browser\./, "The footer must still carry the browser-local promise");
 assert.match(stepOneHtml, /<label class="sr-only" for="destination">Destination<\/label>/, "The destination control must retain an accessible label");
 assert.doesNotMatch(stepOneHtml, />Where\?</, "The compact first screen must not show a redundant Where heading");
 assert.doesNotMatch(stepOneHtml, />When\?</, "The compact first screen must not show a redundant When heading");
