@@ -25,18 +25,18 @@ assert.match(stepOneHtml, /class="builder-brand home-brand-lockup"[\s\S]*?src="a
 assert.match(stepOneHtml, /<p class="eyebrow">Free AI travel planner<\/p>/, "Trip Basics must state the product category");
 assert.match(stepOneHtml, /<h1>Plan the trip\. Build the guide\. Go Now\.<\/h1>/, "Trip Basics must use the Adtona primary tagline as its page heading");
 assert.match(stepOneHtml, /Create a shareable trip website, printable day-by-day itinerary, and AI-ready planning file—free in your browser\./, "Trip Basics must state the approved public promise");
-// The AI refinement loop and the no-account promise moved off Trip Basics into Learn More:
-// the welcome screen keeps the tagline and the one-line promise, and the detail is a click
-// away for anyone who wants it.
+// The welcome screen keeps only the tagline and the one-line promise. The refinement and
+// no-account lines are not repeated as an intro in Learn More either — its body already
+// covers both, so the dialog opens straight into its sections.
 assert.doesNotMatch(stepOneHtml, /export a guide you can refine with ChatGPT/, "Trip Basics must stay uncluttered");
 assert.doesNotMatch(stepOneHtml, /No account or API key needed/, "The no-account detail belongs in Learn More, not the welcome screen");
 const learnMoreHtml = html.slice(html.indexOf('id="learnMoreDialog"'));
-assert.match(learnMoreHtml, /export a guide you can refine with ChatGPT, Claude, or another AI assistant\./, "Learn More must explain the AI refinement loop");
-assert.match(learnMoreHtml, /No account or API key needed/, "Learn More must carry the no-account promise");
+// Those lines are no longer repeated as an intro in Learn More either: its body already
+// covers the formats, the AI loop and the no-account promise, so the dialog opens straight
+// into its sections rather than restating them.
+assert.doesNotMatch(learnMoreHtml, /<p class="landing-lede">/, "Learn More must not repeat the promise as a duplicate intro");
+assert.match(learnMoreHtml, /AI-ready planning file/, "Learn More must still describe the AI-ready planning file in its body");
 assert.match(html, /data-open-learn-more>Learn More<\/button>(?!\.)/, "The Learn More link must not end in a period");
-// The trust note moved into Learn More with the rest of the detail; the footer still says
-// "No account needed. Your draft stays in this browser." on every screen.
-assert.match(learnMoreHtml, /Your saved draft stays in this browser\./, "Learn More must keep the browser-local trust note");
 assert.match(html, /No account needed\. Your draft stays in this browser\./, "The footer must still carry the browser-local promise");
 assert.match(stepOneHtml, /<label class="sr-only" for="destination">Destination<\/label>/, "The destination control must retain an accessible label");
 assert.doesNotMatch(stepOneHtml, />Where\?</, "The compact first screen must not show a redundant Where heading");
@@ -347,11 +347,11 @@ assert.match(
   "Leaving Trip Basics must reconcile the answers with the destination"
 );
 
-// "See How It Works" is the quiet middle action on the welcome screen, opening the Learn
-// More lightbox, styled after the reference button on Pictayo.
-// Regrouped as on Pictayo: the primary action alone and centred, with Import and See How It
-// Works on a quiet row beneath it.
-assert.match(stepOneHtml, /id="nextStepButton"[\s\S]{0,500}?<div class="landing-secondary-actions">[\s\S]{0,400}?data-open-import[\s\S]{0,300}?data-open-learn-more>See How It Works<\/button>/, "Import and See How It Works must sit beneath the primary action");
+// The welcome screen offers only Import beside the primary action: See How It Works was
+// removed because the footer Learn More link already opens the same lightbox.
+assert.doesNotMatch(stepOneHtml, /See How It Works/, "The welcome screen must not duplicate the Learn More entry point");
+assert.match(stepOneHtml, /id="nextStepButton"[\s\S]{0,500}?<div class="landing-secondary-actions">[\s\S]{0,400}?data-open-import/, "Import must sit alongside the primary action");
+assert.match(html, /data-open-learn-more>Learn More<\/button>/, "Learn More must remain reachable from the footer");
 assert.match(stepOneHtml, /id="nextStepButton"[^>]*>\s*<img class="cta-mark"/, "The primary action must carry the brand mark before its label");
 assert.match(styles, /\.merged-start-continue\s*\{[^}]*background:\s*#e2621f/s, "The primary action must be orange");
 assert.match(styles, /\.learn-more-panel\s*\{[^}]*border-radius:\s*14px/s, "Learn More groups must render as panels");
