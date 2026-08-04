@@ -8789,3 +8789,56 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   .trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name { font-size: 11.5px; }
   .trip-basics-action-row.merged-start-actions .cta-mark { width: 16px; height: 16px; flex-basis: 16px; }
 }
+
+/* Action row, arranged the conventional way for a form.
+   Measured first: the three actions total ~566px against a 908px field row, so they fit on
+   one line comfortably. Stacking them centred left the actions floating away from the left
+   edge the fields start on, and giving all three the same weight in v5.5.1 removed any
+   signal of which one to press.
+   So: one row, aligned to the same left margin as the destination field, primary first in
+   reading order and visibly heavier — tinted and larger, without the solid slab that fought
+   the gradient. `display: contents` lets the wrapper's two buttons join this same row
+   without changing the markup. */
+.trip-basics-action-row.merged-start-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+}
+.trip-basics-action-row.merged-start-actions .landing-secondary-actions {
+  display: contents;
+}
+.trip-basics-action-row.merged-start-actions .merged-start-continue {
+  order: 1;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  min-width: 0;
+  margin: 0;
+  padding: 10px 22px;
+  border: 1.5px solid #d4571a;
+  color: #b8460f;
+  background: rgba(226, 98, 31, .12);
+}
+.trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name {
+  font-size: 14.5px;
+  font-weight: 800;
+}
+.trip-basics-action-row.merged-start-actions .cta-mark {
+  width: 20px;
+  height: 20px;
+  flex-basis: 20px;
+}
+.trip-basics-action-row.merged-start-actions .landing-alt { order: 2; margin: 0; }
+@media (max-width: 760px) {
+  /* Too narrow for one row: the primary takes its own full-width line, the two
+     alternatives share the line beneath it. */
+  .trip-basics-action-row.merged-start-actions { gap: 10px; }
+  .trip-basics-action-row.merged-start-actions .merged-start-continue {
+    width: 100%;
+    height: 46px; min-height: 46px; max-height: 46px;
+    justify-content: center;
+  }
+  .trip-basics-action-row.merged-start-actions .landing-alt { flex: 1 1 45%; min-width: 0; }
+}
