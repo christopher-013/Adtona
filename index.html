@@ -137,7 +137,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=5.5.5">
+  <link rel="stylesheet" href="styles.css?v=5.5.6">
 </head>
 <body>
   <main class="page-shell">
@@ -519,15 +519,55 @@
     </form>
   </dialog>
 
-  <dialog class="export-dialog privacy-dialog" id="privacyDialog" aria-labelledby="privacyDialogTitle">
-    <button class="export-dialog-close" id="privacyDialogClose" type="button" aria-label="Close Privacy dialog">×</button>
-    <span class="export-dialog-icon" aria-hidden="true">✓</span>
-    <p class="eyebrow">Public-safe browser mode</p>
-    <h2 id="privacyDialogTitle">Privacy</h2>
-    <p>No account or API key required. Your trip answers and saved draft are stored in this browser using local storage. Uploaded photo data is stored locally in IndexedDB when available; photo metadata may also be kept with the trip draft.</p>
-    <p>Destination and weather research may contact Open-Meteo, Wikimedia, Wikivoyage, and OpenStreetMap/Overpass. Maps may load from Google Maps. Those services receive the requested destination or map details and normal connection information needed to respond.</p>
-    <p>If you send feedback, the category, summary, message, page, app version, browser details, and screen size are sent to Adtona's feedback worker and used to create a public GitHub issue. Do not include private trip details or personal information. Cloudflare may process basic analytics and security data when enabled by the hosted site.</p>
-    <p>Exports contain the trip information you choose to include. The complete structured export can include locally stored photo data. Clearing this site's browser storage removes the saved draft and locally stored photos from that browser.</p>
+  <dialog class="info-dialog privacy-dialog" id="privacyDialog" aria-labelledby="privacyDialogTitle">
+    <article class="info-dialog-card privacy-dialog-card">
+      <button class="info-dialog-close" id="privacyDialogClose" type="button" aria-label="Close Privacy dialog">×</button>
+      <span class="info-dialog-icon" aria-hidden="true">🔒</span>
+      <p class="eyebrow">Your privacy</p>
+      <h2 id="privacyDialogTitle">Privacy</h2>
+      <div class="info-dialog-body privacy-dialog-body">
+        <p class="info-dialog-lead">Your trip stays in your browser. Adtona has no account system and no trip backend, and it does not upload your plan.</p>
+
+        <section>
+          <h3>What stays on this device</h3>
+          <p>Your destination, dates, answers, chosen recommendations, and saved draft are stored locally in this browser using local storage. Photos you add are stored locally in IndexedDB where the browser supports it, and photo details may also be kept alongside the trip draft.</p>
+          <p>Browser storage is not encrypted by Adtona, so protect your browser profile and clear the saved draft on a shared or public computer.</p>
+        </section>
+
+        <section>
+          <h3>Destination and weather research</h3>
+          <p>To suggest real places, Adtona sends the destination you type — never your whole trip — to Open-Meteo for weather, and to Wikipedia, Wikivoyage, and OpenStreetMap/Overpass for places to see, eat, and shop. Photos for those suggestions come from Wikimedia Commons.</p>
+          <p>These providers also receive normal connection information such as your IP address, and their own privacy policies apply.</p>
+        </section>
+
+        <section>
+          <h3>Maps</h3>
+          <p>Map links and embedded maps load from Google Maps, which receives the place or map details being opened along with normal connection information. Adtona opens a map only when you choose to view one.</p>
+        </section>
+
+        <section>
+          <h3>Feedback</h3>
+          <p>Sending feedback submits the category, your summary and message, the current page, app version, browser details, and screen size to Adtona’s feedback service. It creates a public issue, so do not include private trip details, addresses, email addresses, passwords, or links. Your trip data and photos are never attached.</p>
+        </section>
+
+        <section>
+          <h3>Exports and sharing</h3>
+          <p>An export contains the trip information you chose to include, and a complete structured export can also carry locally stored photo data. Once you share or host an exported guide, anything inside it is visible to whoever can open it.</p>
+        </section>
+
+        <section>
+          <h3>Analytics</h3>
+          <p>When the hosted site has it enabled, Cloudflare may process basic analytics and security data for adtona.com. Adtona does not run advertising or cross-site tracking.</p>
+        </section>
+
+        <section>
+          <h3>Your controls</h3>
+          <p>Starting a new trip or clearing this site’s browser storage removes the saved draft and any locally stored photos from that browser. Files on your device are never changed, moved, or deleted.</p>
+        </section>
+
+        <p class="info-dialog-updated">Last updated August 3, 2026.</p>
+      </div>
+    </article>
   </dialog>
 
   <dialog class="info-dialog learn-more-dialog" id="learnMoreDialog" aria-labelledby="learnMoreDialogTitle">
@@ -630,13 +670,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=5.5.5"></script>
-  <script src="dynamic-catalog.js?v=5.5.5"></script>
-  <script src="export-styles.js?v=5.5.5"></script>
-  <script src="icon-source.js?v=5.5.5"></script>
-  <script src="photo-store.js?v=5.5.5"></script>
-  <script src="trip-schema.js?v=5.5.5"></script>
-  <script src="beta-tools.js?v=5.5.5"></script>
-  <script src="app.js?v=5.5.5"></script>
+  <script src="version.js?v=5.5.6"></script>
+  <script src="dynamic-catalog.js?v=5.5.6"></script>
+  <script src="export-styles.js?v=5.5.6"></script>
+  <script src="icon-source.js?v=5.5.6"></script>
+  <script src="photo-store.js?v=5.5.6"></script>
+  <script src="trip-schema.js?v=5.5.6"></script>
+  <script src="beta-tools.js?v=5.5.6"></script>
+  <script src="app.js?v=5.5.6"></script>
 </body>
 </html>

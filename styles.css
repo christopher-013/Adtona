@@ -8861,3 +8861,42 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
 .trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name {
   font-weight: 700;
 }
+
+/* Privacy dialog now matches the Learn More card: sectioned, one type scale, each topic in
+   its own panel so it can be scanned rather than read as a block. */
+.privacy-dialog-body,
+.privacy-dialog-body p,
+.privacy-dialog-body li {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #3d534d;
+}
+.privacy-dialog-body .info-dialog-lead {
+  margin: 0 0 4px;
+  font-size: 15px;
+  color: #2f4a44;
+}
+.privacy-dialog-body h3 {
+  margin: 0 0 6px;
+  color: var(--forest-dark, #17403a);
+  font: 700 15px/1.3 "DM Sans", sans-serif;
+}
+.privacy-dialog-body section {
+  margin: 14px 0 0;
+  padding: 15px 17px;
+  border: 1px solid rgba(36, 89, 76, .16);
+  border-radius: 14px;
+  background: rgba(233, 241, 236, .5);
+}
+.privacy-dialog-body section p { margin: 0 0 8px; }
+.privacy-dialog-body section p:last-child { margin-bottom: 0; }
+.privacy-dialog-body .info-dialog-updated {
+  margin: 18px 0 0;
+  color: #5d716b;
+  font-size: 12px;
+  font-weight: 700;
+}
+@media (max-width: 760px) {
+  .privacy-dialog-body section { padding: 12px 13px; }
+}
