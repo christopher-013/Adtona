@@ -346,3 +346,10 @@ assert.match(
   /clearTimeout\(destinationResearchTimer\);[\s\S]{0,320}?syncPreferencesToDestination\(\);/,
   "Leaving Trip Basics must reconcile the answers with the destination"
 );
+
+// "See How It Works" is the quiet middle action on the welcome screen, opening the Learn
+// More lightbox, styled after the reference button on Pictayo.
+assert.match(stepOneHtml, /data-open-import[\s\S]{0,300}?class="landing-alt see-how-button" type="button" data-open-learn-more>See How It Works<\/button>[\s\S]{0,200}?id="nextStepButton"/, "See How It Works must sit between Import and the primary action");
+assert.match(styles, /\.trip-basics-action-row \.see-how-button\s*\{[^}]*border-radius:\s*999px/s, "See How It Works must use the reference pill shape");
+// The product promise stays on one line on desktop; phones still wrap it.
+assert.match(styles, /@media \(min-width: 900px\)[\s\S]{0,260}?p\.hero-support[\s\S]{0,120}?white-space:\s*nowrap/s, "The hero promise must not wrap on a wide display");

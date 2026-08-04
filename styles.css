@@ -8455,3 +8455,44 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
     transition-duration: .01ms !important;
   }
 }
+
+/* "See How It Works" — the quiet middle action between Import and Adto na, opening the
+   Learn More lightbox. Mirrors the reference button on Pictayo: translucent white pill,
+   hairline brand-tinted border, brand-coloured label, no shadow — so it reads as a calm
+   third option rather than competing with the primary action. */
+.trip-basics-action-row .see-how-button {
+  flex: 0 0 auto;
+  margin-inline: auto;
+  padding: 9px 16px;
+  border: 1px solid rgba(36, 89, 76, .28);
+  border-radius: 999px;
+  color: var(--forest);
+  background: rgba(255, 255, 255, .72);
+  box-shadow: none;
+  cursor: pointer;
+  font: 700 13px "DM Sans", sans-serif;
+  white-space: nowrap;
+  transition: color .18s ease, background .18s ease, border-color .18s ease;
+}
+.trip-basics-action-row .see-how-button:hover {
+  color: #fffdf8;
+  border-color: var(--forest);
+  background: var(--forest);
+}
+@media (max-width: 760px) {
+  .trip-basics-action-row .see-how-button {
+    order: 3;
+    width: 100%;
+    margin-top: 2px;
+    font-size: 12px;
+  }
+}
+/* Keep the product promise on one line on desktop; it wraps normally on phones, where a
+   single line would have to shrink past readable to fit. */
+@media (min-width: 900px) {
+  .builder .builder-hero-message p.hero-support,
+  .builder:not(.builder-wide) .merged-start-step .builder-hero-message p.hero-support {
+    white-space: nowrap;
+    font-size: clamp(12px, 1.25vw, 18px);
+  }
+}
