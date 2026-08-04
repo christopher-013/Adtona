@@ -8842,3 +8842,22 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   }
   .trip-basics-action-row.merged-start-actions .landing-alt { flex: 1 1 45%; min-width: 0; }
 }
+/* Centre the action row under the fields, and give the primary the same pale background as
+   its neighbours — it stays the obvious action through size and its orange label and
+   border, not a tinted fill. */
+.trip-basics-action-row.merged-start-actions {
+  justify-content: center;
+}
+.trip-basics-action-row.merged-start-actions .merged-start-continue {
+  background: rgba(255, 255, 255, .72);
+}
+.trip-basics-action-row.merged-start-actions .merged-start-continue:hover {
+  color: #fffdf8;
+  border-color: #d4571a;
+  background: #d4571a;
+}
+/* Match the neighbours' weight: the primary now stands out by size and colour alone. */
+.trip-basics-action-row.merged-start-actions .merged-start-continue,
+.trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name {
+  font-weight: 700;
+}
