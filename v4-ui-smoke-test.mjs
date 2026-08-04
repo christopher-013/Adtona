@@ -349,7 +349,12 @@ assert.match(
 
 // "See How It Works" is the quiet middle action on the welcome screen, opening the Learn
 // More lightbox, styled after the reference button on Pictayo.
-assert.match(stepOneHtml, /data-open-import[\s\S]{0,300}?class="landing-alt see-how-button" type="button" data-open-learn-more>See How It Works<\/button>[\s\S]{0,200}?id="nextStepButton"/, "See How It Works must sit between Import and the primary action");
+// Regrouped as on Pictayo: the primary action alone and centred, with Import and See How It
+// Works on a quiet row beneath it.
+assert.match(stepOneHtml, /id="nextStepButton"[\s\S]{0,500}?<div class="landing-secondary-actions">[\s\S]{0,400}?data-open-import[\s\S]{0,300}?data-open-learn-more>See How It Works<\/button>/, "Import and See How It Works must sit beneath the primary action");
+assert.match(stepOneHtml, /id="nextStepButton"[^>]*>\s*<img class="cta-mark"/, "The primary action must carry the brand mark before its label");
+assert.match(styles, /\.merged-start-continue\s*\{[^}]*background:\s*#e2621f/s, "The primary action must be orange");
+assert.match(styles, /\.learn-more-panel\s*\{[^}]*border-radius:\s*14px/s, "Learn More groups must render as panels");
 assert.match(styles, /\.trip-basics-action-row \.see-how-button\s*\{[^}]*border-radius:\s*999px/s, "See How It Works must use the reference pill shape");
 // The product promise stays on one line on desktop; phones still wrap it.
 assert.match(styles, /@media \(min-width: 900px\)[\s\S]{0,260}?p\.hero-support[\s\S]{0,120}?white-space:\s*nowrap/s, "The hero promise must not wrap on a wide display");

@@ -8496,3 +8496,155 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
     font-size: clamp(12px, 1.25vw, 18px);
   }
 }
+
+/* Welcome actions grouped as on Pictayo: the primary action alone and centred, with the
+   two quiet alternatives on a row beneath it. */
+.trip-basics-action-row.merged-start-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.trip-basics-action-row.merged-start-actions .merged-start-continue {
+  display: inline-flex;
+  width: auto;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto;
+  padding: 14px 30px;
+  border: 0;
+  border-radius: 999px;
+  color: #fffdf8;
+  background: var(--coral, #d9541f);
+  box-shadow: 0 10px 26px rgba(217, 84, 31, .32);
+  font: 800 16px "DM Sans", sans-serif;
+}
+.trip-basics-action-row.merged-start-actions .merged-start-continue:hover {
+  background: #c2481a;
+}
+.trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name,
+.trip-basics-action-row.merged-start-actions .merged-start-continue span {
+  color: inherit;
+}
+.trip-basics-action-row.merged-start-actions .cta-mark {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  object-fit: contain;
+}
+.landing-secondary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+/* Both alternatives share one quiet pill, so neither competes with the primary action. */
+.landing-secondary-actions .landing-alt {
+  display: inline-flex;
+  width: auto;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 9px 16px;
+  border: 1px solid rgba(36, 89, 76, .28);
+  border-radius: 999px;
+  color: var(--forest);
+  background: rgba(255, 255, 255, .72);
+  box-shadow: none;
+  cursor: pointer;
+  font: 700 13px "DM Sans", sans-serif;
+  white-space: nowrap;
+}
+.landing-secondary-actions .landing-alt strong { font-weight: 700; }
+.landing-secondary-actions .landing-alt:hover {
+  color: #fffdf8;
+  border-color: var(--forest);
+  background: var(--forest);
+}
+
+/* Learn More: one typographic scale, and each group of text in its own panel as on
+   Pictayo, so the dialog reads as sections rather than a wall of mixed styles. */
+.learn-more-content,
+.learn-more-content p,
+.learn-more-content li {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #3d534d;
+}
+.learn-more-content h2 {
+  margin: 0 0 8px;
+  color: var(--forest-dark, #17403a);
+  font: 600 clamp(22px, 2.6vw, 30px)/1.2 "Fraunces", serif;
+}
+.learn-more-content h3 {
+  margin: 0 0 8px;
+  color: var(--forest-dark, #17403a);
+  font: 700 15px/1.3 "DM Sans", sans-serif;
+}
+.learn-more-content .landing-lede {
+  font-size: 15px;
+  color: #2f4a44;
+}
+.learn-more-content section,
+.learn-more-content .learn-more-panel {
+  margin: 16px 0 0;
+  padding: 16px 18px;
+  border: 1px solid rgba(36, 89, 76, .16);
+  border-radius: 14px;
+  background: rgba(233, 241, 236, .5);
+}
+.learn-more-content section p:last-child,
+.learn-more-content section ul:last-child {
+  margin-bottom: 0;
+}
+.learn-more-content ul,
+.learn-more-content ol {
+  margin: 0;
+  padding-left: 20px;
+}
+.learn-more-content li { margin-bottom: 6px; }
+.learn-more-content li strong,
+.learn-more-content p strong { color: var(--forest-dark, #17403a); }
+@media (max-width: 760px) {
+  .trip-basics-action-row.merged-start-actions .merged-start-continue {
+    width: 100%;
+    padding: 13px 20px;
+    font-size: 15px;
+  }
+  .landing-secondary-actions .landing-alt { font-size: 12px; }
+  .learn-more-content section { padding: 13px 14px; }
+}
+/* Higher-specificity pass: the dialog's own rules were overriding the shared type scale,
+   leaving three fonts and sizes mixed in one panel. */
+.info-dialog .learn-more-content,
+.info-dialog .learn-more-content p,
+.info-dialog .learn-more-content li,
+.info-dialog .learn-more-content .learn-more-panel p,
+.info-dialog .learn-more-content .learn-more-panel li {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.info-dialog .learn-more-content .landing-lede { font-size: 15px; }
+.info-dialog .learn-more-content h3 { font: 700 15px/1.3 "DM Sans", sans-serif; }
+.info-dialog .learn-more-content h2 { font-family: "Fraunces", serif; }
+.info-dialog .learn-more-content .learn-more-panel {
+  margin: 16px 0 0;
+  padding: 16px 18px;
+  border: 1px solid rgba(36, 89, 76, .16);
+  border-radius: 14px;
+  background: rgba(233, 241, 236, .5);
+}
+/* The primary action is orange, not the muted brick the shared coral resolves to. */
+.trip-basics-action-row.merged-start-actions .merged-start-continue {
+  background: #e2621f;
+  box-shadow: 0 10px 26px rgba(226, 98, 31, .32);
+}
+.trip-basics-action-row.merged-start-actions .merged-start-continue:hover {
+  background: #c8541a;
+}

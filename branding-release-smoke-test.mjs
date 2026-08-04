@@ -60,10 +60,10 @@ assert.deepEqual(pngDimensions("icons/maskable-192.png"), [192, 192]);
 assert.deepEqual(pngDimensions("icons/maskable-512.png"), [512, 512]);
 assert.deepEqual(pngDimensions("icons/adtona-social-1200x630.png"), [1200, 630]);
 
-assert.match(versionSource, /ADTONA_VERSION\s*=\s*"5.4.3"/);
+assert.match(versionSource, /ADTONA_VERSION\s*=\s*"5.4.4"/);
 assert.match(versionSource, /PLANTOGUIDE_VERSION\s*=\s*globalThis\.ADTONA_VERSION/);
-assert.equal(packageJson.version, "5.4.3");
-assert.match(serverSource, /McpServer\(\{ name: "plantoguide", version: "5.4.3" \}\)/);
+assert.equal(packageJson.version, "5.4.4");
+assert.match(serverSource, /McpServer\(\{ name: "plantoguide", version: "5.4.4" \}\)/);
 assert.match(serviceWorker, /`adtona-\$\{RELEASE_VERSION\}`/);
 assert.match(app, /ADTONA-TRIP-PLAN\.md/);
 assert.match(app, /ADTONA-TRIP-DATA\.json/);

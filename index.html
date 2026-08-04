@@ -137,7 +137,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=5.4.3">
+  <link rel="stylesheet" href="styles.css?v=5.4.4">
 </head>
 <body>
   <main class="page-shell">
@@ -216,15 +216,18 @@
           </div>
 
           <div class="trip-basics-action-row merged-start-actions">
-            <button type="button" class="merged-import-button" data-open-import>
-              <span aria-hidden="true">↥</span>
-              <strong>Import your AI plan</strong>
-            </button>
-            <button class="landing-alt see-how-button" type="button" data-open-learn-more>See How It Works</button>
             <button class="primary-button compact-next-button merged-start-continue" id="nextStepButton" type="button">
+              <img class="cta-mark" src="adtona-mark.png" alt="" width="24" height="24" decoding="async">
               <span class="adtona-action-name">Adto na — start planning</span>
               <span aria-hidden="true">→</span>
             </button>
+            <div class="landing-secondary-actions">
+              <button type="button" class="landing-alt merged-import-button" data-open-import>
+                <span aria-hidden="true">↥</span>
+                <strong>Import your AI plan</strong>
+              </button>
+              <button class="landing-alt see-how-button" type="button" data-open-learn-more>See How It Works</button>
+            </div>
           </div>
         </section>
 
@@ -540,43 +543,50 @@
         <p>Choose your destination, shape the experience around how you travel, and export a guide you can refine with ChatGPT, Claude, or another AI assistant.</p>
         <p><strong>No account or API key needed.</strong> Your saved draft stays in this browser.</p>
 
-        <h3>About Adtona</h3>
+                <section class="learn-more-panel">
+<h3>About Adtona</h3>
         <p>Adtona was inspired by the Bisaya (Cebuano) phrase “Adto na”—“Go now.” It represents the moment when planning turns into a real journey.</p>
         <p>Travel planning often begins with scattered ideas: places saved in different apps, reservation emails, notes from family, restaurant recommendations, maps, and AI conversations. Adtona brings those pieces together and turns them into a practical travel guide.</p>
         <p>The goal is simple: spend less time rebuilding the same plan and more time enjoying the journey. Plan the trip. Build the guide. Adto na.</p>
-
-        <h3>One plan, three useful formats</h3>
+        </section>
+        <section class="learn-more-panel">
+<h3>One plan, three useful formats</h3>
         <p>Adtona turns your trip details into formats you can use before, during, and after planning.</p>
         <ul>
           <li><strong>Shareable trip website</strong> — a mobile-friendly day-by-day guide you can send to family, friends, or anyone traveling with you.</li>
           <li><strong>Printable itinerary</strong> — a clear version of the same plan that can be printed, saved as a PDF, or kept offline.</li>
           <li><strong>AI-ready planning file</strong> — a structured source-of-truth document you can give to ChatGPT, Claude, or another AI assistant without losing bookings, priorities, and constraints.</li>
         </ul>
-
-        <h3>How it works</h3>
+        </section>
+        <section class="learn-more-panel">
+<h3>How it works</h3>
         <ol>
           <li><strong>Start with the trip.</strong> Enter your destination and travel dates.</li>
           <li><strong>Choose your adventure.</strong> Select the places, food, shopping, and experiences that interest you.</li>
           <li><strong>Shape the travel style.</strong> Tell Adtona about your group, pace, home base, schedule, and trip purpose.</li>
           <li><strong>Protect the important details.</strong> Add bookings, food restrictions, walking limits, transportation preferences, and other real-world constraints.</li>
         </ol>
-
-        <h3>Built around the way you travel</h3>
+        </section>
+        <section class="learn-more-panel">
+<h3>Built around the way you travel</h3>
         <ul>
           <li><strong>Plan around real travelers.</strong> Build around your group, pace, interests, bookings, food needs, and mobility preferences.</li>
           <li><strong>Create something usable.</strong> Turn planning answers into a mobile-friendly travel guide, not just a block of generated text.</li>
           <li><strong>Keep one source of truth.</strong> Keep reservations, constraints, and priorities together in an AI-ready planning file.</li>
           <li><strong>Share the trip.</strong> Export a website and itinerary that family or travel companions can use.</li>
         </ul>
-
-        <h3>Keep improving the trip with AI</h3>
+        </section>
+        <section class="learn-more-panel">
+<h3>Keep improving the trip with AI</h3>
         <p>Adtona exports the trip as a structured planning file that preserves your dates, reservations, preferences, and constraints. Give the file to ChatGPT, Claude, or another AI assistant, then import the updated plan back into Adtona.</p>
         <p><strong>Export. Refine. Re-import. Keep one source of truth.</strong></p>
-
-        <h3>Photos and browser-based planning</h3>
+        </section>
+        <section class="learn-more-panel">
+<h3>Photos and browser-based planning</h3>
         <p>Your saved trip draft stays in this browser. Add photos to a selected trip date; when supported metadata is available, Adtona can organize a photo by capture date and place it on the trip map. Photo files are kept locally in browser storage unless you include them in an export.</p>
-
-        <h3>Questions travellers ask</h3>
+        </section>
+        <section class="learn-more-panel">
+<h3>Questions travellers ask</h3>
         <dl class="landing-faq">
           <dt>Is Adtona free?</dt>
           <dd>Yes. Adtona is currently free to use in a modern web browser. There is no account to create, API key to provide, or usage charge.</dd>
@@ -593,6 +603,8 @@
         </dl>
 
         <p class="landing-sources">Destination suggestions may draw on Wikipedia, Wikivoyage, OpenStreetMap, Open-Meteo, and other listed sources. Always verify current hours, prices, routes, tickets, ratings, reservations, and entry requirements before traveling.</p>
+        </section>
+
       </div>
     </article>
   </dialog>
@@ -623,13 +635,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=5.4.3"></script>
-  <script src="dynamic-catalog.js?v=5.4.3"></script>
-  <script src="export-styles.js?v=5.4.3"></script>
-  <script src="icon-source.js?v=5.4.3"></script>
-  <script src="photo-store.js?v=5.4.3"></script>
-  <script src="trip-schema.js?v=5.4.3"></script>
-  <script src="beta-tools.js?v=5.4.3"></script>
-  <script src="app.js?v=5.4.3"></script>
+  <script src="version.js?v=5.4.4"></script>
+  <script src="dynamic-catalog.js?v=5.4.4"></script>
+  <script src="export-styles.js?v=5.4.4"></script>
+  <script src="icon-source.js?v=5.4.4"></script>
+  <script src="photo-store.js?v=5.4.4"></script>
+  <script src="trip-schema.js?v=5.4.4"></script>
+  <script src="beta-tools.js?v=5.4.4"></script>
+  <script src="app.js?v=5.4.4"></script>
 </body>
 </html>
