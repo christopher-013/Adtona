@@ -8917,3 +8917,44 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+/* The two remaining actions are one control style in two colours: identical pill, height,
+   padding, border and label size — only the ink differs. */
+.trip-basics-action-row.merged-start-actions .merged-start-continue,
+.trip-basics-action-row.merged-start-actions .landing-alt {
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  min-width: 190px;
+  padding: 9px 20px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 999px;
+  gap: 8px;
+  justify-content: center;
+  font: 700 13px "DM Sans", sans-serif;
+  line-height: 1;
+}
+.trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name,
+.trip-basics-action-row.merged-start-actions .landing-alt strong {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+.trip-basics-action-row.merged-start-actions .cta-mark {
+  width: 18px;
+  height: 18px;
+  flex-basis: 18px;
+}
+@media (max-width: 760px) {
+  .trip-basics-action-row.merged-start-actions .merged-start-continue,
+  .trip-basics-action-row.merged-start-actions .landing-alt {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 45%;
+    height: 38px; min-height: 38px; max-height: 38px;
+    padding: 9px 14px;
+    font-size: 12px;
+  }
+  .trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name,
+  .trip-basics-action-row.merged-start-actions .landing-alt strong { font-size: 12px; }
+}
