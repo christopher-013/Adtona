@@ -8727,3 +8727,25 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   line-height: 1.12;
   max-width: none;
 }
+/* The visible label lives in .adtona-action-name, which carries its own 11px size — so
+   enlarging the button only inflated the pill around tiny text. Size the label itself and
+   let the padding hug it. */
+.trip-basics-action-row.merged-start-actions .merged-start-continue {
+  padding: 12px 28px;
+}
+.trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: .005em;
+}
+.trip-basics-action-row.merged-start-actions .cta-mark {
+  width: 26px;
+  height: 26px;
+  flex-basis: 26px;
+}
+@media (max-width: 760px) {
+  .trip-basics-action-row.merged-start-actions .merged-start-continue { padding: 11px 20px; }
+  .trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name { font-size: 19px; }
+  .trip-basics-action-row.merged-start-actions .cta-mark { width: 23px; height: 23px; flex-basis: 23px; }
+}
