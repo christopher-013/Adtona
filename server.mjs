@@ -77,7 +77,7 @@ const itinerarySchema = {
 function createTravelServer() {
   // Keep the legacy MCP name for existing ChatGPT App connections while the
   // public release version follows Adtona's canonical version.js value.
-  const server = new McpServer({ name: "plantoguide", version: "5.5.0" });
+  const server = new McpServer({ name: "plantoguide", version: "5.5.1" });
 
   registerAppResource(
     server,

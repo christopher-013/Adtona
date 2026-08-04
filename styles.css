@@ -8749,3 +8749,43 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   .trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name { font-size: 19px; }
   .trip-basics-action-row.merged-start-actions .cta-mark { width: 23px; height: 23px; flex-basis: 23px; }
 }
+/* The solid orange pill fought the soft gradient. The primary action returns to the same
+   quiet pill as its neighbours — same height, padding and label size — and is set apart by
+   colour alone: orange text and border on the pale card background. */
+.trip-basics-action-row.merged-start-actions .merged-start-continue {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  min-width: 172px;
+  padding: 8px 18px;
+  border: 1px solid rgba(226, 98, 31, .38);
+  border-radius: 999px;
+  color: #d4571a;
+  background: rgba(255, 255, 255, .72);
+  box-shadow: none;
+  line-height: 1;
+}
+.trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: normal;
+}
+.trip-basics-action-row.merged-start-actions .cta-mark {
+  width: 17px;
+  height: 17px;
+  flex-basis: 17px;
+}
+.trip-basics-action-row.merged-start-actions .merged-start-continue:hover {
+  color: #fffdf8;
+  border-color: #d4571a;
+  background: #d4571a;
+}
+@media (max-width: 760px) {
+  .trip-basics-action-row.merged-start-actions .merged-start-continue {
+    height: 34px; min-height: 34px; max-height: 34px;
+    min-width: 0; width: auto; padding: 8px 16px;
+  }
+  .trip-basics-action-row.merged-start-actions .merged-start-continue .adtona-action-name { font-size: 11.5px; }
+  .trip-basics-action-row.merged-start-actions .cta-mark { width: 16px; height: 16px; flex-basis: 16px; }
+}
