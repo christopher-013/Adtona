@@ -8680,3 +8680,50 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   align-items: center;
   line-height: 1;
 }
+/* Primary action carries the screen, so give it real presence; the two alternatives shrink
+   and drop to their own row lower down, spaced apart so they read as separate options. */
+.trip-basics-action-row.merged-start-actions .merged-start-continue {
+  padding: 20px 46px;
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: .005em;
+}
+.trip-basics-action-row.merged-start-actions .cta-mark {
+  width: 30px;
+  height: 30px;
+  flex-basis: 30px;
+}
+.trip-basics-action-row.merged-start-actions .landing-secondary-actions {
+  margin-top: 22px;
+  gap: 22px;
+}
+.landing-secondary-actions .landing-alt {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  min-width: 172px;
+  padding: 8px 16px;
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .trip-basics-action-row.merged-start-actions .merged-start-continue {
+    padding: 16px 24px;
+    font-size: 21px;
+  }
+  .trip-basics-action-row.merged-start-actions .cta-mark { width: 26px; height: 26px; flex-basis: 26px; }
+  .trip-basics-action-row.merged-start-actions .landing-secondary-actions { margin-top: 16px; gap: 12px; }
+  .landing-secondary-actions .landing-alt {
+    height: 34px; min-height: 34px; max-height: 34px;
+    min-width: 0; flex: 1 1 45%; font-size: 11.5px;
+  }
+}
+/* The tagline is the brand line and must read as one phrase, so it never wraps. The size
+   scales with the viewport so it stays on a single line from small phones upward rather
+   than being clipped. */
+.builder .builder-hero-message h1,
+.builder:not(.builder-wide) .merged-start-step .builder-hero-message h1 {
+  white-space: nowrap;
+  font-size: clamp(16px, 4.4vw, 58px);
+  line-height: 1.12;
+  max-width: none;
+}
