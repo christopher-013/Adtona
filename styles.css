@@ -8648,3 +8648,35 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
 .trip-basics-action-row.merged-start-actions .merged-start-continue:hover {
   background: #c8541a;
 }
+/* Larger, more readable primary label, and one shared width for the two alternatives so
+   they read as a matched pair rather than sized by their text. */
+.trip-basics-action-row.merged-start-actions .merged-start-continue {
+  padding: 15px 34px;
+  font-size: 19px;
+  letter-spacing: .01em;
+}
+.landing-secondary-actions .landing-alt {
+  min-width: 200px;
+  justify-content: center;
+  padding: 10px 18px;
+  font-size: 13.5px;
+}
+@media (max-width: 760px) {
+  .trip-basics-action-row.merged-start-actions .merged-start-continue { font-size: 17px; padding: 14px 22px; }
+  .landing-secondary-actions .landing-alt { min-width: 165px; font-size: 12.5px; }
+}
+/* The Import button's icon made it taller than its neighbour; pin both to one height so
+   they are a matched pair. */
+.landing-secondary-actions .landing-alt {
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  line-height: 1;
+  box-sizing: border-box;
+}
+.landing-secondary-actions .landing-alt > span,
+.landing-secondary-actions .landing-alt > strong {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}

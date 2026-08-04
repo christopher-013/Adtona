@@ -1,7 +1,7 @@
 {
   "name": "Adtona — AI Travel Planner",
   "short_name": "Adtona",
-  "description": "Plan the trip. Build the guide. Go.",
+  "description": "Plan the trip. Build the guide. Go Now.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

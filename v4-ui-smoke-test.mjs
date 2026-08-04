@@ -23,7 +23,7 @@ const stepTwoHtml = html.slice(stepTwoStart, stepThreeStart);
 
 assert.match(stepOneHtml, /class="builder-brand home-brand-lockup"[\s\S]*?src="adtona-logo\.png"/, "The merged first screen must show the Adtona logo");
 assert.match(stepOneHtml, /<p class="eyebrow">Free AI travel planner<\/p>/, "Trip Basics must state the product category");
-assert.match(stepOneHtml, /<h1>Plan the trip\. Build the guide\. Go\.<\/h1>/, "Trip Basics must use the Adtona primary tagline as its page heading");
+assert.match(stepOneHtml, /<h1>Plan the trip\. Build the guide\. Go Now\.<\/h1>/, "Trip Basics must use the Adtona primary tagline as its page heading");
 assert.match(stepOneHtml, /Create a shareable trip website, printable day-by-day itinerary, and AI-ready planning file—free in your browser\./, "Trip Basics must state the approved public promise");
 // The AI refinement loop and the no-account promise moved off Trip Basics into Learn More:
 // the welcome screen keeps the tagline and the one-line promise, and the detail is a click
@@ -45,7 +45,7 @@ assert.match(stepOneHtml, /<label for="startDate">Arrive<\/label>[\s\S]*?id="sta
 assert.match(script, /destinationInput\.value\s*=\s*"";/, "A new browser draft must start with a blank destination");
 assert.doesNotMatch(script, /destinationInput\.value\s*=\s*"Tokyo, Japan";/, "The destination field must no longer be prefilled with Tokyo, Japan");
 assert.match(stepOneHtml, /data-open-import[\s\S]{0,180}?Import your AI plan/, "The first screen must provide a compact AI-plan importer");
-assert.match(stepOneHtml, /id="nextStepButton"[^>]*type="button"[\s\S]{0,180}?Adto na — start planning/, "The merged first screen must use the approved primary CTA");
+assert.match(stepOneHtml, /id="nextStepButton"[^>]*type="button"[\s\S]{0,180}?Adto na — Go Now/, "The merged first screen must use the approved primary CTA");
 assert.match(
   script,
   /form\.addEventListener\("submit"[\s\S]{0,500}?currentFormStep === 1[\s\S]{0,220}?await goToPreferencesStep\(\);[\s\S]{0,80}?return;/,
