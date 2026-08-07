@@ -8,6 +8,32 @@
  */
 
 const API_PATH = "/api/feedback";
+/**
+ * Anonymous completion counter. It answers one question — did a real person
+ * finish a trip today — because the site keeps no visitor logs and nothing else
+ * can tell you whether it is used.
+ */
+const PING_PATH = "/api/ping";
+/** The only event accepted. Anything else is discarded without comment. */
+const PING_EVENTS = new Set(["trip"]);
+/** A ping is one short field; anything larger is not one. */
+const MAX_PING_BYTES = 256;
+/** Roughly 13 months, so a year-over-year read still has something to show. */
+const COUNT_TTL_SECONDS = 400 * 24 * 60 * 60;
+const USAGE_ISSUE_TITLE = "Adtona usage log";
+const USAGE_ISSUE_KEY = "usage:issue";
+/** Kept without a TTL: the daily keys expire, the running total must not. */
+const TOTAL_KEY = "count:total:trip";
+/** The issue is rewritten as trips arrive, so writes are throttled to one a minute. */
+const ISSUE_SYNC_KEY = "usage:issue-synced";
+const ISSUE_SYNC_MIN_MS = 60000;
+/**
+ * Automated clients that announce themselves. This is a courtesy filter, not a
+ * security control — the real defence is that a ping is only sent after someone
+ * completes a multi-step workflow that needs typing, choosing and swiping. The
+ * agent string is matched and discarded; it is never stored.
+ */
+const BOT_AGENT_PATTERN = /bot|crawl|spider|slurp|headless|phantom|puppeteer|playwright|selenium|lighthouse|curl|wget|python-requests|axios|monitor|preview|scanner/i;
 const DEFAULT_REPO = "christopher-013/Adtona";
 const DEFAULT_ALLOWED_ORIGINS = [
   "https://adtona.com",
@@ -34,8 +60,9 @@ const CATEGORY_LABELS = {
 };
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (url.pathname === PING_PATH) return handlePing(request, env, ctx);
     if (url.pathname !== API_PATH) {
       if (env.ASSETS && typeof env.ASSETS.fetch === "function") {
         return env.ASSETS.fetch(request);
@@ -362,4 +389,153 @@ function containsProfanity(text) {
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Records one completed trip.
+ *
+ * Stores a date and a number, nothing else. There is no identifier, cookie,
+ * user agent or IP retention — the client address is used as a rate-limit key
+ * and is never written down. Always answers 204, so a caller learns nothing
+ * from probing it and the browser has nothing to wait on.
+ */
+async function handlePing(request, env, ctx) {
+  const allowed = parseAllowedOrigins(env.ALLOWED_ORIGINS);
+  const origin = request.headers.get("Origin") || "";
+  const originAllowed = allowed.includes(origin);
+  const cors = corsHeaders(originAllowed ? origin : "");
+
+  if (request.method === "OPTIONS") {
+    return originAllowed
+      ? new Response(null, { status: 204, headers: cors })
+      : json({ ok: false, error: "Origin not allowed" }, 403, cors);
+  }
+  if (!originAllowed) return json({ ok: false, error: "Origin not allowed" }, 403, cors);
+  if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, cors);
+
+  // Declared oversize bodies are dropped before they are read.
+  const declared = Number.parseInt(request.headers.get("Content-Length") || "", 10);
+  if (Number.isFinite(declared) && declared > MAX_PING_BYTES) {
+    return new Response(null, { status: 204, headers: cors });
+  }
+
+  // Self-identifying automation is not a person finishing a trip.
+  if (BOT_AGENT_PATTERN.test(request.headers.get("User-Agent") || "")) {
+    return new Response(null, { status: 204, headers: cors });
+  }
+
+  let payload;
+  try {
+    const raw = await request.text();
+    if (new TextEncoder().encode(raw).byteLength > MAX_PING_BYTES) {
+      return new Response(null, { status: 204, headers: cors });
+    }
+    payload = JSON.parse(raw);
+  } catch {
+    return new Response(null, { status: 204, headers: cors });
+  }
+  const event = payload && typeof payload === "object" ? payload.event : null;
+  if (!PING_EVENTS.has(event)) return new Response(null, { status: 204, headers: cors });
+
+  // A counter without a throttle is a counter anyone can inflate at will. A
+  // distinct key prefix keeps counting from consuming somebody's feedback budget.
+  const limiter = env.FEEDBACK_RATE_LIMITER;
+  if (typeof limiter?.limit !== "function") {
+    console.error("Usage counter is missing its rate limiter binding");
+    return new Response(null, { status: 204, headers: cors });
+  }
+  const client = request.headers.get("CF-Connecting-IP") || "unknown";
+  try {
+    if (!(await limiter.limit({ key: `ping:${client}` })).success) {
+      return new Response(null, { status: 204, headers: cors });
+    }
+  } catch {
+    return new Response(null, { status: 204, headers: cors });
+  }
+
+  const counts = env.USAGE_COUNTS;
+  if (!counts || typeof counts.get !== "function") {
+    console.error("Usage counter is missing its KV binding");
+    return new Response(null, { status: 204, headers: cors });
+  }
+
+  // Read-modify-write is not atomic in KV, so simultaneous pings can lose one.
+  // That is the right trade here: the question is whether people finish trips,
+  // not the exact number, and the alternative — a row per event — would store
+  // strictly more about visitors.
+  const day = new Date().toISOString().slice(0, 10);
+  try {
+    const dayKey = `count:${day}:${event}`;
+    const current = Number.parseInt((await counts.get(dayKey)) || "0", 10);
+    await counts.put(dayKey, String((Number.isFinite(current) ? current : 0) + 1), {
+      expirationTtl: COUNT_TTL_SECONDS
+    });
+    const total = Number.parseInt((await counts.get(TOTAL_KEY)) || "0", 10);
+    await counts.put(TOTAL_KEY, String((Number.isFinite(total) ? total : 0) + 1));
+  } catch (error) {
+    console.error("Usage counter could not record a ping", { message: String(error?.message || "") });
+  }
+
+  // Publish after responding: the traveler's guide is already built, and
+  // nothing they see should wait on GitHub.
+  if (ctx && typeof ctx.waitUntil === "function") ctx.waitUntil(syncUsageIssue(env, counts));
+  return new Response(null, { status: 204, headers: cors });
+}
+
+/**
+ * Keeps a single issue's body showing the current totals.
+ *
+ * It publishes a date and two numbers, because a date and two numbers are all
+ * that is stored. Throttled so a burst of trips cannot become a burst of
+ * GitHub writes.
+ */
+async function syncUsageIssue(env, counts) {
+  if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return;
+  try {
+    const lastSynced = Number.parseInt((await counts.get(ISSUE_SYNC_KEY)) || "0", 10);
+    if (Number.isFinite(lastSynced) && Date.now() - lastSynced < ISSUE_SYNC_MIN_MS) return;
+    await counts.put(ISSUE_SYNC_KEY, String(Date.now()));
+
+    const day = new Date().toISOString().slice(0, 10);
+    const today = Number.parseInt((await counts.get(`count:${day}:trip`)) || "0", 10) || 0;
+    const total = Number.parseInt((await counts.get(TOTAL_KEY)) || "0", 10) || 0;
+    const body = [
+      "Anonymous count of completed trips. No identifiers, cookies, user agents or IP",
+      "addresses are stored — only the date and the number below.",
+      "",
+      `**Total trips generated:** ${total}`,
+      `**Today (${day} UTC):** ${today}`,
+      "",
+      `_Updated ${new Date().toISOString()}_`
+    ].join("\n");
+
+    const headers = {
+      Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+      "User-Agent": "adtona-usage-log"
+    };
+    // redirect: "manual" throughout — GitHub answers a renamed repository with a
+    // 301, and a followed redirect turns a POST into a GET, which would report
+    // success without writing anything.
+    const known = await counts.get(USAGE_ISSUE_KEY);
+    if (known) {
+      await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/issues/${known}`, {
+        method: "PATCH", headers, redirect: "manual", body: JSON.stringify({ body })
+      });
+      return;
+    }
+    const created = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/issues`, {
+      method: "POST", headers, redirect: "manual",
+      body: JSON.stringify({ title: USAGE_ISSUE_TITLE, body })
+    });
+    if (!created.ok) {
+      console.error("Usage log issue could not be created", { status: created.status });
+      return;
+    }
+    const issue = await created.json();
+    if (issue?.number) await counts.put(USAGE_ISSUE_KEY, String(issue.number));
+  } catch (error) {
+    console.error("Usage log issue could not be updated", { message: String(error?.message || "") });
+  }
 }

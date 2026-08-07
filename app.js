@@ -1093,6 +1093,7 @@ form.addEventListener("submit", async (event) => {
   document.body.classList.add("trip-mode");
   renderTrip();
   switchAppTab("home");
+  recordTripCompletion();
   safeStorageSet("plantoguide-trip", JSON.stringify({ destination: destinationInput.value, start: startDateInput.value, end: endDateInput.value, wishes: wishListInput.value, selections, rejectedSelections, preferences }));
   safeStorageRemove("plantoguide-imported-trip");
   safeStorageRemove("x-travel-agent-imported-trip");
@@ -5683,3 +5684,39 @@ function restoreSavedTrip() {
 restoreSavedTrip();
 updateDestinationModeBadge();
 updateDestinationClearButton();
+
+
+/**
+ * Tells the site how many people actually finish a trip — the one number the
+ * host cannot see, because adtona.com keeps no visitor logs.
+ *
+ * Sends a single word and nothing else: no identifier, no trip content, no
+ * destination, no cookie. Reaching this point already requires typing a real
+ * destination, picking dates, working through the recommendation deck and the
+ * question steps, which is not a path a crawler walks — and automation that
+ * announces itself in its user agent is dropped by the worker.
+ *
+ * Fired once per generated guide: a refresh, a re-export or re-rendering the
+ * same trip must not inflate the count.
+ */
+const TRIP_PING_KEY = "adtona:trip-counted";
+
+function recordTripCompletion() {
+  try {
+    if (!location.protocol.startsWith("http")) return;      // file:// previews are not usage
+    if (navigator.webdriver) return;                        // automated browser session
+    const signature = [trip?.destination, trip?.start, trip?.end].filter(Boolean).join("|");
+    if (!signature) return;
+    if (safeStorageGet(TRIP_PING_KEY) === signature) return; // already counted this trip
+    safeStorageSet(TRIP_PING_KEY, signature);
+    // keepalive so the ping survives the traveler navigating straight on.
+    fetch("/api/ping", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: "trip" }),
+      keepalive: true
+    }).catch(() => {});
+  } catch (_) {
+    /* Counting is best effort and must never interrupt building the guide. */
+  }
+}

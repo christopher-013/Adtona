@@ -150,3 +150,31 @@ console.log(`Security smoke test passed (${checks} checks).`);
     "Every generated external link must be nofollow, noopener and noreferrer"
   );
 }
+
+// Usage counting must never become visitor tracking. These pin the guarantees the Privacy
+// dialog makes: one fixed word leaves the browser, nothing about the trip goes with it, the
+// endpoint is origin-locked and rate-limited, and the client address is a limiter key only.
+{
+  const worker = readFileSync("feedback-worker.js", "utf8");
+  const client = readFileSync("app.js", "utf8");
+  const pingBody = client.slice(client.indexOf("function recordTripCompletion"));
+
+  pass(/const PING_EVENTS = new Set\(\["trip"\]\)/.test(worker), "The counter must accept exactly one event name");
+  pass(/BOT_AGENT_PATTERN/.test(worker), "Self-identifying automation must be filtered out");
+  pass(/limiter\.limit\(\{ key: `ping:\$\{client\}` \}\)/.test(worker), "Pings must be rate limited under their own key");
+  pass(!/counts\.put\([^)]*CF-Connecting-IP/.test(worker), "The client address must never be written to storage");
+  pass(/count:\$\{day\}:\$\{event\}/.test(worker), "Only a date and an event may key the count");
+
+  // The request body is a literal: no destination, dates, answers or identifier.
+  pass(/JSON\.stringify\(\{ event: "trip" \}\)/.test(pingBody), "The ping body must carry nothing but the event name");
+  // The destination is read only to build a local dedupe key; scope this to the request
+  // itself so it tests what actually leaves the browser.
+  const pingRequest = pingBody.slice(pingBody.indexOf("fetch(\"/api/ping\""), pingBody.indexOf("keepalive"));
+  pass(!/destination|preferences|selections|trip./.test(pingRequest), "Trip content must never be sent with the ping");
+  pass(/navigator\.webdriver/.test(pingBody), "Automated browser sessions must not be counted");
+  pass(/TRIP_PING_KEY/.test(pingBody), "A completed trip must only be counted once");
+
+  // Disclosed to travelers, not just implemented.
+  const page = readFileSync("index.html", "utf8");
+  pass(/<h3>Usage counting<\/h3>/.test(page), "Privacy must disclose the usage count");
+}

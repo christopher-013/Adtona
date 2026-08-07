@@ -137,7 +137,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=5.6.0">
+  <link rel="stylesheet" href="styles.css?v=5.6.1">
 </head>
 <body>
   <main class="page-shell">
@@ -556,6 +556,12 @@
         </section>
 
         <section>
+          <h3>Usage counting</h3>
+          <p>When a guide is generated, Adtona sends one word — that a trip was completed — so the site can tell whether it is being used at all. Nothing about the trip goes with it: no destination, no dates, no answers, no identifier, and no cookie.</p>
+          <p>The count is kept as a date and a number, published in a public issue on the Adtona repository. Your address is used only to rate-limit the request and is never stored.</p>
+        </section>
+
+        <section>
           <h3>Analytics</h3>
           <p>When the hosted site has it enabled, Cloudflare may process basic analytics and security data for adtona.com. Adtona does not run advertising or cross-site tracking.</p>
         </section>
@@ -670,13 +676,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=5.6.0"></script>
-  <script src="dynamic-catalog.js?v=5.6.0"></script>
-  <script src="export-styles.js?v=5.6.0"></script>
-  <script src="icon-source.js?v=5.6.0"></script>
-  <script src="photo-store.js?v=5.6.0"></script>
-  <script src="trip-schema.js?v=5.6.0"></script>
-  <script src="beta-tools.js?v=5.6.0"></script>
-  <script src="app.js?v=5.6.0"></script>
+  <script src="version.js?v=5.6.1"></script>
+  <script src="dynamic-catalog.js?v=5.6.1"></script>
+  <script src="export-styles.js?v=5.6.1"></script>
+  <script src="icon-source.js?v=5.6.1"></script>
+  <script src="photo-store.js?v=5.6.1"></script>
+  <script src="trip-schema.js?v=5.6.1"></script>
+  <script src="beta-tools.js?v=5.6.1"></script>
+  <script src="app.js?v=5.6.1"></script>
 </body>
 </html>
