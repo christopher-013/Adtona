@@ -31,7 +31,7 @@ instagramLinks.forEach((tag) => {
 assert.match(html, /class="learn-more-social"/, "Learn More must close with the Instagram link");
 // The footer banners spell the invitation out; the header has no room for it and
 // shows the mark alone, so its accessible name has to come from the label.
-const footerLinks = html.match(/<a class="footer-link instagram-link"[^>]*>Follow Adtona on Instagram<\/a>/g) ?? [];
+const footerLinks = html.match(/<a class="footer-link instagram-link"[^>]*>Adtona on Instagram<\/a>/g) ?? [];
 assert.equal(footerLinks.length, 3, "All three footer banners must link the profile by name");
 const headerMark = html.match(/<a class="export-button social-header-link"[^>]*>/)?.[0];
 assert.ok(headerMark, "The generated trip header must carry the Instagram link");
@@ -81,10 +81,10 @@ assert.deepEqual(pngDimensions("icons/maskable-192.png"), [192, 192]);
 assert.deepEqual(pngDimensions("icons/maskable-512.png"), [512, 512]);
 assert.deepEqual(pngDimensions("icons/adtona-social-1200x630.png"), [1200, 630]);
 
-assert.match(versionSource, /ADTONA_VERSION\s*=\s*"5.6.8"/);
+assert.match(versionSource, /ADTONA_VERSION\s*=\s*"5.6.9"/);
 assert.match(versionSource, /PLANTOGUIDE_VERSION\s*=\s*globalThis\.ADTONA_VERSION/);
-assert.equal(packageJson.version, "5.6.8");
-assert.match(serverSource, /McpServer\(\{ name: "plantoguide", version: "5.6.8" \}\)/);
+assert.equal(packageJson.version, "5.6.9");
+assert.match(serverSource, /McpServer\(\{ name: "plantoguide", version: "5.6.9" \}\)/);
 assert.match(serviceWorker, /`adtona-\$\{RELEASE_VERSION\}`/);
 assert.match(app, /ADTONA-TRIP-PLAN\.md/);
 assert.match(app, /ADTONA-TRIP-DATA\.json/);
