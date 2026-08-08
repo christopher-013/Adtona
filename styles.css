@@ -8992,14 +8992,10 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
 .trip-basics-action-row.merged-start-actions .merged-start-continue { order: 2; }
 .trip-basics-action-row.merged-start-actions .landing-alt { order: 1; }
 
-/* Instagram is the brand’s own profile, so it reads as a normal editorial link rather
-   than an action. In the footer banners the mark alone carries it — the wordmark would
-   repeat what the glyph already says, and the row is tight on narrow phones. */
+/* Instagram is the brand’s own profile, so it reads as a normal editorial link
+   rather than an action — same weight and underline as its sibling footer links. */
 .footer-link.instagram-link {
-  display: inline-flex;
-  align-items: center;
-  vertical-align: -3px;
-  text-decoration: none;
+  white-space: nowrap;
 }
 .instagram-glyph {
   display: block;
