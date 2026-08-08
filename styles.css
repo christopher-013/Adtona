@@ -8992,14 +8992,18 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
 .trip-basics-action-row.merged-start-actions .merged-start-continue { order: 2; }
 .trip-basics-action-row.merged-start-actions .landing-alt { order: 1; }
 
-/* Instagram is the brand's own profile, so it reads as a normal editorial link rather
-   than an action: same weight as the sibling footer links, with the glyph carrying the
-   recognition. */
-.footer-link.instagram-link::before {
-  content: "\1F4F7";
-  margin-right: 5px;
+/* Instagram is the brand’s own profile, so it reads as a normal editorial link rather
+   than an action. In the footer banners the mark alone carries it — the wordmark would
+   repeat what the glyph already says, and the row is tight on narrow phones. */
+.footer-link.instagram-link {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: -3px;
   text-decoration: none;
-  font-weight: 400;
+}
+.instagram-glyph {
+  display: block;
+  color: currentColor;
 }
 .learn-more-content > p.learn-more-social:not(.landing-sources) {
   margin: 18px 0 0;
@@ -9009,17 +9013,35 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   text-align: center;
 }
 .learn-more-content .learn-more-social .social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--forest);
   font-weight: 800;
+  text-decoration: none;
+}
+.learn-more-content .learn-more-social .social-link span {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 .learn-more-content .learn-more-social .social-link:hover {
   color: var(--forest-dark);
 }
+/* Icon-only, so it drops the pill min-width the text buttons need and becomes a
+   square target instead — the mark reads at a glance and the header row stays short
+   enough for a narrow phone. */
 .trip-header-actions .export-button.social-header-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  min-width: 38px;
+  padding-inline: 0;
   text-decoration: none;
+}
+@media (max-width: 620px) {
+  .trip-header-actions .export-button.social-header-link {
+    min-width: 32px;
+    padding-inline: 0;
+  }
+  .trip-header-actions .export-button.social-header-link .instagram-glyph {
+    width: 16px;
+    height: 16px;
+  }
 }
