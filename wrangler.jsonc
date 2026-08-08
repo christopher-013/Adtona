@@ -13,6 +13,9 @@
     "GITHUB_REPO": "christopher-013/Adtona",
     "ALLOWED_ORIGINS": "https://adtona.com,https://www.adtona.com,https://adtona.cch13.workers.dev,http://127.0.0.1:8767,http://localhost:8767"
   },
+  "triggers": {
+    "crons": ["0 8 * * *"]
+  },
   "ratelimits": [
     {
       "name": "FEEDBACK_RATE_LIMITER",

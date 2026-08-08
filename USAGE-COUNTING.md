@@ -26,6 +26,18 @@ cannot become a burst of GitHub API calls.
 The issue lives in a public repository, so the counts are publicly readable. They
 contain nothing but a date and a number.
 
+## Reading the daily history
+
+The issue **body** is rewritten as trips arrive, so it always shows the live running
+total and today's figure — but a rewritten body keeps no history.
+
+The history is in the **comments**. A cron at 08:00 UTC files one comment a day:
+
+> **2026-07-29 (UTC)** — 4 trips generated. Running total: 37.
+
+Days with no trips are skipped, so the log and your inbox carry only real signal, and
+a cron that fires twice cannot file the same day again.
+
 ## Why the count means real people
 
 A ping is only sent after someone has typed a real destination that resolved through

@@ -60,6 +60,12 @@ const CATEGORY_LABELS = {
 };
 
 export default {
+  /** Cron entry point: files the previous day count as a comment on the usage log. */
+  async scheduled(event, env, ctx) {
+    if (ctx && typeof ctx.waitUntil === "function") ctx.waitUntil(postDailyDigest(env));
+    else await postDailyDigest(env);
+  },
+
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === PING_PATH) return handlePing(request, env, ctx);
@@ -537,5 +543,68 @@ async function syncUsageIssue(env, counts) {
     if (issue?.number) await counts.put(USAGE_ISSUE_KEY, String(issue.number));
   } catch (error) {
     console.error("Usage log issue could not be updated", { message: String(error?.message || "") });
+  }
+}
+
+/**
+ * Posts one comment a day carrying the previous day's count.
+ *
+ * The issue body shows the live total, but a body that is rewritten keeps no
+ * history — these comments are the day-by-day record you read down the issue.
+ * Days with no trips are skipped, so the log carries only real signal.
+ */
+const DIGEST_POSTED_KEY = "usage:digest-posted";
+
+async function postDailyDigest(env) {
+  const counts = env.USAGE_COUNTS;
+  if (!counts || typeof counts.get !== "function") {
+    console.error("Daily digest is missing its KV binding");
+    return;
+  }
+  if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return;
+
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  try {
+    // A cron that fires twice must not file the same day twice.
+    if ((await counts.get(DIGEST_POSTED_KEY)) === yesterday) return;
+
+    const day = Number.parseInt((await counts.get(`count:${yesterday}:trip`)) || "0", 10) || 0;
+    if (day < 1) {
+      // Nothing happened; record the day as handled so it is not reconsidered.
+      await counts.put(DIGEST_POSTED_KEY, yesterday);
+      return;
+    }
+    const total = Number.parseInt((await counts.get(TOTAL_KEY)) || "0", 10) || 0;
+
+    // The issue is created by the first ping; if it is somehow absent, make it now.
+    let issue = await counts.get(USAGE_ISSUE_KEY);
+    if (!issue) {
+      await syncUsageIssue(env, counts);
+      issue = await counts.get(USAGE_ISSUE_KEY);
+      if (!issue) return;
+    }
+
+    const body = `**${yesterday} (UTC)** — ${day} ${day === 1 ? "trip" : "trips"} generated. Running total: ${total}.`;
+    const response = await fetch(
+      `https://api.github.com/repos/${env.GITHUB_REPO}/issues/${issue}/comments`,
+      {
+        method: "POST",
+        redirect: "manual",
+        headers: {
+          Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+          Accept: "application/vnd.github+json",
+          "Content-Type": "application/json",
+          "User-Agent": "adtona-usage-log"
+        },
+        body: JSON.stringify({ body })
+      }
+    );
+    if (!response.ok) {
+      console.error("Daily digest could not be posted", { status: response.status });
+      return;
+    }
+    await counts.put(DIGEST_POSTED_KEY, yesterday);
+  } catch (error) {
+    console.error("Daily digest failed", { message: String(error?.message || "") });
   }
 }

@@ -178,3 +178,16 @@ console.log(`Security smoke test passed (${checks} checks).`);
   const page = readFileSync("index.html", "utf8");
   pass(/<h3>Usage counting<\/h3>/.test(page), "Privacy must disclose the usage count");
 }
+
+// The daily digest is the history you read down the issue; the body only shows the live
+// total. It must publish a date and a count and nothing else, and never file a day twice.
+{
+  const worker = readFileSync("feedback-worker.js", "utf8");
+  const config = JSON.parse(readFileSync("wrangler.jsonc", "utf8"));
+  pass(/async scheduled\(event, env, ctx\)/.test(worker), "A cron entry point must exist for the daily digest");
+  pass(Array.isArray(config.triggers?.crons) && config.triggers.crons.length > 0, "The digest cron must be configured");
+  pass(/DIGEST_POSTED_KEY/.test(worker), "A day must never be filed twice");
+  pass(/if \(day < 1\)/.test(worker), "Days with no trips must be skipped");
+  const digest = worker.slice(worker.indexOf("async function postDailyDigest"));
+  pass(!/destination|preferences|CF-Connecting-IP/.test(digest.slice(0, digest.indexOf("catch"))), "The digest must publish nothing but a date and counts");
+}
