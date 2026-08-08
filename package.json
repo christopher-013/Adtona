@@ -1,6 +1,6 @@
 {
   "name": "adtona-chatgpt-app",
-  "version": "5.6.4",
+  "version": "5.6.5",
   "private": true,
   "type": "module",
   "description": "The ChatGPT Apps SDK edition of Adtona.",

@@ -31,12 +31,17 @@ contain nothing but a date and a number.
 The issue **body** is rewritten as trips arrive, so it always shows the live running
 total and today's figure — but a rewritten body keeps no history.
 
-The history is in the **comments**. A cron at 08:00 UTC files one comment a day:
+The history is in the **comments**. A day's comment is filed as soon as its first trip
+completes, then kept current as more arrive:
 
 > **2026-07-29 (UTC)** — 4 trips generated. Running total: 37.
 
-Days with no trips are skipped, so the log and your inbox carry only real signal, and
-a cron that fires twice cannot file the same day again.
+One comment per day rather than one per trip, so the log stays readable however busy a
+day gets. Updates are throttled to one a minute; the first trip of a day is never
+throttled, because that write is what makes the day appear.
+
+A cron at 08:00 UTC remains as a backstop. It files the previous day only if the live
+writes never landed, skips days with no trips, and cannot file a day twice.
 
 ## Why the count means real people
 

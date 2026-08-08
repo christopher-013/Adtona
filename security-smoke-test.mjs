@@ -212,3 +212,16 @@ console.log(`Security smoke test passed (${checks} checks).`);
   pass(target("https://www.adtona.com/api/feedback", "GET") === null, "API paths are exempt regardless of method");
   pass(canonicalRedirect(new URL("https://www.adtona.com/"), "POST") === null, "Only safe methods may be redirected");
 }
+
+// A completed trip must report immediately: the day's comment is created on its first trip
+// and updated as more arrive, so the cron is only a backstop for a day that never wrote.
+{
+  const worker = readFileSync("feedback-worker.js", "utf8");
+  pass(/syncDailyComment\(env, counts, day\)/.test(worker), "A ping must file the day's report straight away");
+  pass(/const DAY_COMMENT_PREFIX/.test(worker), "The day's comment id must be remembered so it is updated, not duplicated");
+  const daily = worker.slice(worker.indexOf("async function syncDailyComment"));
+  pass(/issues\/comments\/\$\{existing\}/.test(daily), "Later trips must update the same comment");
+  pass(/if \(existing\)[\s\S]{0,320}?ISSUE_SYNC_MIN_MS/.test(daily), "Only updates are throttled, never the first trip of a day");
+  const digest = worker.slice(worker.indexOf("async function postDailyDigest"));
+  pass(/DAY_COMMENT_PREFIX\}\$\{yesterday\}/.test(digest), "The cron must not duplicate a day already filed live");
+}

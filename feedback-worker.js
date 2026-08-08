@@ -486,7 +486,9 @@ async function handlePing(request, env, ctx) {
 
   // Publish after responding: the traveler's guide is already built, and
   // nothing they see should wait on GitHub.
-  if (ctx && typeof ctx.waitUntil === "function") ctx.waitUntil(syncUsageIssue(env, counts));
+  if (ctx && typeof ctx.waitUntil === "function") {
+    ctx.waitUntil(syncUsageIssue(env, counts).then(() => syncDailyComment(env, counts, day)));
+  }
   return new Response(null, { status: 204, headers: cors });
 }
 
@@ -569,6 +571,12 @@ async function postDailyDigest(env) {
   try {
     // A cron that fires twice must not file the same day twice.
     if ((await counts.get(DIGEST_POSTED_KEY)) === yesterday) return;
+    // Trips normally file their day comment as they happen, so the cron is only a
+    // backstop for a day whose live writes never landed.
+    if (await counts.get(`${DAY_COMMENT_PREFIX}${yesterday}`)) {
+      await counts.put(DIGEST_POSTED_KEY, yesterday);
+      return;
+    }
 
     const day = Number.parseInt((await counts.get(`count:${yesterday}:trip`)) || "0", 10) || 0;
     if (day < 1) {
@@ -638,4 +646,68 @@ function canonicalRedirect(url, method) {
   target.hostname = CANONICAL_HOST;
   target.port = "";
   return Response.redirect(target.toString(), 301);
+}
+
+/**
+ * Creates the day's log comment on its first trip, then keeps that same comment
+ * current as more arrive.
+ *
+ * Waiting for the cron meant a day's first trip was invisible until the next
+ * morning. Creating the comment immediately makes the log live; updating one
+ * comment per day rather than filing one per trip keeps the history readable
+ * however busy a day gets.
+ */
+const DAY_COMMENT_PREFIX = "usage:comment:";
+const DAY_COMMENT_SYNC_PREFIX = "usage:comment-synced:";
+
+async function syncDailyComment(env, counts, day) {
+  if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return;
+  try {
+    const commentKey = `${DAY_COMMENT_PREFIX}${day}`;
+    const existing = await counts.get(commentKey);
+
+    // Updates are throttled; the first trip of a day is never throttled, because
+    // that is the write which makes the day appear at all.
+    if (existing) {
+      const syncKey = `${DAY_COMMENT_SYNC_PREFIX}${day}`;
+      const last = Number.parseInt((await counts.get(syncKey)) || "0", 10);
+      if (Number.isFinite(last) && Date.now() - last < ISSUE_SYNC_MIN_MS) return;
+      await counts.put(syncKey, String(Date.now()), { expirationTtl: COUNT_TTL_SECONDS });
+    }
+
+    const issue = await counts.get(USAGE_ISSUE_KEY);
+    if (!issue) return; // the body sync creates it; the next ping will find it
+
+    const dayCount = Number.parseInt((await counts.get(`count:${day}:trip`)) || "0", 10) || 0;
+    const total = Number.parseInt((await counts.get(TOTAL_KEY)) || "0", 10) || 0;
+    const body = `**${day} (UTC)** — ${dayCount} ${dayCount === 1 ? "trip" : "trips"} generated. Running total: ${total}.`;
+
+    const headers = {
+      Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+      "User-Agent": "adtona-usage-log"
+    };
+    const repo = env.GITHUB_REPO;
+    if (existing) {
+      await fetch(`https://api.github.com/repos/${repo}/issues/comments/${existing}`, {
+        method: "PATCH", headers, redirect: "manual", body: JSON.stringify({ body })
+      });
+      return;
+    }
+    const created = await fetch(`https://api.github.com/repos/${repo}/issues/${issue}/comments`, {
+      method: "POST", headers, redirect: "manual", body: JSON.stringify({ body })
+    });
+    if (!created.ok) {
+      console.error("Daily comment could not be created", { status: created.status });
+      return;
+    }
+    const comment = await created.json();
+    if (comment?.id) {
+      await counts.put(commentKey, String(comment.id), { expirationTtl: COUNT_TTL_SECONDS });
+      await counts.put(`${DAY_COMMENT_SYNC_PREFIX}${day}`, String(Date.now()), { expirationTtl: COUNT_TTL_SECONDS });
+    }
+  } catch (error) {
+    console.error("Daily comment failed", { message: String(error?.message || "") });
+  }
 }
