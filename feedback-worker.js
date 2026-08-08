@@ -70,6 +70,8 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === PING_PATH) return handlePing(request, env, ctx);
     if (url.pathname !== API_PATH) {
+      const redirect = canonicalRedirect(url, request.method);
+      if (redirect) return redirect;
       if (env.ASSETS && typeof env.ASSETS.fetch === "function") {
         return env.ASSETS.fetch(request);
       }
@@ -607,4 +609,33 @@ async function postDailyDigest(env) {
   } catch (error) {
     console.error("Daily digest failed", { message: String(error?.message || "") });
   }
+}
+
+
+/**
+ * Sends the alternate hostnames to the canonical one.
+ *
+ * The same build is served from www, the workers.dev subdomain and the canonical
+ * apex, so a crawler finds three copies of every page. The canonical tag already
+ * tells Google which to keep — that is why Search Console reports the others as
+ * "Alternate page with proper canonical tag", which is the tag working — but a
+ * redirect is stronger: the duplicates stop being crawled at all and their
+ * ranking signals consolidate onto one URL.
+ *
+ * Only safe, idempotent document requests are redirected. The API is left alone
+ * so it keeps answering on every allowed origin, and a 301 on a POST would be
+ * rewritten to a GET by the client.
+ */
+const CANONICAL_HOST = "adtona.com";
+const REDIRECTING_HOSTS = new Set(["www.adtona.com", "adtona.cch13.workers.dev"]);
+
+function canonicalRedirect(url, method) {
+  if (method !== "GET" && method !== "HEAD") return null;
+  if (!REDIRECTING_HOSTS.has(url.hostname)) return null;
+  if (url.pathname.startsWith("/api/")) return null;
+  const target = new URL(url.toString());
+  target.protocol = "https:";
+  target.hostname = CANONICAL_HOST;
+  target.port = "";
+  return Response.redirect(target.toString(), 301);
 }

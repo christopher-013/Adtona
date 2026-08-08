@@ -191,3 +191,24 @@ console.log(`Security smoke test passed (${checks} checks).`);
   const digest = worker.slice(worker.indexOf("async function postDailyDigest"));
   pass(!/destination|preferences|CF-Connecting-IP/.test(digest.slice(0, digest.indexOf("catch"))), "The digest must publish nothing but a date and counts");
 }
+
+// Alternate hostnames redirect to the canonical one so a crawler is not offered three
+// copies of every page. The API must be exempt, or feedback and the usage ping would be
+// redirected off the origin that is allowed to call them.
+{
+  const worker = readFileSync("feedback-worker.js", "utf8");
+  const redirectBody = worker.slice(worker.indexOf("const CANONICAL_HOST"));
+  const { canonicalRedirect } = new Function("Response", `${redirectBody}; return { canonicalRedirect };`)(
+    { redirect: (url, status) => ({ status, url }) }
+  );
+  const target = (url, method) => canonicalRedirect(new URL(url), method)?.url ?? null;
+
+  pass(target("https://www.adtona.com/", "GET") === "https://adtona.com/", "www must redirect to the canonical host");
+  pass(target("https://adtona.cch13.workers.dev/", "GET") === "https://adtona.com/", "The workers.dev host must redirect to the canonical host");
+  pass(target("https://www.adtona.com/sitemap.xml", "GET") === "https://adtona.com/sitemap.xml", "A redirect must preserve the path");
+  pass(target("https://adtona.com/", "GET") === null, "The canonical host must never redirect to itself");
+  pass(target("http://localhost:8767/", "GET") === null, "Local development must not be redirected");
+  pass(target("https://www.adtona.com/api/ping", "POST") === null, "API requests must never be redirected");
+  pass(target("https://www.adtona.com/api/feedback", "GET") === null, "API paths are exempt regardless of method");
+  pass(canonicalRedirect(new URL("https://www.adtona.com/"), "POST") === null, "Only safe methods may be redirected");
+}
