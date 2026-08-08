@@ -18,6 +18,19 @@ assert.match(html, /<p class="eyebrow">Free AI travel planner<\/p>/);
 assert.match(html, /Adtona was inspired by the Bisaya \(Cebuano\) phrase “Adto na”—“Go now\.”/);
 assert.match(html, /Export\. Refine\. Re-import\. Keep one source of truth\./);
 
+// The Instagram profile is the one outbound link the site owns, so it must survive
+// markup edits: three footer banners, the Learn More dialog, and the generated
+// trip site's header. It is an editorial link, so it must not carry nofollow.
+const instagramLinks = html.match(/<a[^>]*href="https:\/\/www\.instagram\.com\/adto\.na\/"[^>]*>/g) ?? [];
+assert.equal(instagramLinks.length, 5, "Every Adtona Instagram entry point must be present");
+instagramLinks.forEach((tag) => {
+  assert.match(tag, /rel="noopener noreferrer"/, `Instagram link needs safe rel: ${tag}`);
+  assert.match(tag, /target="_blank"/, `Instagram link must open in a new tab: ${tag}`);
+  assert.doesNotMatch(tag, /nofollow/, `The site's own profile link must stay followable: ${tag}`);
+});
+assert.match(html, /class="learn-more-social"/, "Learn More must close with the Instagram link");
+assert.match(html, /class="export-button social-header-link"/, "The generated trip header must carry the Instagram link");
+
 const jsonLdText = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
 assert.ok(jsonLdText, "The page must include JSON-LD");
 const graph = JSON.parse(jsonLdText)["@graph"];
@@ -60,10 +73,10 @@ assert.deepEqual(pngDimensions("icons/maskable-192.png"), [192, 192]);
 assert.deepEqual(pngDimensions("icons/maskable-512.png"), [512, 512]);
 assert.deepEqual(pngDimensions("icons/adtona-social-1200x630.png"), [1200, 630]);
 
-assert.match(versionSource, /ADTONA_VERSION\s*=\s*"5.6.5"/);
+assert.match(versionSource, /ADTONA_VERSION\s*=\s*"5.6.6"/);
 assert.match(versionSource, /PLANTOGUIDE_VERSION\s*=\s*globalThis\.ADTONA_VERSION/);
-assert.equal(packageJson.version, "5.6.5");
-assert.match(serverSource, /McpServer\(\{ name: "plantoguide", version: "5.6.5" \}\)/);
+assert.equal(packageJson.version, "5.6.6");
+assert.match(serverSource, /McpServer\(\{ name: "plantoguide", version: "5.6.6" \}\)/);
 assert.match(serviceWorker, /`adtona-\$\{RELEASE_VERSION\}`/);
 assert.match(app, /ADTONA-TRIP-PLAN\.md/);
 assert.match(app, /ADTONA-TRIP-DATA\.json/);

@@ -8991,3 +8991,35 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
    tab order still reaches it before its alternative. */
 .trip-basics-action-row.merged-start-actions .merged-start-continue { order: 2; }
 .trip-basics-action-row.merged-start-actions .landing-alt { order: 1; }
+
+/* Instagram is the brand's own profile, so it reads as a normal editorial link rather
+   than an action: same weight as the sibling footer links, with the glyph carrying the
+   recognition. */
+.footer-link.instagram-link::before {
+  content: "\1F4F7";
+  margin-right: 5px;
+  text-decoration: none;
+  font-weight: 400;
+}
+.learn-more-content > p.learn-more-social:not(.landing-sources) {
+  margin: 18px 0 0;
+  color: #5d716b;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+.learn-more-content .learn-more-social .social-link {
+  color: var(--forest);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.learn-more-content .learn-more-social .social-link:hover {
+  color: var(--forest-dark);
+}
+.trip-header-actions .export-button.social-header-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
