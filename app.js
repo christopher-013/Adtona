@@ -1369,6 +1369,9 @@ Open \`index.html\` locally, drag the folder to Netlify Drop, or upload it to an
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
+    // Counted only once the archive exists and the download has been handed
+    // over, so a failed export never reads as a successful one.
+    recordExportCompleted();
     const dialog = document.querySelector("#exportDialog");
     if (typeof dialog.showModal === "function") dialog.showModal();
     else dialog.setAttribute("open", "");
@@ -5701,22 +5704,60 @@ updateDestinationClearButton();
  */
 const TRIP_PING_KEY = "adtona:trip-counted";
 
-function recordTripCompletion() {
+/**
+ * Sends one ping. What counts as "already counted" is the caller's business: a
+ * trip is deduplicated by its own signature, the other two once per session.
+ */
+function sendUsagePing(event) {
   try {
     if (!location.protocol.startsWith("http")) return;      // file:// previews are not usage
     if (navigator.webdriver) return;                        // automated browser session
-    const signature = [trip?.destination, trip?.start, trip?.end].filter(Boolean).join("|");
-    if (!signature) return;
-    if (safeStorageGet(TRIP_PING_KEY) === signature) return; // already counted this trip
-    safeStorageSet(TRIP_PING_KEY, signature);
     // keepalive so the ping survives the traveler navigating straight on.
     fetch("/api/ping", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ event: "trip" }),
+      body: JSON.stringify({ event }),
       keepalive: true
     }).catch(() => {});
   } catch (_) {
     /* Counting is best effort and must never interrupt building the guide. */
   }
 }
+
+function recordTripCompletion() {
+  try {
+    const signature = [trip?.destination, trip?.start, trip?.end].filter(Boolean).join("|");
+    if (!signature) return;
+    if (safeStorageGet(TRIP_PING_KEY) === signature) return; // already counted this trip
+    safeStorageSet(TRIP_PING_KEY, signature);
+    sendUsagePing("trip");
+  } catch (_) {
+    /* Counting is best effort and must never interrupt building the guide. */
+  }
+}
+
+/** Once per session, so a reload is not a second arrival. */
+function recordSessionOnce(key, event) {
+  try {
+    if (sessionStorage.getItem(key) === "1") return;
+    sessionStorage.setItem(key, "1");
+  } catch (_) {
+    return; // blocked storage: skip rather than count every occurrence
+  }
+  sendUsagePing(event);
+}
+
+/**
+ * Counts more automated traffic than the other two, because it asks nothing of
+ * the visitor. Worth having anyway: paired with trips it says how many arrivals
+ * go on to build something.
+ */
+function recordAppOpened() {
+  recordSessionOnce("adtona:open-counted", "open");
+}
+
+function recordExportCompleted() {
+  recordSessionOnce("adtona:export-counted", "export");
+}
+
+recordAppOpened();

@@ -157,16 +157,35 @@ console.log(`Security smoke test passed (${checks} checks).`);
 {
   const worker = readFileSync("feedback-worker.js", "utf8");
   const client = readFileSync("app.js", "utf8");
-  const pingBody = client.slice(client.indexOf("function recordTripCompletion"));
+  const pingBody = client.slice(client.indexOf("function sendUsagePing"));
 
-  pass(/const PING_EVENTS = new Set\(\["trip"\]\)/.test(worker), "The counter must accept exactly one event name");
+  // Three tallies, and the accepted set must be exactly the disclosed set. A
+  // fourth added here without a matching line in the Privacy dialog would be
+  // counted without being declared, which is the failure this guards against.
+  pass(
+    /const PING_EVENTS = new Set\(\["trip", "export", "open"\]\)/.test(worker),
+    "The counter must accept exactly the three disclosed event names"
+  );
+  for (const event of ["open", "trip", "export"]) {
+    pass(
+      new RegExp(`<code>${event}</code>|when you open the app|when a guide is generated|when you export`).test(
+        readFileSync("index.html", "utf8")
+      ),
+      `The Privacy dialog must describe the ${event} count`
+    );
+  }
+  // Separate keys per event, so nothing can be joined across them.
+  pass(
+    /const totalKey = \(event\) => `count:total:\$\{event\}`;/.test(worker),
+    "Each event must keep its own tally"
+  );
   pass(/BOT_AGENT_PATTERN/.test(worker), "Self-identifying automation must be filtered out");
   pass(/limiter\.limit\(\{ key: `ping:\$\{client\}` \}\)/.test(worker), "Pings must be rate limited under their own key");
   pass(!/counts\.put\([^)]*CF-Connecting-IP/.test(worker), "The client address must never be written to storage");
   pass(/count:\$\{day\}:\$\{event\}/.test(worker), "Only a date and an event may key the count");
 
   // The request body is a literal: no destination, dates, answers or identifier.
-  pass(/JSON\.stringify\(\{ event: "trip" \}\)/.test(pingBody), "The ping body must carry nothing but the event name");
+  pass(/JSON\.stringify\(\{ event \}\)/.test(pingBody), "The ping body must carry nothing but the event name");
   // The destination is read only to build a local dedupe key; scope this to the request
   // itself so it tests what actually leaves the browser.
   const pingRequest = pingBody.slice(pingBody.indexOf("fetch(\"/api/ping\""), pingBody.indexOf("keepalive"));
@@ -187,7 +206,10 @@ console.log(`Security smoke test passed (${checks} checks).`);
   pass(/async scheduled\(event, env, ctx\)/.test(worker), "A cron entry point must exist for the daily digest");
   pass(Array.isArray(config.triggers?.crons) && config.triggers.crons.length > 0, "The digest cron must be configured");
   pass(/DIGEST_POSTED_KEY/.test(worker), "A day must never be filed twice");
-  pass(/if \(day < 1\)/.test(worker), "Days with no trips must be skipped");
+  pass(
+    /if \(stats\.every\(\(s\) => s\.today === 0\)\)/.test(worker),
+    "Days with no activity on any counter must be skipped"
+  );
   const digest = worker.slice(worker.indexOf("async function postDailyDigest"));
   pass(!/destination|preferences|CF-Connecting-IP/.test(digest.slice(0, digest.indexOf("catch"))), "The digest must publish nothing but a date and counts");
 }

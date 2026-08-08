@@ -14,16 +14,37 @@ const API_PATH = "/api/feedback";
  * can tell you whether it is used.
  */
 const PING_PATH = "/api/ping";
-/** The only event accepted. Anything else is discarded without comment. */
-const PING_EVENTS = new Set(["trip"]);
+/**
+ * The events accepted. Anything else is discarded without comment.
+ *
+ * Three separate tallies, never joined: nothing links an `open` to the `trip`
+ * that may have followed it, because no request carries anything to join on.
+ * `trip` still requires a multi-step workflow completed by hand; `open` counts
+ * more automated traffic precisely because it asks nothing of the visitor.
+ */
+const PING_EVENTS = new Set(["trip", "export", "open"]);
+/** Ordered for display: the funnel reads open, then trip, then export. */
+const REPORTED_EVENTS = ["open", "trip", "export"];
+const EVENT_LABELS = { open: "Sessions", trip: "Trips", export: "Exports" };
 /** A ping is one short field; anything larger is not one. */
 const MAX_PING_BYTES = 256;
 /** Roughly 13 months, so a year-over-year read still has something to show. */
 const COUNT_TTL_SECONDS = 400 * 24 * 60 * 60;
 const USAGE_ISSUE_TITLE = "Adtona usage log";
 const USAGE_ISSUE_KEY = "usage:issue";
-/** Kept without a TTL: the daily keys expire, the running total must not. */
-const TOTAL_KEY = "count:total:trip";
+/**
+ * Lifetime figures, kept without a TTL: the daily keys expire, these must not.
+ *
+ * `first`, `best` and `active` exist because they cannot be derived from a
+ * bounded window — a best day in 2026 is still the best day in 2027, and an
+ * average per active day needs every active day, not the last thirty.
+ */
+const totalKey = (event) => `count:total:${event}`;
+const firstDayKey = (event) => `stats:first:${event}`;
+const bestDayKey = (event) => `stats:best:${event}`;
+const activeDaysKey = (event) => `stats:active:${event}`;
+/** How far back the rolling windows look. Also caps the streak search. */
+const WINDOW_DAYS = 30;
 /** The issue is rewritten as trips arrive, so writes are throttled to one a minute. */
 const ISSUE_SYNC_KEY = "usage:issue-synced";
 const ISSUE_SYNC_MIN_MS = 60000;
@@ -472,22 +493,39 @@ async function handlePing(request, env, ctx) {
   // not the exact number, and the alternative — a row per event — would store
   // strictly more about visitors.
   const day = new Date().toISOString().slice(0, 10);
+  let recorded = null;
   try {
     const dayKey = `count:${day}:${event}`;
-    const current = Number.parseInt((await counts.get(dayKey)) || "0", 10);
-    await counts.put(dayKey, String((Number.isFinite(current) ? current : 0) + 1), {
-      expirationTtl: COUNT_TTL_SECONDS
-    });
-    const total = Number.parseInt((await counts.get(TOTAL_KEY)) || "0", 10);
-    await counts.put(TOTAL_KEY, String((Number.isFinite(total) ? total : 0) + 1));
+    const current = readInt(await counts.get(dayKey));
+    const next = current + 1;
+    await counts.put(dayKey, String(next), { expirationTtl: COUNT_TTL_SECONDS });
+
+    const nextTotal = readInt(await counts.get(totalKey(event))) + 1;
+    await counts.put(totalKey(event), String(nextTotal));
+
+    // A day becoming active is the only moment these can change, so they are
+    // maintained here rather than recounted from history that expires.
+    if (current === 0) {
+      await counts.put(activeDaysKey(event), String(readInt(await counts.get(activeDaysKey(event))) + 1));
+      if (!(await counts.get(firstDayKey(event)))) await counts.put(firstDayKey(event), day);
+    }
+    const best = parseBest(await counts.get(bestDayKey(event)));
+    if (next > best.count) await counts.put(bestDayKey(event), `${day}:${next}`);
+
+    // KV is eventually consistent, so the publisher below can read back the
+    // values from before these writes. Hand it what was actually written and
+    // let it take the larger of the two, which can never under-report.
+    recorded = { event, day, count: next, total: nextTotal };
   } catch (error) {
     console.error("Usage counter could not record a ping", { message: String(error?.message || "") });
   }
 
   // Publish after responding: the traveler's guide is already built, and
   // nothing they see should wait on GitHub.
-  if (ctx && typeof ctx.waitUntil === "function") {
-    ctx.waitUntil(syncUsageIssue(env, counts).then(() => syncDailyComment(env, counts, day)));
+  if (recorded && ctx && typeof ctx.waitUntil === "function") {
+    ctx.waitUntil(
+      syncUsageIssue(env, counts, recorded).then(() => syncDailyComment(env, counts, day))
+    );
   }
   return new Response(null, { status: 204, headers: cors });
 }
@@ -499,7 +537,7 @@ async function handlePing(request, env, ctx) {
  * that is stored. Throttled so a burst of trips cannot become a burst of
  * GitHub writes.
  */
-async function syncUsageIssue(env, counts) {
+async function syncUsageIssue(env, counts, fresh) {
   if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return;
   try {
     const lastSynced = Number.parseInt((await counts.get(ISSUE_SYNC_KEY)) || "0", 10);
@@ -507,17 +545,9 @@ async function syncUsageIssue(env, counts) {
     await counts.put(ISSUE_SYNC_KEY, String(Date.now()));
 
     const day = new Date().toISOString().slice(0, 10);
-    const today = Number.parseInt((await counts.get(`count:${day}:trip`)) || "0", 10) || 0;
-    const total = Number.parseInt((await counts.get(TOTAL_KEY)) || "0", 10) || 0;
-    const body = [
-      "Anonymous count of completed trips. No identifiers, cookies, user agents or IP",
-      "addresses are stored — only the date and the number below.",
-      "",
-      `**Total trips generated:** ${total}`,
-      `**Today (${day} UTC):** ${today}`,
-      "",
-      `_Updated ${new Date().toISOString()}_`
-    ].join("\n");
+    const stats = [];
+    for (const name of REPORTED_EVENTS) stats.push(await eventStats(counts, name, day, fresh));
+    const body = usageIssueBody(stats, day);
 
     const headers = {
       Authorization: `Bearer ${env.GITHUB_TOKEN}`,
@@ -578,13 +608,13 @@ async function postDailyDigest(env) {
       return;
     }
 
-    const day = Number.parseInt((await counts.get(`count:${yesterday}:trip`)) || "0", 10) || 0;
-    if (day < 1) {
+    const stats = [];
+    for (const name of REPORTED_EVENTS) stats.push(await eventStats(counts, name, yesterday, null));
+    if (stats.every((s) => s.today === 0)) {
       // Nothing happened; record the day as handled so it is not reconsidered.
       await counts.put(DIGEST_POSTED_KEY, yesterday);
       return;
     }
-    const total = Number.parseInt((await counts.get(TOTAL_KEY)) || "0", 10) || 0;
 
     // The issue is created by the first ping; if it is somehow absent, make it now.
     let issue = await counts.get(USAGE_ISSUE_KEY);
@@ -594,7 +624,7 @@ async function postDailyDigest(env) {
       if (!issue) return;
     }
 
-    const body = `**${yesterday} (UTC)** — ${day} ${day === 1 ? "trip" : "trips"} generated. Running total: ${total}.`;
+    const body = `**${yesterday} (UTC)** — ${dailySummary(stats)}`;
     const response = await fetch(
       `https://api.github.com/repos/${env.GITHUB_REPO}/issues/${issue}/comments`,
       {
@@ -660,6 +690,114 @@ function canonicalRedirect(url, method) {
 const DAY_COMMENT_PREFIX = "usage:comment:";
 const DAY_COMMENT_SYNC_PREFIX = "usage:comment-synced:";
 
+/**
+ * Renders the board.
+ *
+ * Every column is either a stored counter or arithmetic on stored counters.
+ * Nothing here needed a new fact about a visitor to be collected, which is why
+ * the privacy promise reads the same after this table as it did before it.
+ */
+function usageIssueBody(stats, day) {
+  const trips = stats.find((s) => s.event === "trip") ?? stats[0];
+  const rows = stats.map((s) =>
+    `| ${EVENT_LABELS[s.event]} | ${s.total} | ${s.today} | ${s.last7} | ${s.last30} | ` +
+    `${s.activeDays} | ${s.perActiveDay} | ${s.bestDay ? `${s.bestCount} on ${s.bestDay}` : "—"} |`);
+
+  return [
+    "Anonymous counts. No identifiers, cookies, user agents or IP addresses are",
+    "stored — only daily totals, and every other column here is arithmetic on",
+    "those totals. The three counts are never joined to one another.",
+    "",
+    `**Total trips generated:** ${trips.total}`,
+    `**Today (${day} UTC):** ${trips.today}`,
+    "",
+    "| | Total | Today | 7 days | 30 days | Active days | Avg/active day | Best day |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+    ...rows,
+    "",
+    `Active ${trips.activeDays} day${trips.activeDays === 1 ? "" : "s"} since ` +
+      `${trips.firstDay || "—"}${trips.streak > 0 ? `, currently ${trips.streak} day${trips.streak === 1 ? "" : "s"} running` : ""}.`,
+    "",
+    `_Updated ${new Date().toISOString()}_`
+  ].join("\n");
+}
+
+/** One line summarising a day across all three counters. */
+function dailySummary(stats) {
+  const parts = stats
+    .filter((s) => s.today > 0)
+    .map((s) => `${s.today} ${EVENT_LABELS[s.event].toLowerCase()}`);
+  const trips = stats.find((s) => s.event === "trip");
+  return `${parts.join(", ") || "no activity"}. Running total: ${trips ? trips.total : 0} trips.`;
+}
+
+/**
+ * Everything known about one counter, from the stored figures plus a bounded
+ * window of daily keys. `fresh` is what the caller has just written; taking the
+ * larger of the two survives KV's eventual consistency without over-reporting.
+ */
+async function eventStats(counts, event, day, fresh) {
+  const override = fresh && fresh.event === event ? fresh : null;
+  const read = async (key) => readInt(await counts.get(key).catch(() => null));
+
+  let total = await read(totalKey(event));
+  if (override) total = Math.max(total, override.total);
+
+  const days = [];
+  for (let i = 0; i < WINDOW_DAYS; i++) {
+    const on = new Date(Date.parse(`${day}T00:00:00Z`) - i * 86400000).toISOString().slice(0, 10);
+    let value = await read(`count:${on}:${event}`);
+    if (override && override.day === on) value = Math.max(value, override.count);
+    days.push(value);
+  }
+
+  const last7 = days.slice(0, 7).reduce((a, b) => a + b, 0);
+  const last30 = days.reduce((a, b) => a + b, 0);
+  // A lifetime figure cannot be smaller than a window inside it, which it can
+  // look like when counting predates the lifetime key.
+  total = Math.max(total, last30);
+
+  // Counted backwards from the given day, stopping at the first blank one. That
+  // day being blank is not a broken streak yet, so the search starts a day back.
+  let streak = 0;
+  for (let i = days[0] > 0 ? 0 : 1; i < days.length; i++) {
+    if (days[i] <= 0) break;
+    streak++;
+  }
+
+  const activeDays = Math.max(await read(activeDaysKey(event)), days.filter((d) => d > 0).length);
+  const best = parseBest(await counts.get(bestDayKey(event)).catch(() => null));
+  if (override && override.count > best.count) {
+    best.count = override.count;
+    best.day = override.day;
+  }
+
+  return {
+    event,
+    total,
+    today: days[0],
+    last7,
+    last30,
+    activeDays,
+    streak,
+    perActiveDay: activeDays > 0 ? (total / activeDays).toFixed(1) : "0.0",
+    bestDay: best.day,
+    bestCount: best.count,
+    firstDay: (await counts.get(firstDayKey(event)).catch(() => null)) || ""
+  };
+}
+
+function readInt(value) {
+  const parsed = Number.parseInt(value || "0", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+/** Stored as `YYYY-MM-DD:count`, so a single key carries both halves. */
+function parseBest(value) {
+  const [day, count] = String(value || "").split(":");
+  return { day: day || "", count: readInt(count) };
+}
+
 async function syncDailyComment(env, counts, day) {
   if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return;
   try {
@@ -678,9 +816,9 @@ async function syncDailyComment(env, counts, day) {
     const issue = await counts.get(USAGE_ISSUE_KEY);
     if (!issue) return; // the body sync creates it; the next ping will find it
 
-    const dayCount = Number.parseInt((await counts.get(`count:${day}:trip`)) || "0", 10) || 0;
-    const total = Number.parseInt((await counts.get(TOTAL_KEY)) || "0", 10) || 0;
-    const body = `**${day} (UTC)** — ${dayCount} ${dayCount === 1 ? "trip" : "trips"} generated. Running total: ${total}.`;
+    const stats = [];
+    for (const name of REPORTED_EVENTS) stats.push(await eventStats(counts, name, day, null));
+    const body = `**${day} (UTC)** — ${dailySummary(stats)}`;
 
     const headers = {
       Authorization: `Bearer ${env.GITHUB_TOKEN}`,
