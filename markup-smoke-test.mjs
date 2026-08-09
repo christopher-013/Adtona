@@ -22,7 +22,30 @@ assert.ok(html.includes('data-open-feedback'), "The footer must expose Send feed
 assert.ok(html.includes('data-open-privacy'), "The footer must expose Privacy");
 assert.ok(html.includes('id="learnMoreDialog"'), "Learn More must open a dedicated information lightbox");
 assert.ok(html.includes('id="learnMoreDialogTitle"'), "The Learn More lightbox must have an accessible title");
-assert.ok(!html.includes('class="landing-about"'), "Long-form information must not remain inline below the welcome screen");
+// The welcome screen stays decluttered by keeping the long-form copy out of the hero and
+// below the fold — not by deleting it. Search engines discount text inside a closed
+// <dialog>, so a crawlable section has to exist somewhere in the page; what matters is
+// that it never intrudes on the wizard, which is gated in CSS off body.trip-basics-mode.
+assert.ok(html.includes('class="landing-about"'), "A crawlable product description must stay in the page for search engines");
+assert.ok(
+  html.indexOf('class="landing-about"') > html.indexOf('class="trip-basics-action-row'),
+  "The crawlable description must sit below the welcome screen's actions, not above them"
+);
+assert.match(
+  stylesheet.toString("utf8"),
+  /body:not\(\.trip-basics-mode\)\s*\.landing-about\s*\{\s*display:\s*none;?\s*\}/,
+  "The crawlable description must be hidden once the traveler leaves step 1"
+);
+const markupOnly = html.replace(/<!--[\s\S]*?-->/g, "");
+const aboutOffset = markupOnly.indexOf('class="landing-about"');
+const dialogRanges = [...markupOnly.matchAll(/<dialog\b/g)].map((match) => [
+  match.index,
+  markupOnly.indexOf("</dialog>", match.index)
+]);
+assert.ok(
+  !dialogRanges.some(([start, end]) => aboutOffset > start && aboutOffset < end),
+  "The description must be page content — a closed <dialog> is display:none and gets discounted"
+);
 
 const version = versionSource.match(/ADTONA_VERSION\s*=\s*["']([^"']+)/)?.[1];
 assert.ok(version, "version.js must define ADTONA_VERSION");

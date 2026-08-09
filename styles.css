@@ -9041,3 +9041,55 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
     height: 16px;
   }
 }
+
+/* Crawlable product description. It exists for search engines and for the reader who
+   scrolls past the form looking for "what is this?" — so it sits below the fold, and
+   only on the welcome screen: past step 1 the wizard is meant to fit a phone screen
+   without scrolling, and trailing prose would break that. body.trip-basics-mode is
+   already toggled by showFormStep(), so no extra JS is needed to gate it. */
+.landing-about {
+  max-width: 760px;
+  margin: 40px auto 8px;
+  padding: 0 20px 8px;
+  color: #46605a;
+  font-size: 14px;
+  line-height: 1.62;
+  text-align: left;
+}
+body:not(.trip-basics-mode) .landing-about { display: none; }
+.landing-about h2 {
+  margin: 0 0 12px;
+  color: var(--adtona-navy);
+  font-family: Fraunces, Georgia, serif;
+  font-size: 21px;
+  line-height: 1.25;
+}
+.landing-about h3 {
+  margin: 26px 0 8px;
+  color: var(--adtona-navy);
+  font-size: 15px;
+  font-weight: 700;
+}
+.landing-about p { margin: 0 0 12px; }
+.landing-about ol,
+.landing-about ul { margin: 0 0 12px; padding-left: 20px; }
+.landing-about li { margin-bottom: 7px; }
+.landing-about strong { color: var(--adtona-navy); }
+.landing-about .landing-faq { margin: 0; }
+.landing-about .landing-faq dt {
+  margin-top: 12px;
+  color: var(--adtona-navy);
+  font-weight: 700;
+}
+.landing-about .landing-faq dd { margin: 4px 0 0; }
+.landing-about .landing-about-note {
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(36, 89, 76, .16);
+  color: #5d716b;
+  font-size: 12.5px;
+}
+@media (max-width: 560px) {
+  .landing-about { margin-top: 28px; font-size: 13.5px; }
+  .landing-about h2 { font-size: 19px; }
+}

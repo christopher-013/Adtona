@@ -1,4 +1,4 @@
-import { cp, copyFile, lstat, mkdir, rm } from "node:fs/promises";
+import { cp, copyFile, lstat, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,6 +9,8 @@ const requiredFiles = [
   "index.html",
   "robots.txt",
   "sitemap.xml",
+  // Bing looks for the icon at the site root, not at the <link rel="icon"> PNGs.
+  "favicon.ico",
   // IndexNow proves domain ownership by serving this key file, so it must ship.
   "7d1c404caea77020637baef4b69b0b96.txt",
   "version.js",
@@ -34,10 +36,15 @@ if (path.dirname(outputDirectory) !== projectRoot || path.basename(outputDirecto
   throw new Error(`Refusing to clean an unexpected output directory: ${outputDirectory}`);
 }
 
+// Windows hands back EPERM while a virus scanner or the indexer still holds a handle on a
+// file the previous build just wrote. It clears on its own, but the old budget ran out
+// first and failed the build on a different file each attempt. Node backs the delay off
+// linearly per attempt, so keep the count modest — a large one turns a fast failure into
+// a multi-minute stall.
 await rm(outputDirectory, {
   recursive: true,
   force: true,
-  maxRetries: process.platform === "win32" ? 8 : 2,
+  maxRetries: process.platform === "win32" ? 12 : 2,
   retryDelay: 150
 });
 await mkdir(outputDirectory, { recursive: true });
@@ -67,4 +74,17 @@ for (const relativePath of requiredDirectories) {
   });
 }
 
-console.log(`Cloudflare static bundle assembled in ${outputDirectory}.`);
+// Stamp the shipped sitemap with the deploy date. A <lastmod> that drifts months behind
+// the page tells Bing and Google the site is stale and slows how often they recrawl it,
+// and hand-editing it on every release is exactly the step that gets forgotten. The
+// tracked source file keeps a stable placeholder; only the copy in dist is rewritten.
+const sitemapPath = path.join(outputDirectory, "sitemap.xml");
+const today = new Date().toISOString().slice(0, 10);
+const sitemap = await readFile(sitemapPath, "utf8");
+const stamped = sitemap.replace(/<lastmod>[^<]*<\/lastmod>/g, `<lastmod>${today}</lastmod>`);
+if (stamped === sitemap && sitemap.includes("<lastmod>")) {
+  throw new Error("sitemap.xml has a <lastmod> that could not be stamped");
+}
+await writeFile(sitemapPath, stamped);
+
+console.log(`Cloudflare static bundle assembled in ${outputDirectory} (sitemap lastmod ${today}).`);

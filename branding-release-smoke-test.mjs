@@ -66,6 +66,16 @@ for (const icon of [
   "icons/adtona-social-1200x630.png"
 ]) assert.ok(existsSync(icon), `Missing release asset: ${icon}`);
 
+// Bing resolves its SERP icon from /favicon.ico and shows a generic globe when it 404s,
+// so the root .ico is a release asset in its own right — not just a copy of the PNGs.
+// It must carry 48px: that is the size both Bing and Google render at on dense screens.
+const ico = readFileSync("favicon.ico");
+assert.equal(ico.readUInt16LE(0), 0, "favicon.ico must start with a valid ICONDIR");
+assert.equal(ico.readUInt16LE(2), 1, "favicon.ico must be an icon resource, not a cursor");
+const icoSizes = Array.from({ length: ico.readUInt16LE(4) }, (_, index) => ico[6 + index * 16] || 256);
+assert.deepEqual(icoSizes, [16, 32, 48], "favicon.ico must carry 16, 32 and 48 px entries");
+assert.match(html, /<link rel="icon" href="\/favicon\.ico"/, "The root favicon must be declared for crawlers");
+
 function pngDimensions(path) {
   const bytes = readFileSync(path);
   assert.equal(bytes.toString("ascii", 1, 4), "PNG", `${path} must be a PNG`);
@@ -81,10 +91,10 @@ assert.deepEqual(pngDimensions("icons/maskable-192.png"), [192, 192]);
 assert.deepEqual(pngDimensions("icons/maskable-512.png"), [512, 512]);
 assert.deepEqual(pngDimensions("icons/adtona-social-1200x630.png"), [1200, 630]);
 
-assert.match(versionSource, /ADTONA_VERSION\s*=\s*"5.6.9"/);
+assert.match(versionSource, /ADTONA_VERSION\s*=\s*"5.7.0"/);
 assert.match(versionSource, /PLANTOGUIDE_VERSION\s*=\s*globalThis\.ADTONA_VERSION/);
-assert.equal(packageJson.version, "5.6.9");
-assert.match(serverSource, /McpServer\(\{ name: "plantoguide", version: "5.6.9" \}\)/);
+assert.equal(packageJson.version, "5.7.0");
+assert.match(serverSource, /McpServer\(\{ name: "plantoguide", version: "5.7.0" \}\)/);
 assert.match(serviceWorker, /`adtona-\$\{RELEASE_VERSION\}`/);
 assert.match(app, /ADTONA-TRIP-PLAN\.md/);
 assert.match(app, /ADTONA-TRIP-DATA\.json/);

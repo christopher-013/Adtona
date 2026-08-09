@@ -34,9 +34,26 @@
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "Organization",
+        "@id": "https://adtona.com/#organization",
+        "name": "Adtona",
+        "alternateName": ["Adtona Travel", "Adtona AI Travel Planner", "adtona.com"],
+        "url": "https://adtona.com/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://adtona.com/icons/icon-512.png",
+          "width": 512,
+          "height": 512
+        },
+        "image": "https://adtona.com/icons/adtona-social-1200x630.png",
+        "description": "Adtona is a free browser-based AI travel planner. The name comes from the Bisaya (Cebuano) phrase “Adto na” — “Go now.”",
+        "sameAs": ["https://www.instagram.com/adto.na/"]
+      },
+      {
         "@type": "WebApplication",
         "@id": "https://adtona.com/#app",
         "name": "Adtona",
+        "publisher": { "@id": "https://adtona.com/#organization" },
         "alternateName": "Adtona AI Travel Planner",
         "url": "https://adtona.com/",
         "description": "Adtona is a free browser-based AI travel planner that creates a shareable trip website, printable itinerary, and AI-ready planning file.",
@@ -69,11 +86,12 @@
         "name": "Adtona",
         "description": "Free AI travel planner: build a shareable trip website, printable itinerary, and AI-ready planning file in your browser.",
         "inLanguage": "en",
-        "publisher": { "@id": "https://adtona.com/#app" }
+        "publisher": { "@id": "https://adtona.com/#organization" }
       },
       {
         "@type": "FAQPage",
         "@id": "https://adtona.com/#faq",
+        "isPartOf": { "@id": "https://adtona.com/#website" },
         "mainEntity": [
           {
             "@type": "Question",
@@ -133,11 +151,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet">
+  <!-- Bing resolves the SERP icon from /favicon.ico at the site root and falls back to a
+       generic globe when it is missing, so the root .ico is declared first and shipped
+       even though the PNGs below are what browsers and Google prefer. Built by
+       build-favicon.mjs; re-run it whenever the icon set changes. -->
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=5.6.9">
+  <link rel="stylesheet" href="styles.css?v=5.7.0">
 </head>
 <body>
   <main class="page-shell">
@@ -291,6 +314,52 @@
         </section>
         <p class="form-footnote">No account needed. Your draft stays in this browser. <span aria-hidden="true">·</span> Public beta — <button class="footer-link feedback-link" type="button" data-open-feedback>Send feedback</button> <span aria-hidden="true">·</span> <button class="footer-link privacy-link" type="button" data-open-privacy>Privacy</button> <span aria-hidden="true">·</span> <button class="footer-link" type="button" data-open-learn-more>Learn More</button> <span aria-hidden="true">·</span> <a class="footer-link instagram-link" href="https://www.instagram.com/adto.na/" target="_blank" rel="noopener noreferrer">Adtona on Instagram</a></p>
       </form>
+
+      <!-- Crawlable description of the product. Search engines index the rendered DOM but
+           discount text inside a closed <dialog>, so everything that explains what Adtona
+           is used to sit somewhere no crawler would quote — Bing ended up snippeting a
+           stray sentence from the privacy notice. This section is real, visible page text.
+           It sits below the fold and is hidden past step 1 (see .landing-about in
+           styles.css) so the welcome screen and the wizard stay uncluttered. -->
+      <section class="landing-about" aria-labelledby="aboutAdtonaTitle">
+        <h2 id="aboutAdtonaTitle">Adtona: a free AI travel planner and itinerary builder</h2>
+        <p><strong>Adtona</strong> turns a destination and a set of dates into three things you can actually use: a <strong>shareable trip website</strong>, a <strong>printable day-by-day itinerary</strong>, and an <strong>AI-ready planning file</strong> you can hand to ChatGPT or Claude. It runs entirely in your browser, and it is free — no account, no API key, no usage charge.</p>
+
+        <h3>How planning a trip with Adtona works</h3>
+        <ol>
+          <li><strong>Enter a destination and dates.</strong> Type any city and Adtona confirms it against a geocoder before researching it.</li>
+          <li><strong>Swipe through suggestions.</strong> Places to see, eat, and shop are drawn from Wikipedia, Wikivoyage, and OpenStreetMap, ranked so the landmarks a first-time visitor expects come first. Keep what appeals, skip what does not.</li>
+          <li><strong>Answer a few questions.</strong> Pace, home base, must-dos, bookings, and anything to avoid — each one optional.</li>
+          <li><strong>Get your guide.</strong> Adtona builds the itinerary around opening hours, meal windows, and travel time, then exports the whole trip as a website, a printable plan, and a structured file.</li>
+        </ol>
+
+        <h3>What makes Adtona different</h3>
+        <ul>
+          <li><strong>Free, with no sign-up.</strong> There is nothing to create an account for and no key to paste.</li>
+          <li><strong>Your trip stays on your device.</strong> The draft lives in your browser's own storage, not on a server.</li>
+          <li><strong>Works with the AI you already use.</strong> Export the plan, refine it in ChatGPT or Claude, and import the result back — one source of truth rather than a chat log.</li>
+          <li><strong>A guide you can share.</strong> The exported website works on a phone, can be hosted anywhere, and keeps working offline once it has been opened.</li>
+          <li><strong>Real sources.</strong> Suggestions and photos come from Wikipedia, Wikivoyage, OpenStreetMap, Wikimedia Commons, and Open-Meteo — not invented.</li>
+        </ol>
+
+        <h3>Questions travellers ask</h3>
+      <dl class="landing-faq">
+      <dt>Is Adtona free?</dt>
+      <dd>Yes. Adtona is currently free to use in a modern web browser. There is no account to create, API key to provide, or usage charge.</dd>
+      <dt>What does Adtona create for my trip?</dt>
+      <dd>Adtona creates a shareable trip website, printable itinerary, and AI-ready planning file based on your destination, preferences, bookings, and constraints.</dd>
+      <dt>Does Adtona book travel?</dt>
+      <dd>No. Adtona helps organize and plan a trip, but travelers should complete and verify bookings directly with airlines, hotels, restaurants, attractions, and other providers.</dd>
+      <dt>Can I use Adtona with ChatGPT or Claude?</dt>
+      <dd>Yes. Adtona can export a structured planning file and prompts that can be used with ChatGPT, Claude, or another AI assistant. An updated plan can then be imported back into Adtona.</dd>
+      <dt>Does Adtona store my trip data?</dt>
+      <dd>Your saved trip draft stays in your browser. Destination, weather, map, feedback, and related features may contact the external services described in the Privacy information.</dd>
+      <dt>Can I use the guide offline?</dt>
+      <dd>An exported and hosted guide can support offline use after it has been opened over HTTPS and cached successfully. Offline availability depends on browser and hosting support.</dd>
+      </dl>
+
+        <p class="landing-about-note">Adtona is in public beta. The name comes from the Bisaya (Cebuano) phrase “Adto na” — “Go now.” Always verify hours, prices, tickets, and entry requirements before you travel.</p>
+      </section>
 
       <footer class="site-footer landing-footer">
         <p class="site-footer-line"><strong>Adtona</strong> — Plan the trip. Build the guide. Go Now. <span aria-hidden="true">·</span>
@@ -628,22 +697,7 @@
         <p>Your saved trip draft stays in this browser. Add photos to a selected trip date; when supported metadata is available, Adtona can organize a photo by capture date and place it on the trip map. Photo files are kept locally in browser storage unless you include them in an export.</p>
         </section>
         <section class="learn-more-panel">
-<h3>Questions travellers ask</h3>
-        <dl class="landing-faq">
-          <dt>Is Adtona free?</dt>
-          <dd>Yes. Adtona is currently free to use in a modern web browser. There is no account to create, API key to provide, or usage charge.</dd>
-          <dt>What does Adtona create for my trip?</dt>
-          <dd>Adtona creates a shareable trip website, printable itinerary, and AI-ready planning file based on your destination, preferences, bookings, and constraints.</dd>
-          <dt>Does Adtona book travel?</dt>
-          <dd>No. Adtona helps organize and plan a trip, but travelers should complete and verify bookings directly with airlines, hotels, restaurants, attractions, and other providers.</dd>
-          <dt>Can I use Adtona with ChatGPT or Claude?</dt>
-          <dd>Yes. Adtona can export a structured planning file and prompts that can be used with ChatGPT, Claude, or another AI assistant. An updated plan can then be imported back into Adtona.</dd>
-          <dt>Does Adtona store my trip data?</dt>
-          <dd>Your saved trip draft stays in your browser. Destination, weather, map, feedback, and related features may contact the external services described in the Privacy information.</dd>
-          <dt>Can I use the guide offline?</dt>
-          <dd>An exported and hosted guide can support offline use after it has been opened over HTTPS and cached successfully. Offline availability depends on browser and hosting support.</dd>
-        </dl>
-
+<h3>Where suggestions come from</h3>
         <p class="landing-sources">Destination suggestions may draw on Wikipedia, Wikivoyage, OpenStreetMap, Open-Meteo, and other listed sources. Always verify current hours, prices, routes, tickets, ratings, reservations, and entry requirements before traveling.</p>
         </section>
 
@@ -679,13 +733,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=5.6.9"></script>
-  <script src="dynamic-catalog.js?v=5.6.9"></script>
-  <script src="export-styles.js?v=5.6.9"></script>
-  <script src="icon-source.js?v=5.6.9"></script>
-  <script src="photo-store.js?v=5.6.9"></script>
-  <script src="trip-schema.js?v=5.6.9"></script>
-  <script src="beta-tools.js?v=5.6.9"></script>
-  <script src="app.js?v=5.6.9"></script>
+  <script src="version.js?v=5.7.0"></script>
+  <script src="dynamic-catalog.js?v=5.7.0"></script>
+  <script src="export-styles.js?v=5.7.0"></script>
+  <script src="icon-source.js?v=5.7.0"></script>
+  <script src="photo-store.js?v=5.7.0"></script>
+  <script src="trip-schema.js?v=5.7.0"></script>
+  <script src="beta-tools.js?v=5.7.0"></script>
+  <script src="app.js?v=5.7.0"></script>
 </body>
 </html>
