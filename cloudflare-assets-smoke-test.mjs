@@ -133,7 +133,11 @@ const htmlReferences = [...html.matchAll(/\b(?:src|href)=["']([^"']+)["']/gi)]
   .map((match) => localReference(match[1]))
   .filter(Boolean);
 for (const reference of htmlReferences) {
-  assert(deployedPaths.has(reference), `index.html references a missing deployment asset: ${reference}`);
+  // Cloudflare's asset handler serves an extensionless path from its .html file (and
+  // redirects the .html form to it), so /privacy is backed by privacy.html. Accept either
+  // spelling rather than forcing links to point at the URL that only 307s.
+  const deployed = deployedPaths.has(reference) || deployedPaths.has(`${reference}.html`);
+  assert(deployed, `index.html references a missing deployment asset: ${reference}`);
 }
 
 const manifest = JSON.parse(await readFile(path.join(outputDirectory, "manifest.webmanifest"), "utf8"));

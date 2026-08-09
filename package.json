@@ -1,6 +1,6 @@
 {
   "name": "adtona-chatgpt-app",
-  "version": "5.7.0",
+  "version": "5.7.1",
   "private": true,
   "type": "module",
   "description": "The ChatGPT Apps SDK edition of Adtona.",
@@ -12,9 +12,10 @@
     "verify:cloudflare": "node cloudflare-assets-smoke-test.mjs",
     "deploy": "wrangler deploy",
     "preview": "wrangler dev",
-    "check": "node --check server.mjs && node --check app.js && node --check beta-tools.js && node --check trip-schema.js && node --check dynamic-catalog.js && node --check photo-store.js && node --check build-precomputed-catalogs.mjs && node --check build-export-styles.mjs && node --check build-cloudflare.mjs && node --check cloudflare-assets-smoke-test.mjs && node --check branding-release-smoke-test.mjs && node --check markup-smoke-test.mjs && node --check v4-ui-smoke-test.mjs && node --check destination-validation-smoke-test.mjs && node --check destination-isolation-smoke-test.mjs && node --check itinerary-timing-smoke-test.mjs && node --check suggestion-image-smoke-test.mjs && node --check security-smoke-test.mjs && node --check feedback-worker.js && node --check feedback-worker-smoke-test.mjs && node --check build-favicon.mjs",
-    "smoke": "node branding-release-smoke-test.mjs && node markup-smoke-test.mjs && node v4-ui-smoke-test.mjs && node destination-validation-smoke-test.mjs && node destination-isolation-smoke-test.mjs && node itinerary-timing-smoke-test.mjs && node catalog-order-smoke-test.mjs && node dynamic-catalog-smoke-test.mjs && node suggestion-image-smoke-test.mjs && node schema-smoke-test.mjs && node photo-store-smoke-test.mjs && node security-smoke-test.mjs && node feedback-worker-smoke-test.mjs",
-    "build:favicon": "node build-favicon.mjs"
+    "check": "node --check server.mjs && node --check app.js && node --check beta-tools.js && node --check trip-schema.js && node --check dynamic-catalog.js && node --check photo-store.js && node --check build-precomputed-catalogs.mjs && node --check build-export-styles.mjs && node --check build-cloudflare.mjs && node --check cloudflare-assets-smoke-test.mjs && node --check branding-release-smoke-test.mjs && node --check markup-smoke-test.mjs && node --check v4-ui-smoke-test.mjs && node --check destination-validation-smoke-test.mjs && node --check destination-isolation-smoke-test.mjs && node --check itinerary-timing-smoke-test.mjs && node --check suggestion-image-smoke-test.mjs && node --check security-smoke-test.mjs && node --check feedback-worker.js && node --check feedback-worker-smoke-test.mjs && node --check build-favicon.mjs && node --check build-privacy-page.mjs && node --check privacy-page-smoke-test.mjs",
+    "smoke": "node branding-release-smoke-test.mjs && node markup-smoke-test.mjs && node v4-ui-smoke-test.mjs && node destination-validation-smoke-test.mjs && node destination-isolation-smoke-test.mjs && node itinerary-timing-smoke-test.mjs && node catalog-order-smoke-test.mjs && node dynamic-catalog-smoke-test.mjs && node suggestion-image-smoke-test.mjs && node schema-smoke-test.mjs && node photo-store-smoke-test.mjs && node security-smoke-test.mjs && node feedback-worker-smoke-test.mjs && node privacy-page-smoke-test.mjs",
+    "build:favicon": "node build-favicon.mjs",
+    "build:privacy": "node build-privacy-page.mjs"
   },
   "engines": {
     "node": ">=18"

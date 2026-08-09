@@ -1,9 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The privacy URL is listed without its .html extension on purpose. Cloudflare serves
+  /privacy from privacy.html and answers /privacy.html with a 307 to it, so listing the
+  .html form would point crawlers at a redirect and disagree with the page canonical tag.
+  <lastmod> is stamped with the deploy date by build-cloudflare.mjs.
+-->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://adtona.com/</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://adtona.com/privacy</loc>
+    <lastmod>2026-08-09</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
   </url>
 </urlset>

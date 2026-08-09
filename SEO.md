@@ -46,6 +46,32 @@ a name, and a social presence into one entity. More `sameAs` profiles strengthen
   A stale `lastmod` slows recrawl rate; hand-editing it is the step that gets forgotten.
 - **`robots.txt`** — names `bingbot` and `googlebot` explicitly with `Crawl-delay: 0`.
 
+## A second indexable URL
+
+The privacy notice used to exist only inside a `<dialog>` — ~500 words no crawler saw, on
+a site with exactly one indexable URL. `build-privacy-page.mjs` generates `privacy.html`
+from that dialog, so the two cannot drift, and `/privacy` is listed in the sitemap, linked
+from the crawlable description, and named by the schema.org `privacyPolicy` property.
+
+Edit the dialog in `index.html`, never `privacy.html`, then:
+
+```bash
+node build-privacy-page.mjs
+```
+
+The sitemap lists `/privacy` without the extension: Cloudflare serves the page there and
+answers `/privacy.html` with a 307, so the `.html` form would point crawlers at a redirect
+and disagree with the page's own canonical tag.
+
+## Deliberately not copied from Pictayo
+
+Pictayo carries a `<meta name="keywords">` tag. Bing documents keyword meta as a spam
+signal and Google has ignored it since 2009, so Adtona has none — it was removed earlier
+and should stay removed. Pictayo would be better off dropping it too.
+
+Pictayo also has no root `favicon.ico`, only `favicon.png`, so it has the same Bing icon
+gap Adtona just closed. `build-favicon.mjs` ports over cleanly if you want it there.
+
 ## Manual, once
 
 These need a logged-in browser and cannot be scripted:
