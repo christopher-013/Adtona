@@ -112,3 +112,10 @@ a:hover { color: var(--forest-dark); }
   .privacy-card { padding: 24px 20px 28px; border-radius: 14px; }
   h1 { font-size: 26px; }
 }
+
+/* Shared by /privacy and /about. The question is what is being scanned for, so
+   it carries the weight and the answer sits quietly beneath it. */
+.page-faq { margin: 0 0 14px; }
+.page-faq dt { margin-top: 16px; font-weight: 700; }
+.page-faq dt:first-child { margin-top: 0; }
+.page-faq dd { margin: 4px 0 0; }

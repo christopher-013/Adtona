@@ -103,61 +103,6 @@
         "about": { "@id": "https://adtona.com/#app" },
         "primaryImageOfPage": "https://adtona.com/icons/adtona-social-1200x630.png",
         "inLanguage": "en"
-      },
-      {
-        "@type": "FAQPage",
-        "@id": "https://adtona.com/#faq",
-        "isPartOf": { "@id": "https://adtona.com/#website" },
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "Is Adtona free?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. Adtona is currently free to use in a modern web browser. There is no account to create, API key to provide, or usage charge."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "What does Adtona create for my trip?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Adtona creates a shareable trip website, printable itinerary, and AI-ready planning file based on your destination, preferences, bookings, and constraints."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Does Adtona book travel?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "No. Adtona helps organize and plan a trip, but travelers should complete and verify bookings directly with airlines, hotels, restaurants, attractions, and other providers."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Does Adtona store my trip data?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Your saved trip draft stays in your browser. Destination, weather, map, feedback, and related features may contact the external services described in the Privacy information."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Can I use Adtona with ChatGPT or Claude?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. Adtona can export a structured planning file and prompts that can be used with ChatGPT, Claude, or another AI assistant. An updated plan can then be imported back into Adtona."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Can I use the guide offline?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "An exported and hosted guide can support offline use after it has been opened over HTTPS and cached successfully. Offline availability depends on browser and hosting support."
-            }
-          }
-        ]
       }
     ]
   }
@@ -328,59 +273,13 @@
             <button class="primary-button final-create-button" id="createTripButton" type="submit"><span>Build my trip guide</span><span aria-hidden="true">→</span></button>
           </div>
         </section>
-        <p class="form-footnote">No account needed. Your draft stays in this browser. <span aria-hidden="true">·</span> Public beta — <button class="footer-link feedback-link" type="button" data-open-feedback>Send feedback</button> <span aria-hidden="true">·</span> <button class="footer-link privacy-link" type="button" data-open-privacy>Privacy</button> <span aria-hidden="true">·</span> <button class="footer-link" type="button" data-open-learn-more>Learn More</button> <span aria-hidden="true">·</span> <a class="footer-link instagram-link" href="https://www.instagram.com/adto.na/" target="_blank" rel="noopener noreferrer">Adtona on Instagram</a></p>
+        <p class="form-footnote">No account needed. Your draft stays in this browser. <span aria-hidden="true">·</span> Public beta — <button class="footer-link feedback-link" type="button" data-open-feedback>Send feedback</button> <span aria-hidden="true">·</span> <a class="footer-link" href="/about">About</a> <span aria-hidden="true">·</span> <a class="footer-link privacy-link" href="/privacy">Privacy</a> <span aria-hidden="true">·</span> <button class="footer-link" type="button" data-open-learn-more>Learn More</button> <span aria-hidden="true">·</span> <a class="footer-link instagram-link" href="https://www.instagram.com/adto.na/" target="_blank" rel="noopener noreferrer">Adtona on Instagram</a></p>
       </form>
-
-      <!-- Crawlable description of the product. Search engines index the rendered DOM but
-           discount text inside a closed <dialog>, so everything that explains what Adtona
-           is used to sit somewhere no crawler would quote — Bing ended up snippeting a
-           stray sentence from the privacy notice. This section is real, visible page text.
-           It sits below the fold and is hidden past step 1 (see .landing-about in
-           styles.css) so the welcome screen and the wizard stay uncluttered. -->
-      <section class="landing-about" aria-labelledby="aboutAdtonaTitle">
-        <h2 id="aboutAdtonaTitle">Adtona: a free AI travel planner and itinerary builder</h2>
-        <p><strong>Adtona</strong> turns a destination and a set of dates into three things you can actually use: a <strong>shareable trip website</strong>, a <strong>printable day-by-day itinerary</strong>, and an <strong>AI-ready planning file</strong> you can hand to ChatGPT or Claude. It runs entirely in your browser, and it is free — no account, no API key, no usage charge.</p>
-
-        <h3>How planning a trip with Adtona works</h3>
-        <ol>
-          <li><strong>Enter a destination and dates.</strong> Type any city and Adtona confirms it against a geocoder before researching it.</li>
-          <li><strong>Swipe through suggestions.</strong> Places to see, eat, and shop are drawn from Wikipedia, Wikivoyage, and OpenStreetMap, ranked so the landmarks a first-time visitor expects come first. Keep what appeals, skip what does not.</li>
-          <li><strong>Answer a few questions.</strong> Pace, home base, must-dos, bookings, and anything to avoid — each one optional.</li>
-          <li><strong>Get your guide.</strong> Adtona builds the itinerary around opening hours, meal windows, and travel time, then exports the whole trip as a website, a printable plan, and a structured file.</li>
-        </ol>
-
-        <h3>What makes Adtona different</h3>
-        <ul>
-          <li><strong>Free, with no sign-up.</strong> There is nothing to create an account for and no key to paste.</li>
-          <li><strong>Your trip stays on your device.</strong> The draft lives in your browser's own storage, not on a server.</li>
-          <li><strong>Works with the AI you already use.</strong> Export the plan, refine it in ChatGPT or Claude, and import the result back — one source of truth rather than a chat log.</li>
-          <li><strong>A guide you can share.</strong> The exported website works on a phone, can be hosted anywhere, and keeps working offline once it has been opened.</li>
-          <li><strong>Real sources.</strong> Suggestions and photos come from Wikipedia, Wikivoyage, OpenStreetMap, Wikimedia Commons, and Open-Meteo — not invented.</li>
-        </ol>
-
-        <h3>Questions travellers ask</h3>
-      <dl class="landing-faq">
-      <dt>Is Adtona free?</dt>
-      <dd>Yes. Adtona is currently free to use in a modern web browser. There is no account to create, API key to provide, or usage charge.</dd>
-      <dt>What does Adtona create for my trip?</dt>
-      <dd>Adtona creates a shareable trip website, printable itinerary, and AI-ready planning file based on your destination, preferences, bookings, and constraints.</dd>
-      <dt>Does Adtona book travel?</dt>
-      <dd>No. Adtona helps organize and plan a trip, but travelers should complete and verify bookings directly with airlines, hotels, restaurants, attractions, and other providers.</dd>
-      <dt>Can I use Adtona with ChatGPT or Claude?</dt>
-      <dd>Yes. Adtona can export a structured planning file and prompts that can be used with ChatGPT, Claude, or another AI assistant. An updated plan can then be imported back into Adtona.</dd>
-      <dt>Does Adtona store my trip data?</dt>
-      <dd>Your saved trip draft stays in your browser. Destination, weather, map, feedback, and related features may contact the external services described in the Privacy information.</dd>
-      <dt>Can I use the guide offline?</dt>
-      <dd>An exported and hosted guide can support offline use after it has been opened over HTTPS and cached successfully. Offline availability depends on browser and hosting support.</dd>
-      </dl>
-
-        <p class="landing-about-note"><a href="/privacy">Read the Adtona privacy notice</a> for exactly what stays on your device and what is sent to Open-Meteo, Wikipedia, Wikivoyage, OpenStreetMap, and Wikimedia Commons. Adtona is in public beta. The name comes from the Bisaya (Cebuano) phrase “Adto na” — “Go now.” Always verify hours, prices, tickets, and entry requirements before you travel.</p>
-      </section>
 
       <footer class="site-footer landing-footer">
         <p class="site-footer-line"><strong>Adtona</strong> — Plan the trip. Build the guide. Go Now. <span aria-hidden="true">·</span>
           <button type="button" class="footer-link" data-open-feedback>Send feedback</button>
-          <span aria-hidden="true">·</span> <button type="button" class="footer-link" data-open-privacy>Privacy</button>
+          <span aria-hidden="true">·</span> <a class="footer-link" href="/about">About</a> <span aria-hidden="true">·</span> <button type="button" class="footer-link" data-open-privacy>Privacy</button>
           <span aria-hidden="true">·</span> <button type="button" class="footer-link" data-open-learn-more>Learn More</button> <span aria-hidden="true">·</span> <a class="footer-link instagram-link" href="https://www.instagram.com/adto.na/" target="_blank" rel="noopener noreferrer">Adtona on Instagram</a>
         </p>
       </footer>
@@ -537,7 +436,7 @@
           <button class="app-nav-button" type="button" data-tab="ai"><span>✦</span><small>AI Plan</small></button>
         </nav>
 
-        <p class="form-footnote app-footnote">No account needed. Your draft stays in this browser. <span aria-hidden="true">·</span> Public beta — <button class="footer-link feedback-link" type="button" data-open-feedback>Send feedback</button> <span aria-hidden="true">·</span> <button class="footer-link privacy-link" type="button" data-open-privacy>Privacy</button> <span aria-hidden="true">·</span> <button class="footer-link" type="button" data-open-learn-more>Learn More</button> <span aria-hidden="true">·</span> <a class="footer-link instagram-link" href="https://www.instagram.com/adto.na/" target="_blank" rel="noopener noreferrer">Adtona on Instagram</a></p>
+        <p class="form-footnote app-footnote">No account needed. Your draft stays in this browser. <span aria-hidden="true">·</span> Public beta — <button class="footer-link feedback-link" type="button" data-open-feedback>Send feedback</button> <span aria-hidden="true">·</span> <a class="footer-link" href="/about">About</a> <span aria-hidden="true">·</span> <a class="footer-link privacy-link" href="/privacy">Privacy</a> <span aria-hidden="true">·</span> <button class="footer-link" type="button" data-open-learn-more>Learn More</button> <span aria-hidden="true">·</span> <a class="footer-link instagram-link" href="https://www.instagram.com/adto.na/" target="_blank" rel="noopener noreferrer">Adtona on Instagram</a></p>
       </div>
     </section>
   </main>

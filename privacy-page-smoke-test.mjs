@@ -29,9 +29,21 @@ assert.equal((committed.match(/<h1>/g) ?? []).length, 1, "Exactly one h1");
 assert.ok((committed.match(/<h2>/g) ?? []).length >= 8, "Every privacy section must survive the conversion");
 assert.doesNotMatch(committed, /<h3>/, "Headings must be promoted a level on a page of its own");
 
-// Orphan pages rank poorly, so the homepage has to link to it in crawlable text — the
-// footer's Privacy control is a <button> that opens the dialog and is not a link at all.
-assert.match(html, /<a href="\/privacy">/, "The homepage must link to /privacy from visible page content");
+// Orphan pages rank poorly, so the homepage has to link to it in crawlable text.
+// Attribute order is not the guarantee — an anchor whose href is /privacy is — so
+// the footnote controls can carry classes without failing this. Those controls
+// are now links rather than dialog buttons, since /privacy is a real page and the
+// crawlable link that used to sit in the landing copy moved to /about with it.
+assert.match(
+  html,
+  /<a\b[^>]*href="\/privacy"/,
+  "The homepage must link to /privacy from visible page content"
+);
+assert.match(
+  html,
+  /<a\b[^>]*href="\/about"/,
+  "The homepage must link to /about, which carries the product description"
+);
 
 const sitemap = readFileSync("sitemap.xml", "utf8");
 assert.match(sitemap, /<loc>https:\/\/adtona\.com\/<\/loc>/);

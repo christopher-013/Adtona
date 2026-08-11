@@ -15,7 +15,7 @@
 import { readdir } from "node:fs/promises";
 
 const HOST = process.env.INDEXNOW_HOST || "adtona.com";
-const URLS = [`https://${HOST}/`];
+const URLS = [`https://${HOST}/`, `https://${HOST}/about`, `https://${HOST}/privacy`];
 const TIMEOUT_MS = 15000;
 
 async function postJson(url, body, headers = {}) {

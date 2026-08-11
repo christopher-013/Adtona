@@ -43,13 +43,37 @@ const jsonLdText = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\
 assert.ok(jsonLdText, "The page must include JSON-LD");
 const graph = JSON.parse(jsonLdText)["@graph"];
 const appSchema = graph.find((entry) => entry["@type"] === "WebApplication");
-const faqSchema = graph.find((entry) => entry["@type"] === "FAQPage");
 assert.equal(appSchema?.name, "Adtona");
 assert.equal(appSchema?.isAccessibleForFree, true);
-assert.equal(faqSchema?.mainEntity?.length, 6, "Structured data must publish the six visible FAQs");
-faqSchema.mainEntity.forEach((faq) => {
-  assert.ok(html.includes(`<dt>${faq.name}</dt>`), `Visible FAQ is missing: ${faq.name}`);
-  assert.ok(html.includes(`<dd>${faq.acceptedAnswer.text}</dd>`), `Visible FAQ answer differs from JSON-LD: ${faq.name}`);
+
+// The FAQ moved to /about with the prose it belongs to. Google requires the
+// answers to be visible on the page carrying the markup, so the welcome screen
+// must not claim FAQ content it no longer shows, and the about page must show
+// every question it declares.
+assert.ok(
+  !graph.some((entry) => entry["@type"] === "FAQPage"),
+  "The welcome screen must not claim FAQ content it does not show"
+);
+const aboutHtml = readFileSync("about.html", "utf8");
+const aboutGraph = JSON.parse(
+  aboutHtml.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]
+)["@graph"];
+const aboutFaq = aboutGraph.find((entry) => entry["@type"] === "FAQPage");
+assert.equal(aboutFaq?.mainEntity?.length, 6, "The about page must publish the six FAQs");
+for (const question of aboutFaq.mainEntity) {
+  assert.ok(
+    aboutHtml.includes(`<dt>${question.name}</dt>`),
+    `The about page must show "${question.name}" as visible text`
+  );
+}
+assert.match(html, /href="\/about"/, "The welcome screen must link to the about page");
+// The answer text must match too, not just the question: a summary in the
+// markup and a fuller answer on the page is the mismatch Google acts on.
+aboutFaq.mainEntity.forEach((faq) => {
+  assert.ok(
+    aboutHtml.includes(`<dd>${faq.acceptedAnswer.text}</dd>`),
+    `Visible FAQ answer differs from JSON-LD: ${faq.name}`
+  );
 });
 
 assert.equal(manifest.name, "Adtona — AI Travel Planner");

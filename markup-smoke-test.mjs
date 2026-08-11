@@ -22,29 +22,31 @@ assert.ok(html.includes('data-open-feedback'), "The footer must expose Send feed
 assert.ok(html.includes('data-open-privacy'), "The footer must expose Privacy");
 assert.ok(html.includes('id="learnMoreDialog"'), "Learn More must open a dedicated information lightbox");
 assert.ok(html.includes('id="learnMoreDialogTitle"'), "The Learn More lightbox must have an accessible title");
-// The welcome screen stays decluttered by keeping the long-form copy out of the hero and
-// below the fold — not by deleting it. Search engines discount text inside a closed
-// <dialog>, so a crawlable section has to exist somewhere in the page; what matters is
-// that it never intrudes on the wizard, which is gated in CSS off body.trip-basics-mode.
-assert.ok(html.includes('class="landing-about"'), "A crawlable product description must stay in the page for search engines");
+// Search engines discount text inside a closed <dialog>, so a crawlable
+// description has to exist — but it belongs on a page of its own rather than
+// bolted under the welcome screen, which keeps the wizard uncluttered and gives
+// the copy somewhere that can rank on its own.
 assert.ok(
-  html.indexOf('class="landing-about"') > html.indexOf('class="trip-basics-action-row'),
-  "The crawlable description must sit below the welcome screen's actions, not above them"
+  !html.includes('class="landing-about"'),
+  "The long-form copy belongs on /about, not under the welcome screen"
 );
+assert.match(html, /href="\/about"/, "The welcome screen must link to the about page");
+
+const aboutPage = readFileSync("about.html", "utf8");
+const aboutMarkupOnly = aboutPage.replace(/<!--[\s\S]*?-->/g, "");
+assert.ok(aboutMarkupOnly.length > 3000, "The about page must carry the description, not a stub");
 assert.match(
-  stylesheet.toString("utf8"),
-  /body:not\(\.trip-basics-mode\)\s*\.landing-about\s*\{\s*display:\s*none;?\s*\}/,
-  "The crawlable description must be hidden once the traveler leaves step 1"
+  aboutMarkupOnly,
+  /rel="canonical" href="https:\/\/adtona\.com\/about"/,
+  "The about page must declare its own canonical URL"
 );
-const markupOnly = html.replace(/<!--[\s\S]*?-->/g, "");
-const aboutOffset = markupOnly.indexOf('class="landing-about"');
-const dialogRanges = [...markupOnly.matchAll(/<dialog\b/g)].map((match) => [
-  match.index,
-  markupOnly.indexOf("</dialog>", match.index)
-]);
 assert.ok(
-  !dialogRanges.some(([start, end]) => aboutOffset > start && aboutOffset < end),
+  !aboutMarkupOnly.includes("<dialog"),
   "The description must be page content — a closed <dialog> is display:none and gets discounted"
+);
+assert.ok(
+  JSON.parse(readFileSync("build-cloudflare.mjs", "utf8").includes('"about.html"') ? "true" : "false"),
+  "about.html must ship with the deploy"
 );
 
 const version = versionSource.match(/ADTONA_VERSION\s*=\s*["']([^"']+)/)?.[1];
