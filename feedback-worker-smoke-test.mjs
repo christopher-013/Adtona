@@ -438,7 +438,11 @@ for (const [label, overrides] of [
   const store = new Map();
   const kv = {
     get: async (key) => (store.has(key) ? store.get(key) : null),
-    put: async (key, value) => { store.set(key, value); }
+    put: async (key, value) => { store.set(key, value); },
+    list: async ({ prefix = "" } = {}) => ({
+      keys: [...store.keys()].filter((key) => key.startsWith(prefix)).map((name) => ({ name })),
+      list_complete: true
+    })
   };
   const commentBodies = [];
   const originalFetch = globalThis.fetch;
@@ -486,9 +490,12 @@ for (const [label, overrides] of [
     await Promise.all(pending);
 
     const day = new Date().toISOString().slice(0, 10);
-    const log = store.get("log:" + day);
-    pass(typeof log === "string", "the day's event log must be written to KV");
-    const lines = log.split("\n");
+    // A key per event, never appended to a shared one: KV reads are eventually
+    // consistent, so read-modify-write on one key silently drops most events.
+    const logKeys = [...store.keys()].filter((key) => key.startsWith("log:" + day + ":")).sort();
+    pass(logKeys.length === 3, "each event must get its own KV key");
+    pass(new Set(logKeys).size === logKeys.length, "two events must never share a key");
+    const lines = logKeys.map((key) => store.get(key));
     pass(lines.length === 3, "every event must add one line, not one per day");
     pass(lines.every((line) => /^\d{2}:\d{2}:\d{2} (open|trip|export)( [A-Z]{2})?$/.test(line)),
       "each line must be a UTC time, an event name and at most a country code");
@@ -516,7 +523,11 @@ for (const [label, overrides] of [
     await ping("trip", "XX");
     await ping("trip", "");
     await Promise.all(placeholderPending);
-    const afterPlaceholders = store.get("log:" + day).split("\n").slice(3);
+    const afterPlaceholders = [...store.keys()]
+      .filter((key) => key.startsWith("log:" + day + ":"))
+      .sort()
+      .slice(3)
+      .map((key) => store.get(key));
     pass(afterPlaceholders.length === 3, "unresolvable countries must still record the event");
     pass(afterPlaceholders.every((line) => /^\d{2}:\d{2}:\d{2} trip$/.test(line)),
       "XX, T1 and a missing header must record no country rather than a fake one");
@@ -525,6 +536,64 @@ for (const [label, overrides] of [
     const everything = [...store.keys(), ...store.values(), ...commentBodies].join(" ");
     pass(!/d+.d+.d+.d+/.test(everything), "no address may reach the usage log");
     pass(!/Mozilla|User-Agent/i.test(everything), "no user agent may reach the usage log");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+
+// A day whose counters run ahead of its log — events counted before per-event
+// logging was deployed, or a ping whose log write failed. The comment must say
+// so plainly instead of blaming a 300-line cap it never came close to.
+{
+  const day = new Date().toISOString().slice(0, 10);
+  const store = new Map([
+    ["count:" + day + ":trip", "17"],
+    ["count:total:trip", "17"]
+  ]);
+  const kv = {
+    get: async (key) => (store.has(key) ? store.get(key) : null),
+    put: async (key, value) => { store.set(key, value); },
+    list: async ({ prefix = "" } = {}) => ({
+      keys: [...store.keys()].filter((key) => key.startsWith(prefix)).map((name) => ({ name })),
+      list_complete: true
+    })
+  };
+  const bodies = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    const parsed = init?.body ? JSON.parse(init.body) : {};
+    if (url.endsWith("/issues") && init?.method === "POST") return new Response(JSON.stringify({ number: 7 }), { status: 201 });
+    if (url.includes("/comments")) { bodies.push(parsed.body); return new Response(JSON.stringify({ id: 5 }), { status: 201 }); }
+    return new Response("[]", { status: 200 });
+  };
+  const pending = [];
+  try {
+    await worker.fetch(
+      new Request("https://adtona.com/api/ping", {
+        method: "POST",
+        headers: { Origin: "https://adtona.com", "Content-Type": "application/json", "CF-IPCountry": "PH" },
+        body: JSON.stringify({ event: "trip" })
+      }),
+      {
+        ...baseEnv,
+        GITHUB_REPO: "christopher-013/Adtona",
+        USAGE_COUNTS: kv,
+        FEEDBACK_RATE_LIMITER: { limit: async () => ({ success: true }) }
+      },
+      { waitUntil: (promise) => pending.push(promise) }
+    );
+    await Promise.all(pending);
+
+    const comment = bodies.filter((body) => body.includes("UTC —")).at(-1);
+    pass(Boolean(comment), "the day comment must still be filed");
+    pass(comment.includes("more counted today but not listed individually."),
+      "a counter/log shortfall must be described as what it is");
+    pass(!comment.includes("listing cap"),
+      "a shortfall well under the cap must not be blamed on the cap");
+    pass(comment.includes("- …and 17 more"),
+      "the shortfall must count every event the log does not list");
   } finally {
     globalThis.fetch = originalFetch;
   }

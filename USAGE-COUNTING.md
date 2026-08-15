@@ -36,9 +36,15 @@ GitHub issue titled **Adtona usage log**, whose body shows the running total and
 today's figure. Issue writes are throttled to one a minute, so a burst of trips
 cannot become a burst of GitHub API calls.
 
-Alongside the counters it keeps `log:YYYY-MM-DD` — the day's events as
-`HH:MM:SS event COUNTRY` lines (the country omitted when it could not be resolved).
+Alongside the counters it writes **one key per event** — `log:YYYY-MM-DD:<ms>-<rand>`,
+holding `HH:MM:SS event COUNTRY` (the country omitted when it could not be resolved).
 The counters stay authoritative for the numbers; the log is the timeline.
+
+A key per event rather than lines appended to one key is deliberate, and was learned
+the hard way. KV reads are eventually consistent — a read can return a value up to a
+minute old — so read-modify-write on a shared key does not merely lose the rare
+simultaneous ping, it loses most events arriving within that window. The first
+version appended to one key per day and collapsed seventeen events into one line.
 
 The issue lives in a public repository, so the log is publicly readable. It contains
 nothing but times, event names and country codes.
@@ -61,9 +67,15 @@ completes, then kept current as more arrive:
 > - `10:02:18` UTC — Export · US
 
 Still one comment per day rather than one per event, so the thread stays readable
-however busy a day gets — the individual events are lines inside it. Past 300 lines
-the listing stops and says how many more there were; the counters keep rising either
-way.
+however busy a day gets — the individual events are lines inside it.
+
+The counters and the log can disagree, and the comment distinguishes the two reasons:
+
+- **past the 300-line listing cap** — a genuinely busy day. Only the listing stops;
+  the counters keep rising.
+- **counted today but not listed individually** — the counters know about events the
+  log does not, which is what a mid-day deploy looks like: everything before it was
+  counted but never logged per event.
 
 Updates are throttled to one a minute; the first event of a day is never throttled,
 because that write is what makes the day appear. The timestamp is stored the moment
