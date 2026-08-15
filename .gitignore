@@ -24,3 +24,8 @@ npm-debug.log*
 
 # Generated at deploy time by build-precomputed-catalogs.mjs
 precomputed-catalogs.json
+
+# Loose image drops in the project root: they are not deployment assets, and a
+# public repo is the wrong place for them to land by accident.
+/*.jpg
+/*.jpeg
