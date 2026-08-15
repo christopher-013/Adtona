@@ -757,7 +757,8 @@ function dailySummary(stats) {
       return `${s.today} ${s.today === 1 ? label.replace(/s$/, "") : label}`;
     });
   const trips = stats.find((s) => s.event === "trip");
-  return `${parts.join(", ") || "no activity"}. Running total: ${trips ? trips.total : 0} trips.`;
+  const total = trips ? trips.total : 0;
+  return `${parts.join(", ") || "no activity"}. Running total: ${total} ${total === 1 ? "trip" : "trips"}.`;
 }
 
 /**
