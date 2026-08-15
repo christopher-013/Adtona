@@ -17,6 +17,8 @@ assert.ok(appNavIndex >= 0, "Generated trip app must include the bottom navigati
 assert.ok(appFootnoteIndex > appNavIndex, "Public-beta footnote must render below the bottom navigation");
 
 assert.ok(html.includes('class="site-footer landing-footer"'), "Trip Basics must include the compact Adtona footer");
+assert.ok(html.includes('class="site-footer-copy"'), "Landing footer links must stay grouped for consistent alignment");
+assert.ok(html.includes('class="site-footer-social-separator"'), "Landing footer must separate its social icon group cleanly");
 assert.ok(html.includes('data-open-learn-more'), "The footer must expose a Learn More action");
 assert.ok(html.includes('data-open-feedback'), "The footer must expose Send feedback");
 assert.ok(html.includes('data-open-privacy'), "The footer must expose Privacy");

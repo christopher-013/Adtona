@@ -8221,7 +8221,18 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
   text-align: center;
 }
 .site-footer-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3px 7px;
   margin: 0;
+}
+.site-footer-copy {
+  display: inline;
+}
+.site-footer-social-separator {
+  flex: 0 0 auto;
 }
 .footer-link {
   display: inline;
@@ -8996,8 +9007,12 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
    the footer and generated-trip header while aria-label/title provide the names. */
 .footer-social-links {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
+  justify-content: center;
   gap: 7px;
+  width: auto;
+  margin: 0;
   vertical-align: middle;
 }
 .footer-link.social-icon-link {
