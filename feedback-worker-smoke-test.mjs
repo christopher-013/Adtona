@@ -497,23 +497,36 @@ for (const [label, overrides] of [
     pass(new Set(logKeys).size === logKeys.length, "two events must never share a key");
     const lines = logKeys.map((key) => store.get(key));
     pass(lines.length === 3, "every event must add one line, not one per day");
-    pass(lines.every((line) => /^\d{2}:\d{2}:\d{2} (open|trip|export)( [A-Z]{2})?$/.test(line)),
-      "each line must be a UTC time, an event name and at most a country code");
-    pass(lines.map((line) => line.split(" ")[1]).join(",") === "open,trip,export",
-      "lines must keep the order the events arrived in");
+    // utc|pacific|zone|event|country — pipe-separated so an absent country cannot
+    // shift the other fields along.
+    pass(lines.every((line) => /^\d{2}:\d{2}:\d{2}\|\d{2}:\d{2}:\d{2}\|P[SD]T\|(open|trip|export)\|[A-Z]{0,2}$/.test(line)),
+      "each entry must store UTC, Pacific, the zone, the event and the country");
+    // Keys sort by millisecond, so entries come back in the order they happened.
+    // Two events inside the same millisecond order arbitrarily between themselves —
+    // the random suffix decides — which is why this checks the timestamps are
+    // non-decreasing and every event is present, not an exact sequence.
+    const stamps = logKeys.map((key) => key.split(":").pop().split("-")[0]);
+    pass(stamps.every((stamp, index) => index === 0 || stamp >= stamps[index - 1]),
+      "entries must come back in the order they happened");
+    pass([...lines.map((line) => line.split("|")[3])].sort().join(",") === "export,open,trip",
+      "every event must be present exactly once");
     pass(store.get("count:" + day + ":trip") === "1", "the daily counter must still be kept alongside the log");
 
-    const withTimeline = commentBodies.filter((body) => body.includes("UTC —"));
+    const withTimeline = commentBodies.filter((body) => body.includes("Country Origin:"));
     pass(withTimeline.length > 0, "the day comment must carry the timeline");
     const latest = withTimeline[withTimeline.length - 1];
     pass(/\*\*\d{4}-\d{2}-\d{2} \(UTC\)\*\*/.test(latest), "the comment must keep its daily summary heading");
-    pass(/- `\d{2}:\d{2}:\d{2}` UTC — (Session|Trip|Export)/.test(latest),
-      "timeline entries must render as a time and a readable event name");
 
-    pass(lines.every((line) => line.endsWith(" US")), "the resolved country must be recorded on each line");
-    pass(latest.includes("From: US 3"), "the timeline must open with a tally of the countries in it");
-    pass(/- `\d{2}:\d{2}:\d{2}` UTC — (Session|Trip|Export) · US/.test(latest),
-      "each published entry must name its country");
+    pass(lines.every((line) => line.endsWith("|US")), "the resolved country must be recorded on each entry");
+    pass(latest.includes("Origins: US 3"), "the timeline must open with a tally of the countries in it");
+
+    // The published shape the log is read in: what happened, when in both zones,
+    // and where from.
+    pass(/- \*\*New Trip Created\*\* — `\d{2}:\d{2}:\d{2}` UTC \/ `\d{2}:\d{2}:\d{2}` P[SD]T · Country Origin: US/.test(latest),
+      "a trip must be announced with both clocks and its country");
+    pass(latest.includes("**New Session Started**"), "an app open must be named in the log");
+    pass(latest.includes("**New Trip Exported**"), "an export must be named in the log");
+    pass(!/\*\*New (trip|export|open)\*\*/.test(latest), "raw event keys must never reach the log");
 
     // Cloudflare uses XX when it cannot resolve one and T1 for Tor. Neither is a
     // country, and recording them as one would misreport where visitors are.
@@ -529,7 +542,7 @@ for (const [label, overrides] of [
       .slice(3)
       .map((key) => store.get(key));
     pass(afterPlaceholders.length === 3, "unresolvable countries must still record the event");
-    pass(afterPlaceholders.every((line) => /^\d{2}:\d{2}:\d{2} trip$/.test(line)),
+    pass(afterPlaceholders.every((line) => line.endsWith("|trip|")),
       "XX, T1 and a missing header must record no country rather than a fake one");
 
     // Nothing about the visitor may reach storage or the published log.
@@ -586,7 +599,7 @@ for (const [label, overrides] of [
     );
     await Promise.all(pending);
 
-    const comment = bodies.filter((body) => body.includes("UTC —")).at(-1);
+    const comment = bodies.filter((body) => body.includes("(UTC)")).at(-1);
     pass(Boolean(comment), "the day comment must still be filed");
     pass(comment.includes("more counted today but not listed individually."),
       "a counter/log shortfall must be described as what it is");
@@ -594,6 +607,64 @@ for (const [label, overrides] of [
       "a shortfall well under the cap must not be blamed on the cap");
     pass(comment.includes("- …and 17 more"),
       "the shortfall must count every event the log does not list");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+
+// Entries written before the format changed are space-separated and carry only a
+// UTC time. A format change must not blank out a day already in the log.
+{
+  const day = new Date().toISOString().slice(0, 10);
+  const store = new Map([
+    ["count:" + day + ":trip", "2"],
+    ["count:total:trip", "2"],
+    ["log:" + day + ":00001786833000000-legacy", "08:12:41 trip US"],
+    ["log:" + day + ":00001786833000001-legacz", "08:13:02 trip"]
+  ]);
+  const kv = {
+    get: async (key) => (store.has(key) ? store.get(key) : null),
+    put: async (key, value) => { store.set(key, value); },
+    list: async ({ prefix = "" } = {}) => ({
+      keys: [...store.keys()].filter((key) => key.startsWith(prefix)).map((name) => ({ name })),
+      list_complete: true
+    })
+  };
+  const bodies = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    const parsed = init?.body ? JSON.parse(init.body) : {};
+    if (url.endsWith("/issues") && init?.method === "POST") return new Response(JSON.stringify({ number: 3 }), { status: 201 });
+    if (url.includes("/comments")) { bodies.push(parsed.body); return new Response(JSON.stringify({ id: 8 }), { status: 201 }); }
+    return new Response("[]", { status: 200 });
+  };
+  const pending = [];
+  try {
+    await worker.fetch(
+      new Request("https://adtona.com/api/ping", {
+        method: "POST",
+        headers: { Origin: "https://adtona.com", "Content-Type": "application/json", "CF-IPCountry": "PH" },
+        body: JSON.stringify({ event: "trip" })
+      }),
+      {
+        ...baseEnv,
+        GITHUB_REPO: "christopher-013/Adtona",
+        USAGE_COUNTS: kv,
+        FEEDBACK_RATE_LIMITER: { limit: async () => ({ success: true }) }
+      },
+      { waitUntil: (promise) => pending.push(promise) }
+    );
+    await Promise.all(pending);
+    const comment = bodies.filter((body) => body.includes("Country Origin")).at(-1);
+    pass(Boolean(comment), "a day of legacy entries must still publish");
+    pass(comment.includes("- **New Trip Created** — `08:12:41` UTC · Country Origin: US"),
+      "a legacy entry must render with the UTC time it has and no invented Pacific one");
+    pass(comment.includes("Country Origin: unknown"),
+      "a legacy entry without a country must say so rather than leave the field blank");
+    pass(/`\d{2}:\d{2}:\d{2}` UTC \/ `\d{2}:\d{2}:\d{2}` P[SD]T/.test(comment),
+      "the new entry alongside them must still carry both clocks");
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -37,8 +37,13 @@ today's figure. Issue writes are throttled to one a minute, so a burst of trips
 cannot become a burst of GitHub API calls.
 
 Alongside the counters it writes **one key per event** — `log:YYYY-MM-DD:<ms>-<rand>`,
-holding `HH:MM:SS event COUNTRY` (the country omitted when it could not be resolved).
-The counters stay authoritative for the numbers; the log is the timeline.
+holding `utc|pacific|zone|event|country`. Pipe-separated rather than spaced so an
+absent country cannot shift the other fields along. The counters stay authoritative
+for the numbers; the log is the timeline.
+
+The Pacific clock is formatted at write time from `America/Los_Angeles`, and the zone
+abbreviation is formatted with it rather than hardcoded — that zone is PST for part of
+the year and PDT for the rest, so a fixed `PST` label would be wrong for most of it.
 
 A key per event rather than lines appended to one key is deliberate, and was learned
 the hard way. KV reads are eventually consistent — a read can return a value up to a
@@ -59,12 +64,16 @@ completes, then kept current as more arrive:
 
 > **2026-07-29 (UTC)** — 5 sessions, 4 trips, 1 export. Running total: 37 trips.
 >
-> From: US 3 · PH 1
+> Origins: US 3 · PH 1
 >
-> - `08:12:41` UTC — Session · US
-> - `08:19:03` UTC — Trip · US
-> - `09:47:55` UTC — Session · PH
-> - `10:02:18` UTC — Export · US
+> - **New Session Started** — `08:12:41` UTC / `01:12:41` PDT · Country Origin: US
+> - **New Trip Created** — `08:19:03` UTC / `01:19:03` PDT · Country Origin: US
+> - **New Session Started** — `09:47:55` UTC / `02:47:55` PDT · Country Origin: PH
+> - **New Trip Exported** — `10:02:18` UTC / `03:02:18` PDT · Country Origin: US
+
+Adtona names its events **New Session Started**, **New Trip Created** and **New Trip
+Exported**; Pictayo uses **New Session Started**, **New Pictures Imported** and **New
+Pictures Exported**.
 
 Still one comment per day rather than one per event, so the thread stays readable
 however busy a day gets — the individual events are lines inside it.
