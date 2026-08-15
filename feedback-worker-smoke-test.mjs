@@ -430,4 +430,104 @@ for (const [label, overrides] of [
   }
 }
 
+
+// Usage pings record a timestamped line per event, not only a daily tally, so the
+// log answers when something happened. The counters and the log are written
+// separately: the count stays authoritative, the log is the timeline.
+{
+  const store = new Map();
+  const kv = {
+    get: async (key) => (store.has(key) ? store.get(key) : null),
+    put: async (key, value) => { store.set(key, value); }
+  };
+  const commentBodies = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    const body = init?.body ? JSON.parse(init.body) : {};
+    if (url.endsWith("/issues") && init?.method === "POST") {
+      return new Response(JSON.stringify({ number: 42 }), { status: 201 });
+    }
+    if (url.includes("/issues/42/comments")) {
+      commentBodies.push(body.body);
+      return new Response(JSON.stringify({ id: 900 }), { status: 201 });
+    }
+    if (url.includes("/issues/comments/")) {
+      commentBodies.push(body.body);
+      return new Response("{}", { status: 200 });
+    }
+    return new Response("[]", { status: 200 });
+  };
+
+  const pending = [];
+  const ctx = { waitUntil: (promise) => pending.push(promise) };
+  const env = {
+    ...baseEnv,
+    GITHUB_REPO: "christopher-013/Adtona",
+    USAGE_COUNTS: kv,
+    FEEDBACK_RATE_LIMITER: { limit: async () => ({ success: true }) }
+  };
+  const ping = (event, country = "US") => worker.fetch(
+    new Request("https://adtona.com/api/ping", {
+      method: "POST",
+      headers: {
+        Origin: "https://adtona.com",
+        "Content-Type": "application/json",
+        ...(country ? { "CF-IPCountry": country } : {})
+      },
+      body: JSON.stringify({ event })
+    }),
+    env,
+    ctx
+  );
+
+  try {
+    for (const event of ["open", "trip", "export"]) pass((await ping(event)).status === 204, event + " ping must answer 204");
+    await Promise.all(pending);
+
+    const day = new Date().toISOString().slice(0, 10);
+    const log = store.get("log:" + day);
+    pass(typeof log === "string", "the day's event log must be written to KV");
+    const lines = log.split("\n");
+    pass(lines.length === 3, "every event must add one line, not one per day");
+    pass(lines.every((line) => /^\d{2}:\d{2}:\d{2} (open|trip|export)( [A-Z]{2})?$/.test(line)),
+      "each line must be a UTC time, an event name and at most a country code");
+    pass(lines.map((line) => line.split(" ")[1]).join(",") === "open,trip,export",
+      "lines must keep the order the events arrived in");
+    pass(store.get("count:" + day + ":trip") === "1", "the daily counter must still be kept alongside the log");
+
+    const withTimeline = commentBodies.filter((body) => body.includes("UTC —"));
+    pass(withTimeline.length > 0, "the day comment must carry the timeline");
+    const latest = withTimeline[withTimeline.length - 1];
+    pass(/\*\*\d{4}-\d{2}-\d{2} \(UTC\)\*\*/.test(latest), "the comment must keep its daily summary heading");
+    pass(/- `\d{2}:\d{2}:\d{2}` UTC — (Session|Trip|Export)/.test(latest),
+      "timeline entries must render as a time and a readable event name");
+
+    pass(lines.every((line) => line.endsWith(" US")), "the resolved country must be recorded on each line");
+    pass(latest.includes("From: US 3"), "the timeline must open with a tally of the countries in it");
+    pass(/- `\d{2}:\d{2}:\d{2}` UTC — (Session|Trip|Export) · US/.test(latest),
+      "each published entry must name its country");
+
+    // Cloudflare uses XX when it cannot resolve one and T1 for Tor. Neither is a
+    // country, and recording them as one would misreport where visitors are.
+    const placeholderPending = [];
+    ctx.waitUntil = (promise) => placeholderPending.push(promise);
+    await ping("trip", "T1");
+    await ping("trip", "XX");
+    await ping("trip", "");
+    await Promise.all(placeholderPending);
+    const afterPlaceholders = store.get("log:" + day).split("\n").slice(3);
+    pass(afterPlaceholders.length === 3, "unresolvable countries must still record the event");
+    pass(afterPlaceholders.every((line) => /^\d{2}:\d{2}:\d{2} trip$/.test(line)),
+      "XX, T1 and a missing header must record no country rather than a fake one");
+
+    // Nothing about the visitor may reach storage or the published log.
+    const everything = [...store.keys(), ...store.values(), ...commentBodies].join(" ");
+    pass(!/d+.d+.d+.d+/.test(everything), "no address may reach the usage log");
+    pass(!/Mozilla|User-Agent/i.test(everything), "no user agent may reach the usage log");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
 console.log(`Feedback Worker smoke test passed (${checks} checks).`);

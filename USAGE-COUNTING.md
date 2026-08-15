@@ -6,14 +6,27 @@ anyone uses it.
 
 ## What is stored
 
-A date and a number. That is the whole record.
+A UTC timestamp, one word, and a two-letter country, per event. That is the whole
+record.
+
+The country comes from `CF-IPCountry`, which Cloudflare resolves at the edge. Only
+A–Z pairs are kept: `XX` (unresolved) and `T1` (Tor) record no country rather than
+a fake one. The address it was derived from is used for that and for rate limiting,
+and is never written to storage.
 
 No identifier, cookie, session, user agent or IP address is retained, and nothing
 about the trip is sent — not the destination, the dates, the answers, or the
 recommendations. The request body is the literal `{"event":"trip"}`.
 
-The client address is used as a rate-limit key for the request and is never written
-to storage.
+The timestamps are what let the log answer *when*, not only *how many*. They also
+mean events close together read as one visit: an `open` at 09:14 followed by a
+`trip` at 09:15 is plainly the same session. That is the point of recording them —
+but nothing distinguishes one visitor from another, and nothing joins a visit on
+one day to a visit on any other, because no request carries anything to join on.
+
+A country is a coarse fact — everyone using the site from one shares it — but it is
+still a fact about the visitor, so the privacy notice names it rather than leaving it
+covered by "nothing about you is stored".
 
 ## Where the count appears
 
@@ -23,8 +36,12 @@ GitHub issue titled **Adtona usage log**, whose body shows the running total and
 today's figure. Issue writes are throttled to one a minute, so a burst of trips
 cannot become a burst of GitHub API calls.
 
-The issue lives in a public repository, so the counts are publicly readable. They
-contain nothing but a date and a number.
+Alongside the counters it keeps `log:YYYY-MM-DD` — the day's events as
+`HH:MM:SS event COUNTRY` lines (the country omitted when it could not be resolved).
+The counters stay authoritative for the numbers; the log is the timeline.
+
+The issue lives in a public repository, so the log is publicly readable. It contains
+nothing but times, event names and country codes.
 
 ## Reading the daily history
 
@@ -34,11 +51,24 @@ total and today's figure — but a rewritten body keeps no history.
 The history is in the **comments**. A day's comment is filed as soon as its first trip
 completes, then kept current as more arrive:
 
-> **2026-07-29 (UTC)** — 4 trips generated. Running total: 37.
+> **2026-07-29 (UTC)** — 5 sessions, 4 trips, 1 export. Running total: 37 trips.
+>
+> From: US 3 · PH 1
+>
+> - `08:12:41` UTC — Session · US
+> - `08:19:03` UTC — Trip · US
+> - `09:47:55` UTC — Session · PH
+> - `10:02:18` UTC — Export · US
 
-One comment per day rather than one per trip, so the log stays readable however busy a
-day gets. Updates are throttled to one a minute; the first trip of a day is never
-throttled, because that write is what makes the day appear.
+Still one comment per day rather than one per event, so the thread stays readable
+however busy a day gets — the individual events are lines inside it. Past 300 lines
+the listing stops and says how many more there were; the counters keep rising either
+way.
+
+Updates are throttled to one a minute; the first event of a day is never throttled,
+because that write is what makes the day appear. The timestamp is stored the moment
+the ping lands, so throttling delays when an event is *published*, never whether it
+was recorded.
 
 A cron at 08:00 UTC remains as a backstop. It files the previous day only if the live
 writes never landed, skips days with no trips, and cannot file a day twice.

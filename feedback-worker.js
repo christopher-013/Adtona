@@ -17,10 +17,12 @@ const PING_PATH = "/api/ping";
 /**
  * The events accepted. Anything else is discarded without comment.
  *
- * Three separate tallies, never joined: nothing links an `open` to the `trip`
- * that may have followed it, because no request carries anything to join on.
- * `trip` still requires a multi-step workflow completed by hand; `open` counts
- * more automated traffic precisely because it asks nothing of the visitor.
+ * Each ping is counted and timed. The times mean an `open` and the `trip` a
+ * minute later read as one visit — which is the point of recording them — but
+ * no request carries an identifier, so nothing links a visit to a visitor or to
+ * a visit on another day. `trip` still requires a multi-step workflow completed
+ * by hand; `open` counts more automated traffic precisely because it asks
+ * nothing of the visitor.
  */
 const PING_EVENTS = new Set(["trip", "export", "open"]);
 /** Ordered for display: the funnel reads open, then trip, then export. */
@@ -492,7 +494,8 @@ async function handlePing(request, env, ctx) {
   // That is the right trade here: the question is whether people finish trips,
   // not the exact number, and the alternative — a row per event — would store
   // strictly more about visitors.
-  const day = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const day = now.toISOString().slice(0, 10);
   let recorded = null;
   try {
     const dayKey = `count:${day}:${event}`;
@@ -511,6 +514,9 @@ async function handlePing(request, env, ctx) {
     }
     const best = parseBest(await counts.get(bestDayKey(event)));
     if (next > best.count) await counts.put(bestDayKey(event), `${day}:${next}`);
+
+    // The timeline. Written after the counters so a failure here cannot cost a count.
+    await appendEventLog(counts, day, event, now, requestCountry(request));
 
     // KV is eventually consistent, so the publisher below can read back the
     // values from before these writes. Hand it what was actually written and
@@ -624,7 +630,9 @@ async function postDailyDigest(env) {
       if (!issue) return;
     }
 
-    const body = `**${yesterday} (UTC)** — ${dailySummary(stats)}`;
+    const timeline = await eventLogLines(counts, yesterday, stats.reduce((sum, s) => sum + s.today, 0));
+    const summary = `**${yesterday} (UTC)** — ${dailySummary(stats)}`;
+    const body = timeline ? `${summary}\n\n${timeline}` : summary;
     const response = await fetch(
       `https://api.github.com/repos/${env.GITHUB_REPO}/issues/${issue}/comments`,
       {
@@ -689,6 +697,24 @@ function canonicalRedirect(url, method) {
  */
 const DAY_COMMENT_PREFIX = "usage:comment:";
 const DAY_COMMENT_SYNC_PREFIX = "usage:comment-synced:";
+/**
+ * One line per event, so the log answers *when* something happened and not only
+ * how many times. Stored per day as `HH:MM:SS event` lines under a single key —
+ * appending to one value rather than writing a key per event keeps the read a
+ * single KV get when the comment is rendered.
+ *
+ * The times are UTC and carry nothing else: no identifier, no address, no
+ * destination. What they do carry that a bare daily count did not is ordering —
+ * an `open` at 09:14 followed by a `trip` at 09:15 reads as one visit — so the
+ * privacy notice says so rather than claiming the tallies cannot be related.
+ */
+const EVENT_LOG_PREFIX = "log:";
+/**
+ * A GitHub comment body is capped at 65,536 characters. 300 lines is far below
+ * that and still more activity than a day is likely to see; past it the count
+ * keeps rising and the log says how many it stopped listing.
+ */
+const MAX_LOG_ENTRIES_PER_DAY = 300;
 
 /**
  * Renders the board.
@@ -726,7 +752,10 @@ function usageIssueBody(stats, day) {
 function dailySummary(stats) {
   const parts = stats
     .filter((s) => s.today > 0)
-    .map((s) => `${s.today} ${EVENT_LABELS[s.event].toLowerCase()}`);
+    .map((s) => {
+      const label = EVENT_LABELS[s.event].toLowerCase();
+      return `${s.today} ${s.today === 1 ? label.replace(/s$/, "") : label}`;
+    });
   const trips = stats.find((s) => s.event === "trip");
   return `${parts.join(", ") || "no activity"}. Running total: ${trips ? trips.total : 0} trips.`;
 }
@@ -792,10 +821,73 @@ function readInt(value) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 }
 
+/**
+ * The two-letter country Cloudflare resolved the request to, or "" when it could
+ * not tell. Only A-Z pairs are accepted, so the placeholders Cloudflare uses for
+ * unknown and Tor traffic ("XX", "T1") fall through to "" rather than becoming
+ * countries in the log.
+ *
+ * This is derived from the address and the address itself is never stored. A
+ * country is coarse — hundreds of millions of people share the busiest ones — but
+ * it is still a fact about the visitor, so the privacy notice names it.
+ */
+function requestCountry(request) {
+  const code = String(request.headers.get("CF-IPCountry") || "").toUpperCase();
+  return /^[A-Z]{2}$/.test(code) && code !== "XX" && code !== "T1" ? code : "";
+}
+
 /** Stored as `YYYY-MM-DD:count`, so a single key carries both halves. */
 function parseBest(value) {
   const [day, count] = String(value || "").split(":");
   return { day: day || "", count: readInt(count) };
+}
+
+/**
+ * Appends `HH:MM:SS event` to the day's log.
+ *
+ * Like the counters this is read-modify-write and so can lose a line to a
+ * simultaneous ping. The counters are written separately and stay authoritative:
+ * the log is the timeline, the count is the number.
+ */
+async function appendEventLog(counts, day, event, at, country) {
+  const time = at.toISOString().slice(11, 19);
+  const existing = (await counts.get(`${EVENT_LOG_PREFIX}${day}`)) || "";
+  const lines = existing ? existing.split("\n") : [];
+  if (lines.length >= MAX_LOG_ENTRIES_PER_DAY) return;
+  lines.push(country ? `${time} ${event} ${country}` : `${time} ${event}`);
+  await counts.put(`${EVENT_LOG_PREFIX}${day}`, lines.join("\n"), { expirationTtl: COUNT_TTL_SECONDS });
+}
+
+/**
+ * Renders the day's log as markdown list items, newest last so the day reads
+ * top to bottom. Returns "" when nothing was recorded, so a day with no log
+ * falls back to the summary line alone.
+ */
+async function eventLogLines(counts, day, totalToday) {
+  const stored = (await counts.get(`${EVENT_LOG_PREFIX}${day}`).catch(() => null)) || "";
+  const lines = stored ? stored.split("\n").filter(Boolean) : [];
+  if (!lines.length) return "";
+  // A long day is unreadable for origin, so lead with the tally.
+  const byCountry = new Map();
+  for (const line of lines) {
+    const country = line.split(" ")[2];
+    if (country) byCountry.set(country, (byCountry.get(country) || 0) + 1);
+  }
+  const origins = [...byCountry.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([country, count]) => `${country} ${count}`)
+    .join(" · ");
+
+  const rendered = lines.map((line) => {
+    const [time, event, country] = line.split(" ");
+    const label = EVENT_LABELS[event] ? EVENT_LABELS[event].replace(/s$/, "") : event;
+    return `- \`${time}\` UTC — ${label}${country ? ` · ${country}` : ""}`;
+  });
+  // The cap is on what is listed, not on what is counted, so say when they differ.
+  if (totalToday > lines.length) {
+    rendered.push(`- …and ${totalToday - lines.length} more, past the ${MAX_LOG_ENTRIES_PER_DAY}-line listing cap.`);
+  }
+  return origins ? `From: ${origins}\n\n${rendered.join("\n")}` : rendered.join("\n");
 }
 
 async function syncDailyComment(env, counts, day) {
@@ -818,7 +910,10 @@ async function syncDailyComment(env, counts, day) {
 
     const stats = [];
     for (const name of REPORTED_EVENTS) stats.push(await eventStats(counts, name, day, null));
-    const body = `**${day} (UTC)** — ${dailySummary(stats)}`;
+    const timeline = await eventLogLines(counts, day, stats.reduce((sum, s) => sum + s.today, 0));
+    const body = timeline
+      ? `**${day} (UTC)** — ${dailySummary(stats)}\n\n${timeline}`
+      : `**${day} (UTC)** — ${dailySummary(stats)}`;
 
     const headers = {
       Authorization: `Bearer ${env.GITHUB_TOKEN}`,

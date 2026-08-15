@@ -60,7 +60,9 @@
       <section>
       <h2>Usage counting</h2>
       <p>Adtona sends one word at three moments — when you open the app, when a guide is generated, and when you export one — so the site can tell whether it is being used at all. Nothing else goes with any of them: no destination, no dates, no answers, no identifier, and no cookie.</p>
-      <p>Each is kept as a date and a number, published in a public issue on the Adtona repository. They are three separate tallies with nothing in common to join them on, so none can be linked to another or back to you. Anything else reported from them — weekly and monthly figures, how many days had activity, averages per active day — is arithmetic on those numbers rather than extra information about you. Your address is used only to rate-limit the request and is never stored.</p>
+      <p>Each is recorded as the word, the UTC time it arrived, and the two-letter country Cloudflare resolved the request to — published in a public issue on the Adtona repository and kept for about thirteen months. The country comes from your network address, which is used to derive it and then discarded; the address itself is never stored, and when the country cannot be determined nothing is recorded in its place.</p>
+      <p>Because the entries are timed, ones close together read as a single visit — an app opening at 09:14 followed by a guide at 09:15 is plainly the same session — so the log shows the shape of a visit as well as the count of them.</p>
+      <p>It still holds nothing that identifies you: no address, cookie, account, browser or device is stored, a country is shared by everyone using the site from it, nothing distinguishes one visitor from another, and nothing connects a visit on one day to a visit on any other. Anything else reported — weekly and monthly figures, how many days had activity, averages per active day — is arithmetic on those entries rather than extra information about you. Your address is used only to rate-limit the request and to derive the country above, and is never stored.</p>
       </section>
 
       <section>
