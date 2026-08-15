@@ -18,26 +18,30 @@ assert.match(html, /<p class="eyebrow">Free AI travel planner<\/p>/);
 assert.match(html, /Adtona was inspired by the Bisaya \(Cebuano\) phrase “Adto na”—“Go now\.”/);
 assert.match(html, /Export\. Refine\. Re-import\. Keep one source of truth\./);
 
-// The Instagram profile is the one outbound link the site owns, so it must survive
-// markup edits: three footer banners, the Learn More dialog, and the generated
-// trip site's header. It is an editorial link, so it must not carry nofollow.
+// Both owned social profiles must survive markup edits: three footer banners,
+// the Learn More dialog, and the generated trip site's header. They are icon-only
+// editorial links, so accessible names are mandatory and nofollow is not.
 const instagramLinks = html.match(/<a[^>]*href="https:\/\/www\.instagram\.com\/adto\.na\/"[^>]*>/g) ?? [];
 assert.equal(instagramLinks.length, 5, "Every Adtona Instagram entry point must be present");
 instagramLinks.forEach((tag) => {
   assert.match(tag, /rel="noopener noreferrer"/, `Instagram link needs safe rel: ${tag}`);
   assert.match(tag, /target="_blank"/, `Instagram link must open in a new tab: ${tag}`);
+  assert.match(tag, /aria-label="Adtona on Instagram"/, `Instagram icon link needs a name: ${tag}`);
   assert.doesNotMatch(tag, /nofollow/, `The site's own profile link must stay followable: ${tag}`);
 });
-assert.match(html, /class="learn-more-social"/, "Learn More must close with the Instagram link");
-// The footer banners spell the invitation out; the header has no room for it and
-// shows the mark alone, so its accessible name has to come from the label.
-const footerLinks = html.match(/<a class="footer-link instagram-link"[^>]*>Adtona on Instagram<\/a>/g) ?? [];
-assert.equal(footerLinks.length, 3, "All three footer banners must link the profile by name");
-const headerMark = html.match(/<a class="export-button social-header-link"[^>]*>/)?.[0];
-assert.ok(headerMark, "The generated trip header must carry the Instagram link");
-assert.match(headerMark, /aria-label="Adtona on Instagram"/, "The icon-only header link needs a name");
-assert.equal((html.match(/class="instagram-glyph"/g) ?? []).length, 2, "Only Learn More and the trip header show the mark");
-assert.doesNotMatch(html, /social-header-link"[^>]*>[^<]*Instagram/, "The header link is icon-only");
+const tiktokLinks = html.match(/<a[^>]*href="https:\/\/www\.tiktok\.com\/@adto\.na"[^>]*>/g) ?? [];
+assert.equal(tiktokLinks.length, 5, "Every Adtona TikTok entry point must be present");
+tiktokLinks.forEach((tag) => {
+  assert.match(tag, /rel="noopener noreferrer"/, `TikTok link needs safe rel: ${tag}`);
+  assert.match(tag, /target="_blank"/, `TikTok link must open in a new tab: ${tag}`);
+  assert.match(tag, /aria-label="Adtona on TikTok"/, `TikTok icon link needs a name: ${tag}`);
+  assert.doesNotMatch(tag, /nofollow/, `The site's own profile link must stay followable: ${tag}`);
+});
+assert.match(html, /class="learn-more-social"/, "Learn More must close with both social links");
+assert.equal((html.match(/class="instagram-glyph"/g) ?? []).length, 5, "Every Instagram entry point must show its icon");
+assert.equal((html.match(/class="tiktok-glyph"/g) ?? []).length, 5, "Every TikTok entry point must show its icon");
+assert.doesNotMatch(html, />Adtona on Instagram<\/a>/, "Instagram profile links must be icon-only");
+assert.doesNotMatch(html, />Adtona on TikTok<\/a>/, "TikTok profile links must be icon-only");
 
 const jsonLdText = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
 assert.ok(jsonLdText, "The page must include JSON-LD");
@@ -45,6 +49,11 @@ const graph = JSON.parse(jsonLdText)["@graph"];
 const appSchema = graph.find((entry) => entry["@type"] === "WebApplication");
 assert.equal(appSchema?.name, "Adtona");
 assert.equal(appSchema?.isAccessibleForFree, true);
+const organizationSchema = graph.find((entry) => entry["@type"] === "Organization");
+assert.deepEqual(organizationSchema?.sameAs, [
+  "https://www.instagram.com/adto.na/",
+  "https://www.tiktok.com/@adto.na"
+]);
 
 // The FAQ moved to /about with the prose it belongs to. Google requires the
 // answers to be visible on the page carrying the markup, so the welcome screen
@@ -55,6 +64,9 @@ assert.ok(
   "The welcome screen must not claim FAQ content it does not show"
 );
 const aboutHtml = readFileSync("about.html", "utf8");
+assert.match(aboutHtml, /href="https:\/\/www\.instagram\.com\/adto\.na\/"[^>]*aria-label="Adtona on Instagram"/);
+assert.match(aboutHtml, /href="https:\/\/www\.tiktok\.com\/@adto\.na"[^>]*aria-label="Adtona on TikTok"/);
+assert.doesNotMatch(aboutHtml, />Adtona on Instagram<\/a>/, "About page Instagram link must be icon-only");
 const aboutGraph = JSON.parse(
   aboutHtml.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]
 )["@graph"];

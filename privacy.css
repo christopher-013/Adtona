@@ -106,6 +106,30 @@ a:hover { color: var(--forest-dark); }
   text-align: center;
 }
 .privacy-footer p { margin: 0; }
+.page-social-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  vertical-align: middle;
+}
+.page-social-link {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  text-decoration: none;
+}
+.page-social-link:hover,
+.page-social-link:focus-visible {
+  background: rgba(31, 111, 102, 0.1);
+}
+.page-social-link svg {
+  display: block;
+  width: 19px;
+  height: 19px;
+}
 
 @media (max-width: 560px) {
   body { padding: 0 14px 40px; font-size: 14.5px; }

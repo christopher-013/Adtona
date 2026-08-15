@@ -8992,12 +8992,30 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
 .trip-basics-action-row.merged-start-actions .merged-start-continue { order: 2; }
 .trip-basics-action-row.merged-start-actions .landing-alt { order: 1; }
 
-/* Instagram is the brand’s own profile, so it reads as a normal editorial link
-   rather than an action — same weight and underline as its sibling footer links. */
-.footer-link.instagram-link {
-  white-space: nowrap;
+/* Social profiles are deliberately icon-only. The visible marks stay compact in
+   the footer and generated-trip header while aria-label/title provide the names. */
+.footer-social-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  vertical-align: middle;
 }
-.instagram-glyph {
+.footer-link.social-icon-link {
+  display: inline-flex;
+  width: 25px;
+  height: 25px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  text-decoration: none;
+}
+.footer-link.social-icon-link:hover,
+.footer-link.social-icon-link:focus-visible {
+  color: var(--forest-dark);
+  background: rgba(31, 111, 102, 0.1);
+}
+.instagram-glyph,
+.tiktok-glyph {
   display: block;
   color: currentColor;
 }
@@ -9010,18 +9028,22 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
 }
 .learn-more-content .learn-more-social .social-link {
   display: inline-flex;
+  width: 42px;
+  height: 42px;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  border: 1px solid rgba(31, 111, 102, 0.24);
+  border-radius: 50%;
   color: var(--forest);
   font-weight: 800;
   text-decoration: none;
 }
-.learn-more-content .learn-more-social .social-link span {
-  text-decoration: underline;
-  text-underline-offset: 2px;
+.learn-more-content .learn-more-social .social-link + .social-link {
+  margin-left: 10px;
 }
 .learn-more-content .learn-more-social .social-link:hover {
   color: var(--forest-dark);
+  background: rgba(31, 111, 102, 0.08);
 }
 /* Icon-only, so it drops the pill min-width the text buttons need and becomes a
    square target instead — the mark reads at a glance and the header row stays short
@@ -9036,7 +9058,8 @@ body:not(.trip-mode) .page-shell:has(.trip-form[data-current-step="1"]) {
     min-width: 32px;
     padding-inline: 0;
   }
-  .trip-header-actions .export-button.social-header-link .instagram-glyph {
+  .trip-header-actions .export-button.social-header-link .instagram-glyph,
+  .trip-header-actions .export-button.social-header-link .tiktok-glyph {
     width: 16px;
     height: 16px;
   }
