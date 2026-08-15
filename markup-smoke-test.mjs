@@ -5,6 +5,7 @@ import { gunzipSync } from "node:zlib";
 const html = readFileSync("index.html", "utf8");
 const versionSource = readFileSync("version.js", "utf8");
 const stylesheet = readFileSync("styles.css");
+const stylesheetText = stylesheet.toString("utf8");
 const exportStylesSource = readFileSync("export-styles.js", "utf8");
 
 const ids = [...html.matchAll(/\sid=["']([^"']+)["']/g)].map((match) => match[1]);
@@ -19,6 +20,21 @@ assert.ok(appFootnoteIndex > appNavIndex, "Public-beta footnote must render belo
 assert.ok(html.includes('class="site-footer landing-footer"'), "Trip Basics must include the compact Adtona footer");
 assert.ok(html.includes('class="site-footer-copy"'), "Landing footer links must stay grouped for consistent alignment");
 assert.ok(html.includes('class="site-footer-social-separator"'), "Landing footer must separate its social icon group cleanly");
+assert.match(
+  stylesheetText,
+  /\.site-footer-line\s*\{[^}]*display:\s*flex;/s,
+  "Landing footer content must use a centered flex row"
+);
+assert.match(
+  stylesheetText,
+  /\.footer-social-links\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;/s,
+  "Footer social links must share one vertically centered inline group"
+);
+assert.match(
+  stylesheetText,
+  /\.footer-link\.social-icon-link\s*\{[^}]*width:\s*25px;[^}]*height:\s*25px;/s,
+  "Footer social links must use equal square hit targets"
+);
 assert.ok(html.includes('data-open-learn-more'), "The footer must expose a Learn More action");
 assert.ok(html.includes('data-open-feedback'), "The footer must expose Send feedback");
 assert.ok(html.includes('data-open-privacy'), "The footer must expose Privacy");

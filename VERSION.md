@@ -1,5 +1,10 @@
 # Adtona — Version 5 UI working copy
 
+## v5.7.2 Footer social alignment cache refresh
+
+- Keeps the Instagram and TikTok links in one centered, equal-size footer group.
+- Bumps the public asset and service-worker cache version so browsers load the corrected footer layout instead of combining new markup with stale CSS.
+
 ## v5.4.0 Public-release branding and content polish
 
 - Establishes the public message hierarchy: “Free AI travel planner,” “Plan the trip. Build the guide. Go.,” and “Adto na. Go now.”
